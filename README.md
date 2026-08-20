@@ -58,13 +58,21 @@ python3 -m venv .venv
 .venv/bin/python scripts/verify-reproducibility.py
 ```
 
-When the Node application is present, use the pinned Node LTS and Corepack's
-pnpm:
+When the Node application is present, use the exact pins committed in
+`.nvmrc`/`.node-version` (`Node 22.23.2`) and `package.json`
+(`pnpm@10.15.1`). Corepack provides the pnpm shim, so a globally installed pnpm
+binary is not required:
 
 ```bash
+node --version  # v22.23.2
 corepack enable
+corepack install
+pnpm --version  # 10.15.1
 pnpm install --frozen-lockfile
 pnpm validate
+pnpm test:integration
+pnpm test:e2e
+pnpm test:a11y
 ```
 
 Do not create a second package manager lockfile. Copy `.env.example` to an
