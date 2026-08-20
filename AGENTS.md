@@ -1,0 +1,114 @@
+# SecureBin Agent Guide
+
+## Mission
+
+Build a polished, reliable, independently implemented zero-knowledge sharing platform that maximizes the CloneFest rubric. Protect the working core, deployment, tests, accessibility, and judge demo before starting roadmap work.
+
+## Sources of Truth
+
+- `info/plan.md` defines product priorities, delivery order, and the future roadmap.
+- `architecture.md` defines protocol, trust boundaries, schemas, APIs, and lifecycle semantics.
+- Supabase migrations define the deployed database contract.
+- `package.json` scripts define executable validation commands.
+
+Update the documents in the same change whenever a public contract or security invariant changes.
+
+## Reference Boundary
+
+- Treat `info/PrivateBin`, `info/Challenge_1.md`, and `info/clonefest.md` as read-only reference material.
+- Do not copy PrivateBin source, wire formats, templates, or visual identity.
+- Preserve the challenge's underlying purpose while implementing SecureBin independently.
+
+## Toolchain and Commands
+
+Use the active Node LTS pinned by the repository and pnpm through Corepack. Do not introduce a second package manager or lockfile.
+
+Expected scripts after scaffolding:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:integration
+pnpm test:e2e
+pnpm test:a11y
+pnpm build
+pnpm validate
+pnpm supabase:start
+pnpm supabase:reset
+pnpm supabase:test
+```
+
+Keep this list synchronized with `package.json`. Use `pnpm validate` as the final local gate.
+
+## Non-Negotiable Security Invariants
+
+- Encryption, decryption, key derivation, QR generation, and decrypted rendering happen in the browser.
+- Never send or log plaintext, URL fragments, link secrets, passwords, unlock codes, deletion or upload-reservation capabilities, plaintext filenames, plaintext MIME types, or ciphertext bodies.
+- Never reuse an AES-GCM nonce with the same key.
+- Use Web Crypto and small reviewed wrappers. Never implement a cryptographic primitive manually.
+- Derive independent object keys with the exact versioned HKDF labels in `architecture.md`.
+- Reject unknown envelope versions, fields, algorithms, parameters, sizes, and factor masks before cryptographic work.
+- Any envelope-format change requires a version decision, architecture update, and golden compatibility vectors.
+- Change reveal counts and lifecycle state only through atomic database functions.
+- Keep Supabase service-role credentials and server-only environment variables out of client imports and bundles.
+- Render decrypted content only through the approved plain-text, Markdown sanitizer, code, or safe-preview boundary.
+- Secret routes must not load third-party scripts, analytics, embeds, fonts, or remote Markdown media.
+
+## Data and API Rules
+
+- Validate every external payload with shared strict schemas; reject unknown fields.
+- Enforce limits on both client and server. Client validation is UX, not authorization.
+- Store only HMACed network discriminators for rate limiting; never persist raw IP addresses.
+- Use random Storage paths that contain no user filenames or content hints.
+- Return the uniform recipient-facing `unavailable` state for missing, expired, exhausted, and revoked shares.
+- Preserve idempotency for upload reservation, share creation, reveal, and deletion flows.
+- A reveal counts a server authorization lease, not successful decryption or human viewing.
+- Do not change RLS or grants without integration tests proving anonymous clients cannot read tables or private objects directly.
+
+## Coding Rules
+
+- Keep strict TypeScript enabled. Avoid `any`, non-null assertions, silent catches, and unchecked type casts.
+- Keep browser-only crypto modules separate from server-only database and credential modules.
+- Prefer pure functions for envelope encoding, validation, policy summaries, and state transitions.
+- Use UTC in persistence and localized presentation at the UI boundary.
+- Keep dependencies minimal. Document why each security-sensitive production dependency is necessary.
+- Do not add speculative abstractions or roadmap infrastructure to the judged-release path.
+- Preserve user changes and inspect the current diff before editing.
+- Never commit secrets, generated credentials, local Supabase state, test artifacts, or decrypted fixtures.
+
+## Verification by Change Type
+
+- **Crypto:** run unit tests, wrong-factor/tamper tests, nonce checks, and golden vectors.
+- **Database or policy:** run migrations from a clean reset, integration tests, RLS tests, and concurrency tests.
+- **API:** test schemas, size limits, authorization, rate limiting, idempotency, and uniform failures.
+- **UI:** run the primary Playwright flow, mobile viewport, keyboard flow, and axe checks.
+- **Attachments:** test encrypted upload, object-size validation, reveal lease retry, safe preview, download, and cleanup.
+- **Documentation or public behavior:** synchronize `info/plan.md`, `architecture.md`, README, and submission evidence.
+
+Run the smallest relevant checks while iterating and `pnpm validate` before handoff.
+
+## Definition of Done
+
+- Requested behavior works through the production-shaped path, including failure states.
+- Lint, typecheck, relevant tests, and production build pass.
+- Security-sensitive changes include regression tests.
+- No secrets, unsafe logs, debug code, dead prototypes, or unrelated generated files appear in the diff.
+- Public contracts and environment variables are documented.
+- The default demo flow remains stable and understandable without developer intervention.
+
+## Code Review Rules
+
+Flag and fix:
+
+- Plaintext or secret material crossing the browser/server boundary.
+- AES-GCM nonce reuse or missing domain separation.
+- Non-atomic reveal, expiry, or revocation changes.
+- Direct anonymous database or Storage access.
+- Service-role credentials reachable from client code.
+- Unsafe Markdown, HTML, SVG, MIME, or attachment rendering.
+- Unbounded payloads, KDF parameters, timestamps, or counters.
+- Logs or errors containing secret URLs, tokens, content, or ciphertext bodies.
+- New features that destabilize core reliability, accessibility, deployment, or the judge demo.

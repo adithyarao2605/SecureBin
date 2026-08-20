@@ -33,8 +33,5 @@ supabase/.temp/
 *.p12
 
 # Competition/reference material is read-only and is not submission source.
-# Keep the product plan visible to Git; ignore the challenge notes and checkout.
 /info/*
-!/info/
-!/info/plan.md
 /info/PrivateBin/
