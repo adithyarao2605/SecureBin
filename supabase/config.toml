@@ -1,0 +1,25 @@
+project_id = "securebin"
+
+[api]
+enabled = true
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+
+[storage]
+enabled = true
+file_size_limit = "14MiB"
+
+[auth]
+enabled = true
+
+[analytics]
+enabled = false

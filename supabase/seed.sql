@@ -1,0 +1,3 @@
+-- SecureBin deliberately has no demo rows.  Seed only the private bucket and
+-- deterministic database settings through migrations; inserting fake shares
+-- would create misleading ciphertext and lifecycle state for local demos.
