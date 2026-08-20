@@ -1,6 +1,6 @@
 begin;
 
-select plan(21);
+select plan(25);
 
 select has_table('public', 'shares', 'shares table exists');
 select has_table('public', 'upload_reservations', 'upload reservations table exists');
@@ -20,13 +20,21 @@ select ok(
     select 1 from information_schema.columns
     where table_schema = 'public'
       and table_name in ('shares', 'upload_reservations', 'reveal_leases', 'rate_limit_buckets')
-      and column_name ilike '%ip%'
+      and column_name in ('ip', 'ip_address', 'client_ip', 'remote_ip', 'network_address')
   ),
   'no raw IP column is persisted'
 );
 select ok(
   (select not public from storage.buckets where id = 'securebin-files'),
   'encrypted object bucket is private'
+);
+select ok(
+  public.securebin_b64url('AAAAAAAAAAAAAAAAAAAAAA', 16),
+  'canonical unpadded base64url decodes to 16 bytes'
+);
+select ok(
+  public.securebin_b64url('AAAAAAAAAAAAAAAA', 12),
+  'canonical unpadded base64url decodes to 12 bytes'
 );
 
 select has_function('public', 'create_upload_reservation', array['bytea','bigint'], 'reservation RPC exists');
@@ -68,13 +76,34 @@ insert into public.shares (
   idempotency_key_hash
 ) values (
   'AAAAAAAAAAAAAAAAAAAAAA',
-  '{"version":1,"objectType":"content","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link","ciphertext":"AA"}'::jsonb,
+  '{"version":1,"objectType":"content","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link","ciphertext":"AAAAAAAAAAAAAAAAAAAAAA"}'::jsonb,
   now() + interval '1 hour',
   1,
   decode(repeat('00', 32), 'hex'),
   false,
   false,
   decode(repeat('01', 32), 'hex')
+);
+
+select ok(
+  not public.securebin_valid_envelope(
+    jsonb_set(
+      '{"version":1,"objectType":"content","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link","ciphertext":"AAAAAAAAAAAAAAAAAAAAAA"}'::jsonb,
+      '{ciphertext}', '"AA"'::jsonb
+    ),
+    'content', true, 524304
+  ),
+  'envelopes with ciphertext shorter than an AES-GCM tag are rejected'
+);
+select ok(
+  not public.securebin_valid_envelope(
+    jsonb_set(
+      '{"version":1,"objectType":"content","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link","ciphertext":"AAAAAAAAAAAAAAAAAAAAAA"}'::jsonb,
+      '{ciphertext}', '"AAAAAAAAAAAAAAAAAAAAAA=="'::jsonb
+    ),
+    'content', true, 524304
+  ),
+  'envelopes with padded noncanonical base64url are rejected'
 );
 
 select ok(

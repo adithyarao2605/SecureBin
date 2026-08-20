@@ -16,14 +16,67 @@ begin
 end
 $$;
 
-create or replace function public.securebin_b64url(value text, expected_length integer)
+create or replace function public.securebin_b64url(value text, expected_bytes integer)
 returns boolean
-language sql
+language plpgsql
 immutable
 strict
 set search_path = public, extensions, pg_temp
 as $$
-  select value ~ ('^[A-Za-z0-9_-]{' || expected_length::text || '}$');
+declare
+  decoded bytea;
+  canonical text;
+begin
+  if expected_bytes < 1
+     or value !~ '^[A-Za-z0-9_-]+$'
+     or length(value) <> ceil(expected_bytes * 8.0 / 6.0)::integer then
+    return false;
+  end if;
+
+  decoded := decode(
+    translate(value, '-_', '+/') || repeat('=', (4 - length(value) % 4) % 4),
+    'base64'
+  );
+  canonical := replace(replace(rtrim(encode(decoded, 'base64'), '='), '+', '-'), '/', '_');
+  return octet_length(decoded) = expected_bytes and canonical = value;
+exception when invalid_text_representation or invalid_parameter_value then
+  return false;
+end;
+$$;
+
+create or replace function public.securebin_b64url_range(
+  value text,
+  minimum_bytes integer,
+  maximum_bytes integer
+)
+returns boolean
+language plpgsql
+immutable
+strict
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  decoded bytea;
+  canonical text;
+begin
+  if minimum_bytes < 1
+     or maximum_bytes < minimum_bytes
+     or value !~ '^[A-Za-z0-9_-]+$'
+     or length(value) < ceil(minimum_bytes * 8.0 / 6.0)::integer
+     or length(value) > ceil(maximum_bytes * 8.0 / 6.0)::integer then
+    return false;
+  end if;
+
+  decoded := decode(
+    translate(value, '-_', '+/') || repeat('=', (4 - length(value) % 4) % 4),
+    'base64'
+  );
+  canonical := replace(replace(rtrim(encode(decoded, 'base64'), '='), '+', '-'), '/', '_');
+  return octet_length(decoded) between minimum_bytes and maximum_bytes
+    and canonical = value;
+exception when invalid_text_representation or invalid_parameter_value then
+  return false;
+end;
 $$;
 
 create or replace function public.securebin_valid_kdf_parameters(
@@ -52,7 +105,7 @@ create or replace function public.securebin_valid_envelope(
   envelope jsonb,
   expected_object_type text,
   require_ciphertext boolean,
-  max_ciphertext_chars integer
+  max_ciphertext_bytes integer
 )
 returns boolean
 language plpgsql
@@ -67,7 +120,7 @@ declare
 begin
   if jsonb_typeof(envelope) <> 'object'
      or expected_object_type not in ('content', 'file')
-     or max_ciphertext_chars < 1 then
+     or max_ciphertext_bytes < (case when require_ciphertext then 16 else 1 end) then
     return false;
   end if;
 
@@ -94,9 +147,9 @@ begin
      or envelope->>'objectType' <> expected_object_type
      or envelope->>'algorithm' <> 'AES-256-GCM'
      or envelope->>'factorMask' not in ('link','link+password','link+unlock','link+password+unlock')
-     or not securebin_b64url(envelope->>'nonce', 16)
-     or not securebin_b64url(envelope->>'hkdfSalt', 22)
-     or jsonb_typeof(envelope->'passwordSalt') <> 'null' and not securebin_b64url(envelope->>'passwordSalt', 22)
+     or not securebin_b64url(envelope->>'nonce', 12)
+     or not securebin_b64url(envelope->>'hkdfSalt', 16)
+     or jsonb_typeof(envelope->'passwordSalt') <> 'null' and not securebin_b64url(envelope->>'passwordSalt', 16)
      or not securebin_valid_kdf_parameters(envelope->>'kdf', envelope->'kdfParameters', envelope->>'factorMask') then
     return false;
   end if;
@@ -116,9 +169,7 @@ begin
     end if;
     ciphertext := envelope->>'ciphertext';
     if ciphertext is null
-       or length(ciphertext) < 1
-       or length(ciphertext) > max_ciphertext_chars
-       or ciphertext !~ '^[A-Za-z0-9_-]+$' then
+       or not securebin_b64url_range(ciphertext, 16, max_ciphertext_bytes) then
       return false;
     end if;
   end if;
@@ -144,9 +195,9 @@ create table if not exists public.shares (
   file_envelope jsonb,
   file_ciphertext_size bigint,
   idempotency_key_hash bytea not null unique,
-  constraint shares_public_id_format check (securebin_b64url(public_id, 22)),
+  constraint shares_public_id_format check (securebin_b64url(public_id, 16)),
   constraint shares_content_envelope_format check (
-    securebin_valid_envelope(content_envelope, 'content', true, 699072)
+    securebin_valid_envelope(content_envelope, 'content', true, 524304)
   ),
   constraint shares_factor_prompt_flags check (
     password_required = (content_envelope->>'factorMask' in ('link+password', 'link+password+unlock'))
@@ -341,8 +392,8 @@ begin
      or p_idempotency_key_hash is null or octet_length(p_idempotency_key_hash) <> 32 then
     raise exception using errcode = '22023', message = 'invalid capability digest';
   end if;
-  if not securebin_b64url(p_public_id, 22)
-     or not securebin_valid_envelope(p_content_envelope, 'content', true, 699072) then
+  if not securebin_b64url(p_public_id, 16)
+     or not securebin_valid_envelope(p_content_envelope, 'content', true, 524304) then
     raise exception using errcode = '22023', message = 'invalid content envelope';
   end if;
   if p_password_required is distinct from
@@ -525,8 +576,8 @@ begin
   share_found := found;
   if share_found then
     select * into lease
-      from public.reveal_leases
-      where share_id = share.id and request_token_hash = p_request_token_hash;
+      from public.reveal_leases as rl
+      where rl.share_id = share.id and rl.request_token_hash = p_request_token_hash;
     lease_found := found;
   else
     lease_found := false;
@@ -536,6 +587,7 @@ begin
       return query select 'authorized'::text, share.id, share.content_envelope,
         share.file_object_path, share.file_envelope, share.file_ciphertext_size,
         share.reveal_count, share.max_reveals, lease.retry_expires_at;
+      return;
     end if;
     -- A consumed token is never refunded or allowed to consume a second reveal.
     return query select 'request_expired'::text, null::uuid, null::jsonb, null::text,
@@ -551,9 +603,9 @@ begin
     return;
   end if;
 
-  update public.shares
-    set reveal_count = reveal_count + 1
-    where id = share.id;
+  update public.shares as s
+    set reveal_count = s.reveal_count + 1
+    where s.id = share.id;
 
   insert into public.reveal_leases (share_id, request_token_hash, issued_at, retry_expires_at)
   values (share.id, p_request_token_hash, now_utc, now_utc + interval '5 minutes')
@@ -719,6 +771,7 @@ end;
 $$;
 
 revoke all on function public.securebin_b64url(text, integer) from public, anon, authenticated;
+revoke all on function public.securebin_b64url_range(text, integer, integer) from public, anon, authenticated;
 revoke all on function public.securebin_valid_kdf_parameters(text, jsonb, text) from public, anon, authenticated;
 revoke all on function public.securebin_valid_envelope(jsonb, text, boolean, integer) from public, anon, authenticated;
 revoke all on function public.create_upload_reservation(bytea, bigint) from public, anon, authenticated;
