@@ -17,6 +17,7 @@ coverage/
 playwright-report/
 test-results/
 *.log
+*.tsbuildinfo
 
 # Local deployment and database state
 .vercel/

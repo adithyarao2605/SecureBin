@@ -13,11 +13,12 @@ templates, or visual identity.
 
 ## Current status
 
-Day 1 foundation is present: protocol/architecture source of truth, threat
-model, policy diagrams, security policy, reproducibility checks, CI, and
-deployment runbook. The application vertical slice and a verified production
-deployment are not claimed by this documentation until they exist and are
-tested. The current repository has no live demo URL.
+The Day 1 text-sharing slice works end to end: the browser encrypts a plain-text
+note, the API and database accept only ciphertext plus bounded policy metadata,
+and the recipient authorizes a reveal before decrypting locally. Unit,
+integration, browser, mobile-keyboard, and accessibility coverage exercise that
+path. Markdown, passwords, two-channel unlock, files, and the Privacy Receipt
+remain roadmap work. The current repository has no live demo URL.
 
 ## Why judges should care
 
@@ -89,7 +90,7 @@ APP_URL=http://localhost:3000 scripts/demo-smoke.sh
 ```
 
 PowerShell users can run `.\scripts\demo-smoke.ps1` with `$env:APP_URL` set.
-The `/api/health` endpoint must be implemented before this check can pass.
+The `/api/health` endpoint is included in the application.
 
 ## Judge demo flow (target)
 
@@ -111,11 +112,11 @@ available.
 
 | Rubric area | Evidence location | Status |
 | --- | --- | --- |
-| Problem understanding | This README, `info/plan.md`, threat model | Foundation documented |
-| Innovation | Two-channel unlock, atomic policies, Privacy Receipt in architecture | Specified; implementation pending |
+| Problem understanding | This README, local planning references, threat model | Foundation documented |
+| Innovation | Browser-only encryption and atomic reveal authorization | Text slice implemented; advanced factors pending |
 | Architecture | [`architecture.md`](architecture.md), diagrams | Documented |
-| UX/accessibility | Plan acceptance criteria and future browser tests | Implementation pending |
-| Reliability/demo | CI, smoke script, deployment runbook | Foundation present; deployment pending |
+| UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Text slice covered |
+| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local gates present; deployment pending |
 | Documentation | This README, threat model, security policy, runbook | Present |
 
 ## Security and limitations

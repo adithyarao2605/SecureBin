@@ -50,6 +50,8 @@ jobs:
         run: pnpm validate
       - name: Run integration tests
         run: pnpm test:integration
+      - name: Install the pinned browser runtime
+        run: pnpm exec playwright install --with-deps chromium
       - name: Run end-to-end tests
         run: pnpm test:e2e
       - name: Run accessibility tests
