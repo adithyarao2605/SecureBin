@@ -4,6 +4,11 @@ This document turns the protocol in [`architecture.md`](architecture.md)
 into an operational security boundary. It describes what the judged release
 protects, what it intentionally exposes, and what it cannot protect.
 
+The implemented evidence currently covers the Day 1 encrypted plain-text
+slice. Later factors, files, richer renderers, cleanup scheduling, and a live
+production host remain unverified scope even where this threat model defines
+their required controls.
+
 ## Security objectives
 
 1. Infrastructure must not learn plaintext content, filenames, plaintext MIME
@@ -86,3 +91,8 @@ nonce tests; database RLS, idempotency, expiry, revocation, cleanup, and
 concurrency tests; browser keyboard/accessibility and safe-rendering checks;
 and a fresh-clone smoke test. See the required verification section of
 [`architecture.md`](architecture.md).
+
+For a maintainer or friend handoff, use provider team access and the procedure
+in [`deployment.md`](deployment.md). Do not transmit environment files,
+service-role credentials, secret share URLs, passwords, unlock codes, or
+deletion capabilities as part of review evidence.

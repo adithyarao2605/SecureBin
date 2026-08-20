@@ -38,6 +38,9 @@ contract, not optional decoration:
 - `package.json` scripts define executable validation commands.
 
 Update the documents in the same change whenever a public contract or security invariant changes.
+Because `info/plan.md` is a local read-only input, record any conflict with it
+in `info/HANDOFF.md`; do not resolve the conflict by editing or committing the
+plan.
 
 ## Reference Boundary
 
@@ -51,7 +54,7 @@ Use the active Node LTS pinned by the repository and pnpm through Corepack. Do n
 
 Create and use the repository-local Python virtual environment at `.venv` for Python tooling (`python3 -m venv .venv` when absent). Keep all setup reproducible from committed pins and lockfiles; never rely on unrecorded global packages. Validate fresh-clone setup with `pnpm install --frozen-lockfile`, and run `.venv/bin/python scripts/verify-reproducibility.py` before handoff.
 
-Expected scripts after scaffolding:
+Supported repository scripts:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -113,6 +116,14 @@ Keep this list synchronized with `package.json`. Use `pnpm validate` as the fina
 - Make frequent, coherent Conventional Commits as work progresses so GitHub history shows the implementation sequence. Keep commits small enough to validate and review; never commit broken checkpoints merely to increase commit count. Push to the configured GitHub remote when credentials and network access are available.
 - Update `info/HANDOFF.md` at the end of every run with completed work, current validation results, remaining work, blockers, and the latest relevant commits.
 - Keep `info/plan.md` local and read-only. Never stage or commit it.
+- Keep every `main` CI run as a completed audit record. CI may cancel a
+  superseded pull-request run, but it must queue rather than cancel pushed
+  `main` commits.
+- Deployment is an owner-operated step unless the user explicitly delegates
+  it. For a friend handoff, share the repository URL, exact commit, and
+  `docs/deployment.md`—never an `.env` file, provider credential, fragment URL,
+  password, unlock code, or deletion capability. Record the recipient, commit,
+  validation state, and remaining owner actions in `info/HANDOFF.md`.
 
 ## Verification by Change Type
 

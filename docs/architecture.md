@@ -2,7 +2,21 @@
 
 ## 1. Status and Goals
 
-This document is the technical source of truth for the judged SecureBin release. `info/plan.md` defines product priorities and the retained roadmap. When the two documents disagree about a technical contract, update both in the same change.
+This document is the technical source of truth for the judged SecureBin release.
+`info/plan.md` is a local, read-only source for product priorities and the
+retained roadmap. When the two documents disagree, record the mismatch in
+`info/HANDOFF.md` and update maintained technical documentation and code; never
+edit or commit the plan.
+
+### Current implementation status
+
+The Day 1 plain-text path is implemented: browser encryption/decryption, strict
+create/status/reveal/delete APIs, atomic reveal authorization, private database
+boundaries, security headers, and automated unit/integration/browser/a11y
+coverage. Password and two-channel factors, Markdown/code modes, attachment
+routes, the Privacy Receipt, scheduled cleanup HTTP operation, and a verified
+production deployment remain planned. Sections below define their intended
+release contract and must not be read as evidence that they have shipped.
 
 SecureBin provides anonymous, browser-encrypted sharing with server-enforced availability, expiry, revocation, and reveal limits. The server stores ciphertext and lifecycle metadata but never receives content keys, passwords, unlock codes, filenames, plaintext MIME types, or plaintext content.
 

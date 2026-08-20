@@ -20,6 +20,13 @@ integration, browser, mobile-keyboard, and accessibility coverage exercise that
 path. Markdown, passwords, two-channel unlock, files, and the Privacy Receipt
 remain roadmap work. The current repository has no live demo URL.
 
+The implementation and local/CI evidence for Day 1 are complete. The original
+milestone is not fully closed until the repository owner deploys the app,
+applies the production database migration, and records a real backend-backed
+create/reveal/delete check. Historical red or cancelled workflow entries do
+not describe the current branch: current `main` runs complete both CI jobs,
+and pushed `main` commits are no longer cancelled by later pushes.
+
 ## Product and UX direction
 
 SecureBin uses a light-first **quiet proof** visual language: a warm Linen
@@ -110,6 +117,33 @@ APP_URL=http://localhost:3000 scripts/demo-smoke.sh
 PowerShell users can run `.\scripts\demo-smoke.ps1` with `$env:APP_URL` set.
 The `/api/health` endpoint is included in the application.
 
+## Give this repository to a friend
+
+Send your friend the GitHub repository URL, the exact commit SHA you want them
+to review, and [`docs/deployment.md`](docs/deployment.md). Do not send an
+`.env` file or any Supabase/Vercel secret. From a fresh clone, they should use
+Node `22.23.2`, Corepack, and the committed `pnpm@10.15.1`, then run:
+
+```bash
+git checkout <commit-sha>
+python3 -m venv .venv
+.venv/bin/python scripts/verify-reproducibility.py
+corepack enable
+corepack install
+pnpm install --frozen-lockfile
+pnpm validate
+pnpm test:integration
+pnpm test:e2e
+pnpm test:a11y
+```
+
+For review only, no provider access is necessary. For deployment, either add
+them to the Vercel and Supabase projects through provider team access or let
+them create independent projects; never copy service-role, rate-limit, cron,
+password, unlock, fragment, or deletion secrets through chat. The complete
+owner deployment, production verification, and return-evidence checklist is in
+the deployment runbook.
+
 ## Judge demo flow (target)
 
 Once the judged release is implemented and deployed, the rehearsed 60–90
@@ -134,7 +168,7 @@ available.
 | Innovation | Browser-only encryption and atomic reveal authorization | Text slice implemented; advanced factors pending |
 | Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Text slice covered |
-| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local gates present; deployment pending |
+| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Current `main` gates pass; owner deployment pending |
 | Documentation | This README, threat model, security policy, runbook | Present |
 
 ## Security and limitations

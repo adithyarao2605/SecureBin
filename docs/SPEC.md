@@ -20,6 +20,21 @@ security boundaries, accessibility, deployment, and evidence take priority
 over breadth. Features that cannot be implemented and tested completely stay
 clearly marked as future work.
 
+## Progress snapshot
+
+Day 1 is implemented and green in local and GitHub CI evidence: reproducible
+tooling, browser-encrypted plain-text create/status/reveal/delete, atomic
+database foundations, strict API boundaries, production build, integration,
+Chromium, keyboard/mobile, and accessibility coverage. It is **deployment
+pending**, not a completed live milestone: the owner still needs to apply the
+production migration, deploy `main`, and record a backend-backed browser check.
+Day 2 and later feature work has not been claimed as complete.
+
+When another maintainer or friend continues the schedule, hand them the exact
+commit and [`docs/deployment.md`](deployment.md), have them reproduce the gates
+from a fresh clone, and exchange provider access through team membership rather
+than copied secrets.
+
 ## Experience direction — quiet proof
 
 SecureBin should feel like a calm evidence desk for sharing something sensitive,

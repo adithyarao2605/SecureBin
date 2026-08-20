@@ -5,6 +5,14 @@ trust boundaries without reading implementation code. They describe the
 versioned protocol in [`architecture.md`](architecture.md); a diagram is not
 evidence that an unimplemented component has shipped.
 
+## Current implementation coverage
+
+The solid Day 1 path—browser-encrypted text, strict share APIs, Postgres-backed
+create/status/reveal/delete, and local decryption—is implemented and tested.
+The attachment/Storage and scheduled cleanup nodes remain planned architecture
+until their routes and production operations exist. No live deployment has
+been recorded.
+
 ## System context and data boundary
 
 ```mermaid

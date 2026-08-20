@@ -5,6 +5,10 @@ material are handled in the browser, while the service enforces lifecycle
 policy over ciphertext. This is a security design target, not a claim that an
 unreviewed deployment is production-safe.
 
+The current implemented release is the Day 1 encrypted plain-text slice. A
+production host has not yet been verified, so repository tests are evidence of
+implementation quality, not evidence that a live deployment is safe.
+
 ## Reporting a vulnerability
 
 Please do not open a public issue containing an exploit, secret URL, password,
@@ -43,3 +47,13 @@ Changes that affect cryptography, envelope fields, lifecycle counters, RLS,
 Storage access, logging, or decrypted rendering require regression tests and a
 documentation update. Never add plaintext or secret material to telemetry,
 error messages, fixtures, screenshots, or CI output.
+
+## Secure maintainer or friend handoff
+
+Transfer access through GitHub, Vercel, and Supabase team membership. Share a
+repository URL, exact commit, and validation results—not `.env` files,
+service-role keys, rate-limit or cron secrets, URL fragments, passwords, unlock
+codes, deletion capabilities, or real share links. A new deployer should create
+or receive provider-scoped credentials and follow [`deployment.md`](deployment.md).
+Rotate any credential that was sent through an unapproved channel before using
+the deployment.
