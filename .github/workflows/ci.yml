@@ -10,7 +10,9 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Preserve a completed audit trail for every main-branch commit. Superseded
+  # pull-request runs may still be cancelled to avoid wasting runner time.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   reproducibility:

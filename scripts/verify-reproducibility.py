@@ -16,17 +16,20 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 REQUIRED_FILES = (
+    "AGENTS.md",
     "README.md",
     ".env.example",
     ".gitignore",
     ".github/workflows/ci.yml",
     ".github/dependabot.yml",
     "docs/SECURITY.md",
+    "docs/SPEC.md",
     "docs/architecture.md",
     "docs/threat-model.md",
     "docs/architecture-diagrams.md",
     "docs/policy-state.md",
     "docs/deployment.md",
+    "info/HANDOFF.md",
     "scripts/demo-smoke.sh",
     "scripts/demo-smoke.ps1",
 )
@@ -69,6 +72,11 @@ def main() -> int:
         text = (ROOT / script).read_text(encoding="utf-8")
         if "api/health" not in text or "APP_URL" not in text:
             fail(f"{script} must perform an explicit health check using APP_URL")
+
+    workflow_text = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    main_audit_trail = "cancel-in-progress: ${{ github.event_name == 'pull_request' }}"
+    if main_audit_trail not in workflow_text:
+        fail("CI must preserve completed main-branch runs while cancelling superseded PR runs")
 
     print("OK: reproducibility and documentation contract is valid")
     return 0
