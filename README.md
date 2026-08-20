@@ -97,9 +97,13 @@ pnpm --version  # 10.15.1
 pnpm install --frozen-lockfile
 pnpm validate
 pnpm test:integration
+pnpm exec playwright install chromium
 pnpm test:e2e
 pnpm test:a11y
 ```
+
+On a fresh Linux host that lacks Chromium system libraries, use
+`pnpm exec playwright install --with-deps chromium` instead.
 
 Do not create a second package manager lockfile. Copy `.env.example` to an
 untracked `.env` only when local application work requires configuration. Keep

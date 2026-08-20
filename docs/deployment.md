@@ -28,9 +28,13 @@ corepack install
 pnpm install --frozen-lockfile
 pnpm validate
 pnpm test:integration
+pnpm exec playwright install chromium
 pnpm test:e2e
 pnpm test:a11y
 ```
+
+On a fresh Linux host that lacks browser system libraries, use
+`pnpm exec playwright install --with-deps chromium` instead.
 
 The lockfile is part of the reproducibility contract. CI refuses unlocked
 dependency installation and runs the same Python repository check.
@@ -137,6 +141,10 @@ the provider stores, never in a tracked file.
    corepack install
    pnpm install --frozen-lockfile
    pnpm validate
+   pnpm test:integration
+   pnpm exec playwright install chromium
+   pnpm test:e2e
+   pnpm test:a11y
    pnpm supabase:start
    pnpm supabase:reset
    pnpm supabase:test
