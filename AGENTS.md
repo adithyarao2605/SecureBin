@@ -4,6 +4,32 @@
 
 Build a polished, reliable, independently implemented zero-knowledge sharing platform that maximizes the CloneFest rubric. Protect the working core, deployment, tests, accessibility, and judge demo before starting roadmap work.
 
+## UX and visual direction
+
+The product surface follows the **quiet proof** direction in
+`docs/SPEC.md#experience-direction--quiet-proof`. Treat it as a public design
+contract, not optional decoration:
+
+- Use the light-first Linen `#F4F0E8`, Ink `#17242D`, Deep Slate `#2D4148`,
+  Mineral `#2F7071`, Copper `#B86848`, and Mist `#DCE9E3` token family, with a
+  warm, high-contrast dark counterpart. Never use neon green, matrix rain,
+  hacker-terminal panels, shield/lock hero art, fake threat meters, or generic
+  cyberpunk grids.
+- Compose the experience as one primary content surface plus a narrow evidence
+  rail; collapse the rail to a status strip on mobile. Avoid a dashboard made
+  from interchangeable cards.
+- Use one restrained **proofline** (browser → sealed parcel → recipient) as the
+  signature visual. It explains the flow only; it never stands in for a
+  cryptographic result or a server authorization decision.
+- Prefer bundled/self-hosted display, body, and utility fonts with fallbacks;
+  secret routes must remain free of remote font and media requests. Respect
+  visible focus, semantic landmarks, keyboard/mobile use, contrast, and reduced
+  motion.
+- Keep copy active and honest: “Your browser encrypts this before it leaves the
+  page.”, “Create share”, “Reveal once”, “Copy link”, and “Unavailable”. Do not
+  claim unhackability or imply that a visual state proves more than the
+  protocol actually knows.
+
 ## Sources of Truth
 
 - `info/plan.md` defines product priorities, delivery order, and the future roadmap.

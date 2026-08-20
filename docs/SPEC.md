@@ -20,6 +20,68 @@ security boundaries, accessibility, deployment, and evidence take priority
 over breadth. Features that cannot be implemented and tested completely stay
 clearly marked as future work.
 
+## Experience direction — quiet proof
+
+SecureBin should feel like a calm evidence desk for sharing something sensitive,
+not like a hacker terminal. The audience is a person sending an ordinary note,
+snippet, or file who needs to understand two things quickly: what happens in
+their browser, and what the service can still see. The primary job of the
+surface is to complete a share or reveal without making security claims the
+interface cannot prove.
+
+### Visual system
+
+- **Palette:** light-first Linen `#F4F0E8` for the canvas, Ink `#17242D` for
+  text, Deep Slate `#2D4148` for quiet panels, Mineral `#2F7071` for actions
+  and focus, Copper `#B86848` for the one accent and attention states, and Mist
+  `#DCE9E3` for confirmed local states. Dark mode uses Deep Ink `#11242A` and
+  warm Mist `#ECF1EB` rather than a black/neon reversal. Every status also has
+  text and an icon or shape; color is never the only signal.
+- **Typography:** use a self-hosted, bundled display face such as Bricolage
+  Grotesque for short headings, Atkinson Hyperlegible for body and controls,
+  and IBM Plex Mono for compact receipt labels and technical values. Provide
+  deliberate system fallbacks if the bundled faces are unavailable. No remote
+  font request is allowed on a secret route.
+- **Layout:** use one large primary compose/reveal surface with a narrow
+  evidence rail, rather than a grid of interchangeable cards. On desktop the
+  rail carries lifecycle state and the main surface carries the content/action;
+  on mobile the rail becomes a short status strip above the surface. Keep
+  controls close to the content they affect and leave generous quiet space.
+
+```text
+desktop  [ proofline / state rail ] [ one compose or reveal surface       ]
+                                   [ one action row + receipt              ]
+mobile   [ proofline + state ]
+         [ one primary surface ]
+         [ one action row ]
+```
+
+- **Signature element:** the **proofline** is a single fine route-like line
+  with three square evidence nodes—browser, sealed parcel, recipient—used on
+  the primary surface and receipt. It is a restrained nod to data movement,
+  not a circuit-board background. The proofline is never a cryptographic proof
+  or an authority signal; its labels and state are always accompanied by plain
+  text.
+- **Motion:** one short 150–220ms seal/reveal transition may draw the
+  proofline when a real local state changes. Do not add looping glows, glitch
+  effects, matrix rain, or decorative progress meters. Respect
+  `prefers-reduced-motion` by removing the transition while retaining the
+  state change.
+
+### Interface language
+
+Use plain, active, user-facing copy: “Your browser encrypts this before it
+leaves the page.”, “Create share”, “Reveal once”, “Copy link”, and “Unavailable”.
+Explain what is visible as “The service stores a sealed parcel and limited
+policy metadata.” Avoid “unhackable”, “military-grade”, fake threat scores,
+and unexplained protocol jargon in primary actions. The unavailable state stays
+uniform for missing, expired, exhausted, and revoked shares; recovery guidance
+may explain the next safe action without guessing which condition occurred.
+
+This direction is a release requirement for the UI, copy, screenshots, and
+demo evidence. It is intentionally distinct from PrivateBin and must not turn
+security controls into decorative cyberpunk styling.
+
 ## Non-negotiable release rules
 
 - Keep the implementation independent. Use the challenge and nested
@@ -64,9 +126,10 @@ plain-text share.
 - Confirm the Node, pnpm, TypeScript, Next.js, Supabase, and Playwright pins;
   make `pnpm install --frozen-lockfile`, Corepack setup, and the repo-local
   `.venv` reproducibility check work from a clean checkout.
-- Establish the App Router shell, design tokens, sealed-evidence visual
-  identity, light/dark/system themes, mobile layout, semantic landmarks,
-  focus states, reduced motion, and a health endpoint.
+- Establish the App Router shell from the **quiet proof** direction above:
+  design tokens, the proofline, light/dark/system themes, mobile layout,
+  semantic landmarks, focus states, honest state copy, reduced motion, and a
+  health endpoint.
 - Implement the v1 browser-only AES-256-GCM text envelope: random public ID,
   fragment link secret, nonce, HKDF salt, canonical AAD, strict fields and
   sizes, and fail-closed malformed/tampered input handling.
@@ -175,6 +238,9 @@ handles the non-happy paths judges will try.
 - Complete loading, offline, malformed-link, wrong-factor, wrong-key,
   scheduled, retry, refresh, double-submit, unavailable, and network-failure
   states. Preserve only an unsent in-memory draft during recoverable failures.
+- Apply the quiet-proof layout and proofline consistently across composer,
+  viewer, receipt, and error states; use one clear action per state and keep
+  security language specific and verifiable.
 - Review CSP, HSTS, `no-store`, `nosniff`, frame denial, referrer and
   permissions policies, dependency minimization, bundle boundaries, and logs.
   Add manual keyboard/screen-reader review alongside axe.
@@ -202,6 +268,10 @@ product capability, protocol feature, schema feature, or roadmap item.
 - Measure deployed performance, including representative mobile LCP, bundle
   loading, and documented file-size limits. Fix only regressions, accessibility
   defects, unsafe states, copy clarity, layout issues, and release blockers.
+- Review the light/dark surfaces, proofline states, typography fallbacks,
+  focus visibility, reduced-motion behavior, and mobile status-strip layout in
+  the actual deployment. Remove any accidental neon, terminal, or decorative
+  security theatre before the demo.
 - Verify environment variables, server-only boundaries, CSP, deployment
   configuration, cron/cleanup scheduling, health checks, migration order,
   redacted logs, and rollback instructions against a fresh deployment.

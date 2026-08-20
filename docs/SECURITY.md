@@ -28,9 +28,13 @@ the reporter when they want attribution.
   zero-knowledge storage cannot defend against that browser-runtime attack.
 - A recipient can copy decrypted content, screenshot it, or retain ciphertext
   already released. Reveal limits are server authorization limits, not DRM.
+- The proofline, Privacy Receipt, and other visual states are explanatory UI,
+  not cryptographic evidence or authorization. Secret routes use bundled or
+  same-origin assets only, so visual polish cannot introduce a third-party
+  observation channel.
 
 The complete threat model and mitigations are in
-[`docs/threat-model.md`](docs/threat-model.md). The protocol and data contracts
+[`threat-model.md`](threat-model.md). The protocol and data contracts
 are in [`architecture.md`](architecture.md).
 
 ## Supported security expectations

@@ -24,6 +24,12 @@ The fragment secret never becomes an HTTP request field. The API sees only the
 public ID, ciphertext/envelope data, and the minimum policy metadata required
 to enforce availability and reveal authorization.
 
+The UI explains this boundary with a restrained proofline: browser → sealed
+parcel → recipient. In the diagrams below that visual language is explanatory
+only; it is not a protocol message, a cryptographic proof, or evidence that a
+reveal was successfully decrypted. The actual boundary remains the one shown
+by the solid and dotted data-flow arrows.
+
 ## Create and reveal sequence
 
 ```mermaid
@@ -68,3 +74,9 @@ flowchart TB
   W -->|ciphertext and redacted policy only| API
   API -. no plaintext/factors .- W
 ```
+
+The rendered product keeps this boundary legible with plain status copy and
+accessible structure. It uses a light-first, warm evidence-desk visual system
+with bundled fonts and no remote assets on secret routes; it does not use
+terminal, matrix, neon, or shield/lock motifs as a substitute for security
+evidence.

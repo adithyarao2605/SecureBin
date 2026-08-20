@@ -53,6 +53,22 @@ flowchart LR
 
 The browser owns key generation, derivation, encryption, decryption, content rendering, QR generation, and Privacy Receipt generation. The API owns validation, rate limiting, upload reservations, lifecycle policy, reveal leases, signed Storage operations, and redacted responses.
 
+### Experience layer (non-authoritative)
+
+The browser surface follows the quiet-proof direction in
+[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof): a light-first
+Linen/Ink/Mineral/Copper palette, a single compose or reveal surface, and one
+proofline connecting the browser, sealed parcel, and recipient. The proofline is
+only an explanation of the client flow. It must never be used as evidence that
+encryption, authorization, or deletion succeeded; those states come from the
+actual local and API results and are written in accessible text.
+
+Display, body, and receipt typography are bundled/self-hosted with system
+fallbacks. Secret routes do not fetch remote fonts, media, analytics, or other
+third-party assets. The visual direction avoids security theatre—neon effects,
+terminal styling, fake threat meters, and shield/lock clichés—and does not
+change the cryptographic or trust boundaries above.
+
 ## 4. Deployment Components
 
 - **Next.js App Router:** public composer, share viewer, security page, and server-only route handlers.
@@ -257,6 +273,17 @@ stateDiagram-v2
 The public API deliberately collapses expired, exhausted, revoked, and missing records into `unavailable`. Owner-facing confirmation may acknowledge a valid deletion capability without changing recipient responses.
 
 ## 10. Rendering and Browser Security
+
+### Product surface constraints
+
+- Use one primary content surface and a compact evidence rail/status strip;
+  layout changes must preserve the same semantic order on mobile.
+- The proofline may animate once for a real local state transition, but it is
+  decorative and explanatory. Copy and accessible state text remain present
+  when motion is disabled or unavailable.
+- Use plain, active labels for actions (`Create share`, `Reveal once`, `Copy
+  link`) and a uniform recipient-facing `Unavailable` state. Do not expose
+  hidden reasons through color, timing, animation, or visual labels.
 
 - Render plain text with text nodes, never `innerHTML`.
 - Parse Markdown with an established library, sanitize with an allowlist, strip remote images, and add `rel="noopener noreferrer"` to links.

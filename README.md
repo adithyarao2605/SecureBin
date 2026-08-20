@@ -20,6 +20,22 @@ integration, browser, mobile-keyboard, and accessibility coverage exercise that
 path. Markdown, passwords, two-channel unlock, files, and the Privacy Receipt
 remain roadmap work. The current repository has no live demo URL.
 
+## Product and UX direction
+
+SecureBin uses a light-first **quiet proof** visual language: a warm Linen
+canvas, Ink typography, Mineral actions, a restrained Copper accent, and an
+asymmetrical single-surface layout. A small “proofline” connects browser,
+sealed parcel, and recipient as a visual explanation of the flow. It is not a
+cryptographic proof or a threat meter. The interface should feel calm and
+precise, with a cybersecurity subject expressed through evidence and data
+movement rather than neon, hacker-terminal, matrix, shield, or lock clichés.
+
+Headings, body text, and receipt labels have distinct typographic roles; fonts
+are bundled or system-fallback only because secret routes must not fetch remote
+assets. State is always communicated with words and accessible structure in
+addition to color or motion. See the detailed tokens, layout, motion rules,
+and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-proof).
+
 ## Why judges should care
 
 - Content keys, passwords, unlock codes, filenames, and plaintext stay in the
@@ -45,6 +61,8 @@ remain roadmap work. The current repository has no live demo URL.
 - [`docs/policy-state.md`](docs/policy-state.md) — atomic lifecycle state model.
 - [`docs/deployment.md`](docs/deployment.md) — fresh-clone, environment, and
   deployment checklist.
+- [`docs/SPEC.md`](docs/SPEC.md) — five-day delivery schedule and the quiet-proof
+  visual/copy direction.
 - [`docs/SECURITY.md`](docs/SECURITY.md) — vulnerability reporting and security rules.
 - [`info/plan.md`](info/plan.md) — product priorities, delivery order, and
   future roadmap (read-only planning source).

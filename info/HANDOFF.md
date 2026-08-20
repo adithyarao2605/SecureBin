@@ -9,6 +9,9 @@ Updated: 2026-08-20 (Asia/Kolkata)
 - Pinned Node 22.23.2 and pnpm 10.15.1; created the repo-local `.venv` reproducibility workflow.
 - Moved architecture and security documentation into `docs/`, added the five-day `docs/SPEC.md`, and documented the continuing agent workflow.
 - Luna-high synthesized the five-day specification; Luna-medium audited moved-document references and the handoff/reproducibility rules. Their findings were reviewed and integrated.
+- Delegated UX documentation pass established the quiet-proof direction across `README.md`, `AGENTS.md`, `docs/SPEC.md`, `docs/architecture.md`, `docs/architecture-diagrams.md`, `docs/threat-model.md`, `docs/SECURITY.md`, and `docs/deployment.md`: warm evidence-desk palette, bundled typography roles, single-surface layout, proofline signature, honest copy, and motion/accessibility constraints. No application code or `info/plan.md` was changed; implementing the direction in the UI remains a subsequent task.
+- Reviewed all eight open Dependabot PRs with GitHub CLI. Approved #1–#4 and #6; fresh-worktree `pnpm validate` passed for package PRs #4 and #6. Requested changes on #5 because its Next 16 lint config fails lint against Next 15, on #7 because its incomplete Tailwind 4 migration fails the production build, and on #8 because a production-framework major requires a coordinated Next 16 migration with aligned lint/CSP/browser verification.
+- The user will perform production deployment. No agent deployment was attempted. Exact owner-run Supabase/Vercel and smoke-test steps are recorded in `docs/deployment.md`.
 
 ## Validation
 
@@ -24,6 +27,7 @@ Updated: 2026-08-20 (Asia/Kolkata)
 ## Remaining / Blockers
 
 - A live production deployment needs project credentials and is not yet claimed.
+- The original Day 1 “working deployed vertical slice” remains incomplete until the owner performs the documented deployment and records a real backend-backed create/reveal smoke result. The local Day 1 milestone is complete and green.
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
 - Next starting task: begin Day 2 concurrency/RLS coverage from `docs/SPEC.md`, preserving the green text-share slice.
 

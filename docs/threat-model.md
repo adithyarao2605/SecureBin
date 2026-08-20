@@ -17,6 +17,21 @@ protects, what it intentionally exposes, and what it cannot protect.
 5. Recipient-facing failures do not reveal whether a share is missing, expired,
    exhausted, or revoked.
 
+## UX as a security boundary
+
+The interface uses the quiet-proof direction documented in
+[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof) to make the real
+boundary understandable without security theatre. Its proofline and receipt
+are explanatory browser UI, never cryptographic evidence. A “sealed” label is
+shown only after the local operation reports success; a visual accent cannot
+authorize a reveal or claim deletion.
+
+Security-relevant states use plain text and semantic structure in addition to
+color, shape, or motion. The recipient-facing `Unavailable` copy remains
+uniform across missing, expired, exhausted, and revoked records. Secret routes
+use only bundled/self-hosted assets so an aesthetic dependency cannot add a
+third-party observation channel.
+
 ## Actors and trust assumptions
 
 | Actor | Trust assumption | Security consequence |
