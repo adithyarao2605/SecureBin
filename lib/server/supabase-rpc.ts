@@ -1,0 +1,58 @@
+import { readServerConfig, type ServerConfig } from "./config";
+
+export class RpcRequestError extends Error {
+  readonly status: number;
+  readonly code: string | null;
+
+  constructor(status: number, code: string | null) {
+    super("SecureBin server dependency request failed");
+    this.name = "RpcRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export interface RpcClient {
+  call(functionName: string, args: Record<string, unknown>): Promise<unknown>;
+}
+
+export function createRpcClient(config: ServerConfig = readServerConfig()): RpcClient {
+  const endpoint = `${config.supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/`;
+  return {
+    async call(functionName: string, args: Record<string, unknown>): Promise<unknown> {
+      let response: Response;
+      try {
+        response = await fetch(`${endpoint}${functionName}`, {
+          method: "POST",
+          headers: {
+            apikey: config.serviceRoleKey,
+            Authorization: `Bearer ${config.serviceRoleKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(args),
+          cache: "no-store",
+        });
+      } catch {
+        throw new RpcRequestError(503, null);
+      }
+      if (!response.ok) {
+        let code: string | null = null;
+        try {
+          const payload: unknown = await response.json();
+          if (typeof payload === "object" && payload !== null && "code" in payload && typeof payload.code === "string") {
+            code = payload.code;
+          }
+        } catch {
+          code = null;
+        }
+        throw new RpcRequestError(response.status, code);
+      }
+      try {
+        const payload: unknown = await response.json();
+        return payload;
+      } catch {
+        throw new RpcRequestError(502, null);
+      }
+    },
+  };
+}
