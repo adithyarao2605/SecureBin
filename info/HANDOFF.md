@@ -17,18 +17,18 @@ Updated: 2026-08-20 (Asia/Kolkata)
 - `pnpm test:e2e`: passed (3 Chromium tests).
 - `pnpm test:a11y`: passed (2 Chromium/axe tests).
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed after the document move.
-- Local Supabase clean-reset/pgTAP: pending completion of the first Docker image pull.
+- `pnpm supabase:reset`: passed from a recreated local database.
+- `pnpm supabase:test`: passed all 25 pgTAP checks.
 
 ## Remaining / Blockers
 
-- Finish the local Supabase startup, clean reset, and pgTAP suite, then commit the database validation hardening.
 - A live production deployment needs project credentials and is not yet claimed.
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
+- Next starting task: begin Day 2 concurrency/RLS coverage from `docs/SPEC.md`, preserving the green text-share slice.
 
 ## Recent Commits
 
+- `b44cbe3 fix(db): harden envelope and reveal validation`
+- `f4bfbc3 docs: define five-day delivery workflow`
 - `2408d2e test: complete reproducible browser gates`
 - `10bc403 feat: ship encrypted text sharing slice`
-- `073a530 test: allow configured Chromium executable`
-- `36152c4 test: cover browser sealed share flow`
-- `11912ba feat(db): add atomic lifecycle foundation`

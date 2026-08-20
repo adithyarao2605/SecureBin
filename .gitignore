@@ -23,6 +23,7 @@ test-results/
 .vercel/
 .supabase/
 supabase/.temp/
+supabase/.branches/
 
 # Secrets and machine-local configuration. Keep the names, never values.
 .env
@@ -37,5 +38,4 @@ supabase/.temp/
 /info/*
 !/info/HANDOFF.md
 /info/plan.md
-/info/PrivateBin/
 /info/PrivateBin/
