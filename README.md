@@ -36,7 +36,7 @@ remain roadmap work. The current repository has no live demo URL.
 
 ## Documentation map
 
-- [`architecture.md`](architecture.md) — protocol, schemas, API contracts, and
+- [`docs/architecture.md`](docs/architecture.md) — protocol, schemas, API contracts, and
   lifecycle semantics.
 - [`docs/threat-model.md`](docs/threat-model.md) — assets, trust boundaries,
   threats, controls, and limitations.
@@ -45,7 +45,7 @@ remain roadmap work. The current repository has no live demo URL.
 - [`docs/policy-state.md`](docs/policy-state.md) — atomic lifecycle state model.
 - [`docs/deployment.md`](docs/deployment.md) — fresh-clone, environment, and
   deployment checklist.
-- [`SECURITY.md`](SECURITY.md) — vulnerability reporting and security rules.
+- [`docs/SECURITY.md`](docs/SECURITY.md) — vulnerability reporting and security rules.
 - [`info/plan.md`](info/plan.md) — product priorities, delivery order, and
   future roadmap (read-only planning source).
 
@@ -114,14 +114,14 @@ available.
 | --- | --- | --- |
 | Problem understanding | This README, local planning references, threat model | Foundation documented |
 | Innovation | Browser-only encryption and atomic reveal authorization | Text slice implemented; advanced factors pending |
-| Architecture | [`architecture.md`](architecture.md), diagrams | Documented |
+| Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Text slice covered |
 | Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local gates present; deployment pending |
 | Documentation | This README, threat model, security policy, runbook | Present |
 
 ## Security and limitations
 
-Read [`SECURITY.md`](SECURITY.md) before handling real data. SecureBin is not
+Read [`docs/SECURITY.md`](docs/SECURITY.md) before handling real data. SecureBin is not
 DRM and cannot protect plaintext after it is rendered or copied. A malicious
 application deployment can capture browser plaintext and keys. Infrastructure
 can still observe ciphertext size, timestamps, network metadata, and access

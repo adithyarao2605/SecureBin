@@ -2,7 +2,7 @@
 
 These diagrams are intentionally standalone so a judge can understand the
 trust boundaries without reading implementation code. They describe the
-versioned protocol in [`architecture.md`](../architecture.md); a diagram is not
+versioned protocol in [`architecture.md`](architecture.md); a diagram is not
 evidence that an unimplemented component has shipped.
 
 ## System context and data boundary

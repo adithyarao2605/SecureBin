@@ -7,7 +7,7 @@ Build a polished, reliable, independently implemented zero-knowledge sharing pla
 ## Sources of Truth
 
 - `info/plan.md` defines product priorities, delivery order, and the future roadmap.
-- `architecture.md` defines protocol, trust boundaries, schemas, APIs, and lifecycle semantics.
+- `docs/architecture.md` defines protocol, trust boundaries, schemas, APIs, and lifecycle semantics.
 - Supabase migrations define the deployed database contract.
 - `package.json` scripts define executable validation commands.
 
@@ -22,6 +22,8 @@ Update the documents in the same change whenever a public contract or security i
 ## Toolchain and Commands
 
 Use the active Node LTS pinned by the repository and pnpm through Corepack. Do not introduce a second package manager or lockfile.
+
+Create and use the repository-local Python virtual environment at `.venv` for Python tooling (`python3 -m venv .venv` when absent). Keep all setup reproducible from committed pins and lockfiles; never rely on unrecorded global packages. Validate fresh-clone setup with `pnpm install --frozen-lockfile`, and run `.venv/bin/python scripts/verify-reproducibility.py` before handoff.
 
 Expected scripts after scaffolding:
 
@@ -49,7 +51,7 @@ Keep this list synchronized with `package.json`. Use `pnpm validate` as the fina
 - Never send or log plaintext, URL fragments, link secrets, passwords, unlock codes, deletion or upload-reservation capabilities, plaintext filenames, plaintext MIME types, or ciphertext bodies.
 - Never reuse an AES-GCM nonce with the same key.
 - Use Web Crypto and small reviewed wrappers. Never implement a cryptographic primitive manually.
-- Derive independent object keys with the exact versioned HKDF labels in `architecture.md`.
+- Derive independent object keys with the exact versioned HKDF labels in `docs/architecture.md`.
 - Reject unknown envelope versions, fields, algorithms, parameters, sizes, and factor masks before cryptographic work.
 - Any envelope-format change requires a version decision, architecture update, and golden compatibility vectors.
 - Change reveal counts and lifecycle state only through atomic database functions.
@@ -79,6 +81,13 @@ Keep this list synchronized with `package.json`. Use `pnpm validate` as the fina
 - Preserve user changes and inspect the current diff before editing.
 - Never commit secrets, generated credentials, local Supabase state, test artifacts, or decrypted fixtures.
 
+## Agent Workflow and Handoff
+
+- Use subagents for bounded parallel work when it helps. Subagents must use `gpt-5.6-luna` with medium or high reasoning effort. Record delegated work and its outcome in `info/HANDOFF.md`.
+- Make frequent, coherent Conventional Commits as work progresses so GitHub history shows the implementation sequence. Keep commits small enough to validate and review; never commit broken checkpoints merely to increase commit count. Push to the configured GitHub remote when credentials and network access are available.
+- Update `info/HANDOFF.md` at the end of every run with completed work, current validation results, remaining work, blockers, and the latest relevant commits.
+- Keep `info/plan.md` local and read-only. Never stage or commit it.
+
 ## Verification by Change Type
 
 - **Crypto:** run unit tests, wrong-factor/tamper tests, nonce checks, and golden vectors.
@@ -86,7 +95,7 @@ Keep this list synchronized with `package.json`. Use `pnpm validate` as the fina
 - **API:** test schemas, size limits, authorization, rate limiting, idempotency, and uniform failures.
 - **UI:** run the primary Playwright flow, mobile viewport, keyboard flow, and axe checks.
 - **Attachments:** test encrypted upload, object-size validation, reveal lease retry, safe preview, download, and cleanup.
-- **Documentation or public behavior:** synchronize `info/plan.md`, `architecture.md`, README, and submission evidence.
+- **Documentation or public behavior:** synchronize `docs/architecture.md`, README, `docs/SPEC.md`, and submission evidence without modifying or committing `info/plan.md`.
 
 Run the smallest relevant checks while iterating and `pnpm validate` before handoff.
 

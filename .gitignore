@@ -35,4 +35,7 @@ supabase/.temp/
 
 # Competition/reference material is read-only and is not submission source.
 /info/*
+!/info/HANDOFF.md
+/info/plan.md
+/info/PrivateBin/
 /info/PrivateBin/

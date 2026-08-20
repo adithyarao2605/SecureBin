@@ -1,6 +1,6 @@
 # SecureBin threat model
 
-This document turns the protocol in [`architecture.md`](../architecture.md)
+This document turns the protocol in [`architecture.md`](architecture.md)
 into an operational security boundary. It describes what the judged release
 protects, what it intentionally exposes, and what it cannot protect.
 
@@ -70,4 +70,4 @@ then the full validation gate before handoff: crypto tamper/wrong-factor and
 nonce tests; database RLS, idempotency, expiry, revocation, cleanup, and
 concurrency tests; browser keyboard/accessibility and safe-rendering checks;
 and a fresh-clone smoke test. See the required verification section of
-[`architecture.md`](../architecture.md).
+[`architecture.md`](architecture.md).
