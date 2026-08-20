@@ -19,6 +19,7 @@ Updated: 2026-08-20 (Asia/Kolkata)
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed after the document move.
 - `pnpm supabase:reset`: passed from a recreated local database.
 - `pnpm supabase:test`: passed all 25 pgTAP checks.
+- `main` was published to the configured GitHub `origin`; the branch now tracks `origin/main`.
 
 ## Remaining / Blockers
 
@@ -28,6 +29,7 @@ Updated: 2026-08-20 (Asia/Kolkata)
 
 ## Recent Commits
 
+- `d8b2c92 docs: record verified Day 1 handoff`
 - `b44cbe3 fix(db): harden envelope and reveal validation`
 - `f4bfbc3 docs: define five-day delivery workflow`
 - `2408d2e test: complete reproducible browser gates`
