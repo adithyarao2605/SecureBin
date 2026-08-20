@@ -16,13 +16,13 @@ jobs:
   reproducibility:
     name: Reproducibility and documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: pip
       - name: Create isolated validation environment
         run: python -m venv .venv
       - name: Validate repository contract
@@ -31,7 +31,10 @@ jobs:
   javascript:
     name: JavaScript quality gates
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('package.json') != '' && hashFiles('pnpm-lock.yaml') != '' }}
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      COREPACK_DEFAULT_TO_LATEST: "0"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
