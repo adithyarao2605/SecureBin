@@ -46,7 +46,7 @@
     "@vitejs/plugin-react": "5.0.2",
     "autoprefixer": "10.4.21",
     "eslint": "9.34.0",
-    "eslint-config-next": "15.5.23",
+    "eslint-config-next": "16.3.1",
     "jsdom": "26.1.0",
     "postcss": "8.5.6",
     "supabase": "2.115.0",
