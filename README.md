@@ -1,0 +1,126 @@
+# SecureBin
+
+SecureBin is an independently implemented, browser-encrypted sharing platform
+for sensitive text, Markdown, code, and files. It combines a zero-knowledge
+storage boundary with server-enforced expiry, scheduled availability,
+revocation, and atomic reveal limits. Optional two-channel unlock and a Privacy
+Receipt make the protection model visible to both sender and recipient.
+
+This repository is being built for CloneFest 2.0's “Legacy Modernisation:
+PrivateBin” challenge. It preserves the underlying problem—controlled sharing
+of sensitive information—without copying PrivateBin source, wire formats,
+templates, or visual identity.
+
+## Current status
+
+Day 1 foundation is present: protocol/architecture source of truth, threat
+model, policy diagrams, security policy, reproducibility checks, CI, and
+deployment runbook. The application vertical slice and a verified production
+deployment are not claimed by this documentation until they exist and are
+tested. The current repository has no live demo URL.
+
+## Why judges should care
+
+- Content keys, passwords, unlock codes, filenames, and plaintext stay in the
+  browser; infrastructure receives ciphertext and bounded lifecycle metadata.
+- Availability, expiry, revocation, and reveal limits are transactional policy,
+  not client-side suggestions.
+- Two-channel shares require both the URL fragment and an independently shared
+  unlock code.
+- The Privacy Receipt explains what was protected and what metadata remains
+  visible.
+- The design explicitly documents residual risks: browser compromise,
+  recipient copying, and network metadata are not solved by zero-knowledge
+  storage.
+
+## Documentation map
+
+- [`architecture.md`](architecture.md) — protocol, schemas, API contracts, and
+  lifecycle semantics.
+- [`docs/threat-model.md`](docs/threat-model.md) — assets, trust boundaries,
+  threats, controls, and limitations.
+- [`docs/architecture-diagrams.md`](docs/architecture-diagrams.md) — standalone
+  system, sequence, and trust-boundary diagrams.
+- [`docs/policy-state.md`](docs/policy-state.md) — atomic lifecycle state model.
+- [`docs/deployment.md`](docs/deployment.md) — fresh-clone, environment, and
+  deployment checklist.
+- [`SECURITY.md`](SECURITY.md) — vulnerability reporting and security rules.
+- [`info/plan.md`](info/plan.md) — product priorities, delivery order, and
+  future roadmap (read-only planning source).
+
+## Reproducible setup
+
+The repository check is intentionally dependency-free Python. Run it in the
+repo-local virtual environment:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python scripts/verify-reproducibility.py
+```
+
+When the Node application is present, use the pinned Node LTS and Corepack's
+pnpm:
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm validate
+```
+
+Do not create a second package manager lockfile. Copy `.env.example` to an
+untracked `.env` only when local application work requires configuration. Keep
+server-only values out of browser imports and logs.
+
+## Demo smoke check
+
+The smoke script is a safe, read-only health check. It does not create a share,
+handle a secret, or prove the cryptographic and database acceptance criteria.
+
+```bash
+APP_URL=http://localhost:3000 scripts/demo-smoke.sh
+```
+
+PowerShell users can run `.\scripts\demo-smoke.ps1` with `$env:APP_URL` set.
+The `/api/health` endpoint must be implemented before this check can pass.
+
+## Judge demo flow (target)
+
+Once the judged release is implemented and deployed, the rehearsed 60–90
+second path is:
+
+1. Create a Markdown share with an encrypted file and a three-reveal policy.
+2. Show the Privacy Receipt and ciphertext-only server record.
+3. Demonstrate that the URL fragment alone cannot decrypt a two-channel share.
+4. Provide the unlock code through a separate channel and reveal successfully.
+5. Show the concurrency test never exceeds the configured reveal limit.
+6. Revoke a second share and show the uniform `unavailable` response.
+7. Finish with CI, accessibility, architecture, and limitation evidence.
+
+This flow is a target until the corresponding feature and test evidence are
+available.
+
+## Rubric evidence
+
+| Rubric area | Evidence location | Status |
+| --- | --- | --- |
+| Problem understanding | This README, `info/plan.md`, threat model | Foundation documented |
+| Innovation | Two-channel unlock, atomic policies, Privacy Receipt in architecture | Specified; implementation pending |
+| Architecture | [`architecture.md`](architecture.md), diagrams | Documented |
+| UX/accessibility | Plan acceptance criteria and future browser tests | Implementation pending |
+| Reliability/demo | CI, smoke script, deployment runbook | Foundation present; deployment pending |
+| Documentation | This README, threat model, security policy, runbook | Present |
+
+## Security and limitations
+
+Read [`SECURITY.md`](SECURITY.md) before handling real data. SecureBin is not
+DRM and cannot protect plaintext after it is rendered or copied. A malicious
+application deployment can capture browser plaintext and keys. Infrastructure
+can still observe ciphertext size, timestamps, network metadata, and access
+patterns. These boundaries are part of the product's honest security story.
+
+## License and reference boundary
+
+The `info/Challenge_1.md`, `info/clonefest.md`, and nested `info/PrivateBin`
+material are read-only references. SecureBin must remain an independent
+implementation; do not copy source, wire formats, templates, or visual
+identity from the reference checkout.

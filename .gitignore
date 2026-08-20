@@ -1,0 +1,40 @@
+# Dependencies and local runtimes
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Build, test, coverage, and framework output
+.next/
+out/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+*.log
+
+# Local deployment and database state
+.vercel/
+.supabase/
+supabase/.temp/
+
+# Secrets and machine-local configuration. Keep the names, never values.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+
+# Competition/reference material is read-only and is not submission source.
+# Keep the product plan visible to Git; ignore the challenge notes and checkout.
+/info/*
+!/info/
+!/info/plan.md
+/info/PrivateBin/
