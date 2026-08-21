@@ -47,19 +47,20 @@ Updated: 2026-08-21 (Asia/Kolkata)
   * Updated `app/s/[publicId]/viewer.tsx` with complete 10-state lifecycle state machine and client-side retry token preservation.
   * Updated `app/globals.css` with Quiet Proof color palette, typography tokens, light/dark themes, and responsive layout.
   * Enhanced `app/components/theme-toggle.tsx` with dedicated Light/Dark/Auto SVG segmented toggle and system media query listener.
-  * Added inline zero-flash theme initialization script to `app/layout.tsx` for immediate dark theme activation from `localStorage` and system preferences.
+  * Resolved production CSP nonce injection in `app/layout.tsx` and excluded `_next/static` from custom `next.config.mjs` headers to enable clean React hydration on production deployments.
+  * Added inline zero-flash theme initialization script and Stitch MCP design system single-button dark mode toggle with default dark theme.
   * Added `custom` expiration duration support (`1h` to `30d`) with localized validation in `lib/shares/policy-ui.ts`, `app/components/policy-controls.tsx`, and `tests/unit/policy-ui.test.ts`.
   * Enhanced `.github/workflows/ci.yml` with Supabase CLI setup, local container start, pgTAP test execution, integration tests, E2E tests, and a11y tests.
   * Updated E2E and Axe accessibility test suites (`tests/e2e/home.spec.ts`, `tests/e2e/secure-share.spec.ts`, `tests/a11y/viewer.spec.ts`).
   * Synchronized all active documentation (`README.md`, `docs/deployment.md`, `docs/DAY-2-PLAN.md`, `docs/DAY-2-UI.md`, `docs/policy-state.md`, `info/HANDOFF.md`).
 - Cleaned up dangling Docker containers; verified local Supabase containers are healthy.
-- Full validation passed across 56 unit tests, 12 integration tests, 3 Playwright E2E tests, 2 Playwright Axe accessibility tests, 54 pgTAP tests, lint, strict typecheck, production build, and reproducibility verification.
+- Full validation passed across 57 unit tests, 12 integration tests, 5 Playwright E2E tests, 2 Playwright Axe accessibility tests, 54 pgTAP tests, lint, strict typecheck, production build, and reproducibility verification.
 
 ## Validation
 
-- `pnpm validate`: passed (lint, strict typecheck, 56 unit tests, production build).
+- `pnpm validate`: passed (lint, strict typecheck, 57 unit tests, production build).
 - `pnpm test:integration`: passed (12 integration tests across share service, concurrency, upload service, and cleanup service).
-- `pnpm test:e2e`: passed (3/3 Playwright browser tests).
+- `pnpm test:e2e`: passed (5/5 Playwright browser tests across dark theme, theme toggle, custom expiry, mobile narrow viewport, and browser decryption).
 - `pnpm test:a11y`: passed (2/2 Playwright Axe accessibility tests, 0 critical violations).
 - `pnpm supabase:test`: passed (54 pgTAP tests: 25 foundation + 29 policy and role isolation).
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed.

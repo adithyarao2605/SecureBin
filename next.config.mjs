@@ -4,7 +4,7 @@ const nextConfig = {
   reactStrictMode: true,
   headers: async () => [
     {
-      source: "/(.*)",
+      source: "/((?!_next/static|_next/image|favicon.ico).*)",
       headers: [
         { key: "Cache-Control", value: "no-store" },
         { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), browsing-topics=()" },
