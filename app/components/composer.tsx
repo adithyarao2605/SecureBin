@@ -9,6 +9,7 @@ import {
   type ProoflinePhase,
   type ValidatedPolicy,
 } from "../../lib/shares/policy-ui";
+import { saveShareToHistory } from "../../lib/shares/share-history";
 import { PolicyControls } from "./policy-controls";
 
 interface PreparedAttempt {
@@ -22,9 +23,10 @@ interface PreparedAttempt {
 export interface ComposerProps {
   readonly onPhaseChange?: (phase: ProoflinePhase) => void;
   readonly onPolicyChange?: (policy: ValidatedPolicy) => void;
+  readonly onShareCreated?: () => void;
 }
 
-export function Composer({ onPhaseChange, onPolicyChange }: ComposerProps = {}) {
+export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: ComposerProps = {}) {
   const [draft, setDraft] = useState("");
   const [policyDraft, setPolicyDraft] = useState<PolicyDraft>(defaultPolicyDraft());
   const [isPending, setIsPending] = useState(false);
@@ -124,8 +126,22 @@ export function Composer({ onPhaseChange, onPolicyChange }: ComposerProps = {}) 
       setShareUrl(fullUrl);
       setActivePublicId(returnedPublicId);
       setActiveDeleteCapability(prepared.deleteCapability);
+
+      saveShareToHistory({
+        publicId: returnedPublicId,
+        shareUrl: fullUrl,
+        createdAt: new Date().toISOString(),
+        expiresAt: validated.expiresAt,
+        availableAt: validated.availableAt,
+        maxReveals: validated.maxReveals,
+        deleteCapability: prepared.deleteCapability,
+        status: "active",
+        remainingReveals: validated.maxReveals,
+      });
+
       preparedRef.current = null;
       if (onPhaseChange) onPhaseChange("created");
+      if (onShareCreated) onShareCreated();
     } catch {
       setErrorMessage("This share could not be created. Your draft is still only on this device.");
       if (onPhaseChange) onPhaseChange("draft");

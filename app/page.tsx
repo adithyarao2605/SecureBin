@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Composer } from "./components/composer";
 import { EvidenceRail } from "./components/evidence-rail";
+import { ShareHistoryDesk } from "./components/share-history";
 import { ThemeToggle } from "./components/theme-toggle";
 import {
   defaultPolicyDraft,
@@ -13,6 +14,7 @@ import {
 
 export default function HomePage() {
   const [phase, setPhase] = useState<ProoflinePhase>("draft");
+  const [historySignal, setHistorySignal] = useState(0);
   const [policy, setPolicy] = useState<ValidatedPolicy>(
     validatePolicyDraft(defaultPolicyDraft())
   );
@@ -35,12 +37,18 @@ export default function HomePage() {
       <main id="main-content" className="main-content-desk">
         <div className="desk-grid">
           <div className="primary-surface-container">
-            <Composer onPhaseChange={setPhase} onPolicyChange={setPolicy} />
+            <Composer
+              onPhaseChange={setPhase}
+              onPolicyChange={setPolicy}
+              onShareCreated={() => setHistorySignal((prev) => prev + 1)}
+            />
           </div>
           <div className="evidence-rail-container">
             <EvidenceRail phase={phase} policy={policy} />
           </div>
         </div>
+
+        <ShareHistoryDesk refreshSignal={historySignal} />
 
         <section className="how-section" id="how-it-works" aria-labelledby="how-heading">
           <div>

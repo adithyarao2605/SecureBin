@@ -252,7 +252,13 @@ Status lookup is non-consuming. Retain the same request token after uncertain re
 9. Replace old cyan/amber/navy CSS; add responsive/reduced-motion states.
 10. Update E2E and a11y selectors/evidence.
 
-Commit pure policy behavior separately from the visual shell if independently green.
+## 9. Browser-Local Share History Desk
+
+- Stores metadata of shares created on the current device in `localStorage` (`securebin_share_history_v1`).
+- Preserves Zero-Knowledge invariants: URL fragment key is stored only client-side; status queries use public IDs only.
+- Exposes live reveal limit progress (`remainingReveals / maxReveals`), creation/expiration timestamps, and active badges (`Active`, `Scheduled`, `Unavailable`, `Revoked`).
+- Provides one-click action buttons: "Copy link", "Check status" (queries `/api/shares/[id]/status`), "Revoke", and "Remove from history".
+
 
 ## 9. Test matrix
 

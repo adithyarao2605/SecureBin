@@ -46,3 +46,44 @@ test("the user can select custom expiration duration", async ({ page }) => {
   // Evidence rail updates with custom expiry
   await expect(page.getByLabel("Evidence rail")).toBeVisible();
 });
+
+test("created share appears in the local history desk with live actions", async ({ page }) => {
+  await page.route(/\/api\/shares(?:\/|$)/u, async (route) => {
+    const request = route.request();
+    const pathname = new URL(request.url()).pathname;
+
+    if (pathname === "/api/shares" && request.method() === "POST") {
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          publicId: "hist-sample-public-id-123",
+          created: true,
+          policy: {
+            availableAt: null,
+            expiresAt: new Date(Date.now() + 86400000).toISOString(),
+            maxReveals: null,
+            passwordRequired: false,
+            unlockRequired: false,
+          },
+        }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/");
+
+  // Fill and create a share
+  await page.getByLabel("Note content").fill("History desk test note");
+  await page.getByRole("button", { name: "Create share" }).click();
+  await expect(page.getByRole("textbox", { name: "Share link" })).toBeVisible();
+
+  // Return to composer to view history desk
+  await page.getByRole("button", { name: "Create another" }).click();
+  await expect(page.getByRole("heading", { name: "Shares created on this device" })).toBeVisible();
+  await expect(page.getByText("● Active")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Check status" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy link" }).first()).toBeVisible();
+});
