@@ -170,6 +170,9 @@ plain-text share.
 
 ### Day 2 — Lifecycle policy, concurrency, and operational correctness
 
+Detailed execution: [`DAY-2-PLAN.md`](DAY-2-PLAN.md) and
+[`DAY-2-UI.md`](DAY-2-UI.md).
+
 **Outcome:** access policy is server-enforced and remains correct under
 retries, simultaneous requests, and lifecycle races.
 
@@ -201,6 +204,8 @@ retries, simultaneous requests, and lifecycle races.
   handoff records migration names, test commands, and any environment blocker.
 
 ### Day 3 — Content breadth and safe encrypted attachments
+
+Detailed execution: [`DAY-3-PLAN.md`](DAY-3-PLAN.md).
 
 **Outcome:** the core share supports the judged content types without weakening
 the zero-knowledge boundary.

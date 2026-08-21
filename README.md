@@ -70,6 +70,12 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
   deployment checklist.
 - [`docs/SPEC.md`](docs/SPEC.md) — five-day delivery schedule and the quiet-proof
   visual/copy direction.
+- [`docs/DAY-2-PLAN.md`](docs/DAY-2-PLAN.md) — detailed lifecycle, concurrency,
+  cleanup, and verification sequence.
+- [`docs/DAY-2-UI.md`](docs/DAY-2-UI.md) — implementation-ready quiet-proof UI
+  contract for Day 2.
+- [`docs/DAY-3-PLAN.md`](docs/DAY-3-PLAN.md) — detailed safe-content and encrypted
+  attachment sequence.
 - [`docs/SECURITY.md`](docs/SECURITY.md) — vulnerability reporting and security rules.
 - [`info/plan.md`](info/plan.md) — product priorities, delivery order, and
   future roadmap (read-only planning source).

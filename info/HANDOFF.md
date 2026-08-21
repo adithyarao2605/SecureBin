@@ -20,6 +20,8 @@ Updated: 2026-08-21 (Asia/Kolkata)
 - Corrected fresh-clone command ordering so both friend and owner instructions install the pinned Playwright Chromium runtime before running E2E/accessibility gates; Linux hosts without browser libraries are directed to the `--with-deps` variant.
 - Removed competition, roadmap, and handoff language from the rendered frontend. The page now speaks directly to people sharing a note, with user-facing unavailable labels for unfinished modes and a plain private-sharing footer.
 - Live deployment testing reproduced `POST /api/shares` returning 503 while health and status RPC paths were reachable. The cause was new Supabase `sb_secret_...` keys being sent as Bearer JWTs; the RPC client now sends opaque secret keys only through `apikey` while retaining Bearer authentication for legacy service-role JWTs.
+- Added executor-grade Day 2 lifecycle, Day 2 quiet-proof UI, and Day 3 safe-content/attachment plans. Luna-high audits mapped the plans to the actual SQL, API, frontend, and test gaps. A separate Luna-high review rejected successive drafts until reservation, idempotency, v2 envelope, size, renderer, and migration contracts were exact, then approved all three plans and the synchronized architecture with no release-blocking contradictions.
+- Re-tested production on 2026-08-21: `/api/health` returned 200, but the synthetic browser-encrypted create flow still returned `POST /api/shares` 503 with an `sb_secret_...` credential configured. The public response is intentionally redacted; the owner must inspect the matching Vercel function log and confirm the deployed commit and variable bindings without sharing values.
 
 ## Validation
 
@@ -27,6 +29,8 @@ Updated: 2026-08-21 (Asia/Kolkata)
 - `pnpm test:integration`: passed (2 tests).
 - `pnpm test:e2e`: passed (3 Chromium tests).
 - `pnpm test:a11y`: passed (2 Chromium/axe tests).
+- Documentation-plan run: `pnpm validate` passed (lint, strict typecheck, 19 unit tests, production build). The shell used Node 26.7.0 and emitted the expected engine warning because the repository pins Node 22.23.2; CI remains the pinned-runtime authority.
+- Documentation-plan run: `.venv/bin/python scripts/verify-reproducibility.py` and `git diff --check` passed.
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed after the document move.
 - `pnpm supabase:reset`: passed from a recreated local database.
 - `pnpm supabase:test`: passed all 25 pgTAP checks.
@@ -39,6 +43,7 @@ Updated: 2026-08-21 (Asia/Kolkata)
 
 - A live production deployment needs project credentials and is not yet claimed.
 - The original Day 1 “working deployed vertical slice” remains incomplete until the owner performs the documented deployment and records a real backend-backed create/reveal smoke result. The local Day 1 milestone is complete and green.
+- Production create remains blocked by an unexplained Supabase RPC-side 503 even though health is 200 and the opaque-key header fix is pushed. Do not begin Day 2 feature implementation until the Vercel log identifies and resolves this prerequisite.
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
 - Next starting task: begin Day 2 concurrency/RLS coverage from `docs/SPEC.md`, preserving the green text-share slice.
 

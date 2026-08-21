@@ -139,6 +139,12 @@ Canonical encoding is `JSON.stringify` over a fixed-order array of validated pri
 
 The `kdfParameters` AAD slot is the validated compact JSON string for the supported parameter object: exactly `"{}"` or `"{\"iterations\":600000}"`. This preserves the primitive-only AAD rule while binding the full parameter set.
 
+### Day 3 protocol v2 decision
+
+Version 1 content remains the shipped legacy whole-note plaintext format; a v1 file envelope is invalid. Version 2 content and file envelopes retain the same exact field names and AES-GCM/AAD construction but use `securebin/v2/{factorMask}/content` and `/file` HKDF labels. V2 content requires the `SBCT` framing defined in `DAY-3-PLAN.md`; v2 file plaintext requires its binary filename/MIME framing. Unknown versions are rejected before crypto, and validation has separate v1-content, v2-content, and v2-file branches.
+
+V1 content remains bounded to 524,304 authenticated ciphertext bytes and 699,072 unpadded-base64url characters. V2 preserves a 512-KiB text body and adds its 11-byte frame, so it is bounded to 524,315 authenticated ciphertext bytes and 699,087 characters. V2 file ciphertext is bounded to 10,486,422 bytes. A new migration must replace SQL validation and size constraints atomically with browser/API parsers and golden vectors.
+
 ### URL and capabilities
 
 - Viewer: `/s/{publicId}#{base64url(linkSecret)}`.
@@ -154,7 +160,7 @@ The `kdfParameters` AAD slot is the validated compact JSON string for the suppor
 |---|---|
 | `id` | Internal UUID primary key |
 | `public_id` | Unique client-generated 128-bit opaque ID |
-| `content_envelope` | Validated v1 metadata plus base64url ciphertext |
+| `content_envelope` | Validated v1 legacy-content or v2 framed-content envelope with base64url ciphertext |
 | `created_at` | Server UTC timestamp |
 | `available_at` | Optional UTC start time |
 | `expires_at` | Required UTC time, no more than 30 days after creation |
@@ -165,7 +171,7 @@ The `kdfParameters` AAD slot is the validated compact JSON string for the suppor
 | `password_required` | Prompting metadata only |
 | `unlock_required` | Prompting metadata only |
 | `file_object_path` | Nullable random private Storage path |
-| `file_envelope` | Nullable validated v1 metadata without bytes |
+| `file_envelope` | Nullable validated v2 file envelope without ciphertext at the Day 3 release boundary |
 | `file_ciphertext_size` | Nullable bounded byte count |
 | `idempotency_key_hash` | Unique digest for safe creation retry |
 
@@ -173,7 +179,7 @@ Database constraints enforce supported reveal limits, timestamp ordering, size b
 
 ### `upload_reservations`
 
-Stores a random object path, reservation-token digest, expected ciphertext size, creation/expiry time, attachment state, and optional share ID. Reservations expire after 15 minutes. Only an unexpired unattached reservation with the expected object size can be attached.
+Stores a random object path, future public ID, idempotency digest, metadata-only file envelope, expected ciphertext size, creation/expiry time, attachment state, and optional share ID. Reservations expire after 15 minutes. Only the unexpired unattached reservation matching the complete future-share tuple and actual object size can be attached. No separate attachment capability exists.
 
 ### `reveal_leases`
 
@@ -189,11 +195,15 @@ All APIs use strict shared schemas, size limits, JSON error codes, request IDs, 
 
 ### `POST /api/uploads`
 
-Accept expected ciphertext size and file-envelope metadata. Return a reservation capability, random object path, and short-lived signed upload operation with overwrite disabled. Rate-limit before issuing a reservation. Before attachment, the server verifies the stored object's actual size against the reservation.
+Accept the future share public ID, idempotency digest, metadata-only file envelope, and expected ciphertext size. Store a reservation bound to that exact tuple and return a random object path plus short-lived signed upload operation with overwrite disabled. No attachment bearer capability is created or sent. Rate-limit before issuing a reservation. Before attachment, verify the stored object's actual size.
+
+The replacement RPC is `create_upload_reservation(text, bytea, jsonb, bigint)` for public ID, idempotency digest, exact metadata-only file envelope, and size. The table uniquely binds `(reserved_public_id, idempotency_key_hash)`. An identical live retry reuses the path and receives a fresh signed operation; changed envelope/size returns `409 reservation_conflict`; an expired unattached tuple is reinitialized with a fresh path; attached tuples cannot be uploaded again. File envelopes reject `ciphertext` and unknown fields. Cleanup identifies abandonment only by an unattached expired reservation.
 
 ### `POST /api/shares`
 
-Accept the client public ID, content envelope, lifecycle policy, deletion-token digest, idempotency-key digest, prompting flags, and optional raw upload-reservation capability. Hash and validate the capability without logging it, then attach the reservation transactionally. Return the public ID and normalized policy. Never accept plaintext content or file metadata.
+Accept the client public ID, content envelope, lifecycle policy, deletion-token digest, idempotency-key digest, prompting flags, and optional metadata-only file envelope/size. Find and lock the unexpired unattached reservation matching public ID, idempotency digest, file envelope, and size; verify and attach transactionally. Return the public ID and normalized policy. Never accept an upload-reservation capability, plaintext content, or file metadata.
+
+The replacement RPC is `create_share(text, jsonb, timestamptz, timestamptz, integer, bytea, boolean, boolean, bytea, jsonb, bigint)` in public-ID-through-file-size order. The old 12-argument reservation-token overload is dropped and revoked. An idempotency-key retry whose immutable request differs returns HTTP `409` with exactly `{"error":"idempotency_conflict"}` and no original ID, envelope, policy, or capability.
 
 ### `GET /api/shares/:publicId/status`
 
@@ -301,7 +311,8 @@ The public API deliberately collapses expired, exhausted, revoked, and missing r
 
 - Render plain text with text nodes, never `innerHTML`.
 - Parse Markdown with an established library, sanitize with an allowlist, strip remote images, and add `rel="noopener noreferrer"` to links.
-- Syntax highlighting may emit only sanitizer-approved spans and classes.
+- Syntax highlighting uses browser-only `lowlight@3.3.0` with fixed registered languages and no auto-detection. Its HAST is rebuilt as React from only text/root and `span` nodes with allowlisted `hljs-*` classes; any other node/property falls back to plaintext. No HTML serialization or `dangerouslySetInnerHTML` is allowed.
+- Server-only `@supabase/supabase-js@2.50.0` implements signed private Storage operations so credential/header details are not reimplemented. It is instantiated only in server modules with session persistence and refresh disabled; the dependency is advisory-checked before installation.
 - Preview only raster image formats decoded through Blob URLs and plain text rendered as text. Never inline SVG, HTML, or active documents.
 - Revoke Blob URLs when views unmount.
 - Use self-hosted fonts and assets. Secret routes load no third-party scripts, pixels, embeds, or remote media.
