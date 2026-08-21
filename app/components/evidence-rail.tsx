@@ -110,29 +110,6 @@ export function EvidenceRail({ phase, policy }: EvidenceRailProps) {
           </div>
         </div>
       </div>
-
-      {/* Invariants checklist */}
-      <div className="evidence-section invariants-section">
-        <h2 className="evidence-heading">Security Invariants</h2>
-        <ul className="invariants-list">
-          <li>
-            <span className="invariant-check">✓</span>
-            <span>Zero plaintext or keys sent over the network</span>
-          </li>
-          <li>
-            <span className="invariant-check">✓</span>
-            <span>No IP addresses or hardware fingerprints stored</span>
-          </li>
-          <li>
-            <span className="invariant-check">✓</span>
-            <span>Atomic database race protection</span>
-          </li>
-          <li>
-            <span className="invariant-check">✓</span>
-            <span>Uniform unavailable state for missing/expired shares</span>
-          </li>
-        </ul>
-      </div>
     </aside>
   );
 }

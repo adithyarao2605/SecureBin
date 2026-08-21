@@ -639,31 +639,6 @@ button {
   color: var(--muted-ink);
 }
 
-/* Invariants Section */
-.invariants-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  font-size: 0.82rem;
-  color: var(--muted-ink);
-}
-
-.invariants-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  line-height: 1.4;
-}
-
-.invariant-check {
-  color: var(--mineral);
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
 /* Composer Form */
 .composer-form {
   display: flex;
