@@ -23,8 +23,9 @@ capabilities, or credentials.
    decryption, QR generation, and decrypted rendering.
 3. Availability, expiry, revocation, and reveal limits are enforced atomically
    by the server over ciphertext.
-4. Decrypted text and Markdown cross an explicit safe rendering boundary.
-5. Recipient-facing failures do not reveal whether a share is missing, expired,
+4. Decrypted text, Markdown, and syntax-highlighted code cross an explicit safe rendering boundary without inline HTML execution or remote asset fetches.
+5. Decrypted files are inspected via magic bytes for raster images and fatal UTF-8 for plain text before local Blob preview; other formats fallback to safe browser download.
+6. Recipient-facing failures do not reveal whether a share is missing, expired,
    exhausted, or revoked.
 
 ## UX as a security boundary

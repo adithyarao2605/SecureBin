@@ -142,9 +142,46 @@ The `kdfParameters` AAD slot is the validated compact JSON string for the suppor
 
 ### Day 3 protocol v2 decision
 
-Version 1 content remains the shipped legacy whole-note plaintext format; a v1 file envelope is invalid. Version 2 content and file envelopes retain the same exact field names and AES-GCM/AAD construction but use `securebin/v2/{factorMask}/content` and `/file` HKDF labels. V2 content requires the `SBCT` framing defined in `DAY-3-PLAN.md`; v2 file plaintext requires its binary filename/MIME framing. Unknown versions are rejected before crypto, and validation has separate v1-content, v2-content, and v2-file branches.
+Version 1 content remains the shipped legacy whole-note plaintext format; a v1 file envelope is invalid. Version 2 content and file envelopes retain the same exact field names and AES-GCM/AAD construction but use `securebin/v2/{factorMask}/content` and `/file` HKDF labels.
 
-V1 content remains bounded to 524,304 authenticated ciphertext bytes and 699,072 unpadded-base64url characters. V2 preserves a 512-KiB text body and adds its 11-byte frame, so it is bounded to 524,315 authenticated ciphertext bytes and 699,087 characters. V2 file ciphertext is bounded to 10,486,422 bytes. A new migration must replace SQL validation and size constraints atomically with browser/API parsers and golden vectors.
+#### Content Envelope v2 Framing (Magic `SBCT`)
+
+Version 2 content plaintext is canonically framed as:
+- 4 bytes ASCII magic `SBCT` (`0x53, 0x42, 0x43, 0x54`)
+- 1 byte payload version `0x01`
+- 1 byte mode: `0x00` (note), `0x01` (markdown), `0x02` (code)
+- 1 byte language ID:
+  - `0`: plaintext (also for note / markdown)
+  - `1`: javascript, `2`: typescript, `3`: json, `4`: python, `5`: bash, `6`: sql, `7`: css, `8`: html
+- 4 bytes unsigned big-endian UTF-8 text length
+- N bytes UTF-8 text, with no trailing bytes
+
+Legacy detection uses the authenticated envelope version: version 1 decodes its entire plaintext as a legacy note even when it starts with `SBCT`; version 2 requires valid `SBCT` framing. Unknown envelope versions are rejected before invoking Web Crypto.
+
+#### File Envelope v2 Framing
+
+Version 2 file plaintext is canonically framed as:
+- 4 bytes unsigned big-endian filename UTF-8 length (`uint32`)
+- 2 bytes unsigned big-endian MIME UTF-8 length (`uint16`)
+- N bytes filename UTF-8 (max 512 bytes)
+- M bytes MIME UTF-8 (max 128 bytes)
+- K bytes original file plaintext bytes (max 10,485,760 bytes / 10 MiB)
+
+#### Locked Size Bounds
+
+- `MAX_FILE_PLAINTEXT_BYTES = 10_485_760`
+- `MAX_FILENAME_BYTES = 512`
+- `MAX_MIME_BYTES = 128`
+- `FILE_HEADER_BYTES = 6`
+- `GCM_TAG_BYTES = 16`
+- `MAX_FILE_CIPHERTEXT_SIZE = 10_486_422` (10,485,760 + 512 + 128 + 6 + 16)
+- `MAX_CONTENT_BYTES = 524_288` (512 KiB)
+- `MAX_CONTENT_CIPHERTEXT_BYTES_V1 = 524_304` (524,288 + 16)
+- `MAX_CONTENT_CIPHERTEXT_CHARS_V1 = 699_072`
+- `MAX_CONTENT_CIPHERTEXT_BYTES_V2 = 524_315` (524,288 + 11 + 16)
+- `MAX_CONTENT_CIPHERTEXT_CHARS_V2 = 699_087`
+
+A new forward migration replaces SQL validation and size constraints atomically with browser/API parsers and golden vectors.
 
 ### URL and capabilities
 
