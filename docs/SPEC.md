@@ -28,6 +28,8 @@ database foundations, strict API boundaries, production build, integration,
 Chromium, keyboard/mobile, and accessibility coverage. It is **deployment
 pending**, not a completed live milestone: the owner still needs to apply the
 production migration, deploy `main`, and record a backend-backed browser check.
+The current host still fails share creation; the evidence and friend workflow
+are in [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Resolve it before Day 2.
 Day 2 and later feature work has not been claimed as complete.
 
 When another maintainer or friend continues the schedule, hand them the exact

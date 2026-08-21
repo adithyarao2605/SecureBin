@@ -1,8 +1,9 @@
 # Deployment and reproducibility
 
-There is no production deployment URL in this repository yet. Do not treat a
-local server, preview URL, or planned Vercel project as deployment evidence.
-When one exists, record the exact URL and commit in the judge-facing README.
+The current host is `https://secure-bin.vercel.app/`, but it is not accepted as
+a working deployment: health is reachable while share creation fails. Follow
+[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Do not treat the URL alone
+as deployment evidence.
 
 ## Local prerequisites
 
@@ -194,6 +195,8 @@ the provider stores, never in a tracked file.
 ### Rollback
 
 If deployment or the browser-backed flow fails, stop sharing the new URL.
+For the current `invalid content envelope` incident, use the dedicated incident
+handoff rather than rotating secrets or relaxing database validation.
 Promote the last known-good Vercel deployment or redeploy its exact commit;
 do not roll back a database migration blindly. Because only the initial
 migration exists today, a database rollback requires an explicitly reviewed

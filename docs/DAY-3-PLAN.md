@@ -4,6 +4,9 @@ Status: **approved only after all Day 2 gates are green**
 
 Audience: low-context implementation agents; locked formats must not be improvised
 
+This plan also requires the production blocker in
+[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md) to be closed.
+
 ## Outcome and non-goals
 
 Add locally decrypted plain text, Markdown, code, and one encrypted attachment without weakening the zero-knowledge boundary.

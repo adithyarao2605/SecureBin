@@ -18,12 +18,14 @@ note, the API and database accept only ciphertext plus bounded policy metadata,
 and the recipient authorizes a reveal before decrypting locally. Unit,
 integration, browser, mobile-keyboard, and accessibility coverage exercise that
 path. Markdown, passwords, two-channel unlock, files, and the Privacy Receipt
-remain roadmap work. The current repository has no live demo URL.
+remain roadmap work. The current host is not an accepted live demo because
+share creation remains broken.
 
-The implementation and local/CI evidence for Day 1 are complete. The original
-milestone is not fully closed until the repository owner deploys the app,
-applies the production database migration, and records a real backend-backed
-create/reveal/delete check. Historical red or cancelled workflow entries do
+The implementation and local/CI evidence for Day 1 are complete, but production
+`POST /api/shares` still returns a redacted `503`; a correlated Supabase request
+reported SQLSTATE `22023` (`invalid content envelope`). Give the next maintainer
+[`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md). Historical red or
+cancelled workflow entries do
 not describe the current branch: current `main` runs complete both CI jobs,
 and pushed `main` commits are no longer cancelled by later pushes.
 
@@ -68,6 +70,8 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
 - [`docs/policy-state.md`](docs/policy-state.md) — atomic lifecycle state model.
 - [`docs/deployment.md`](docs/deployment.md) — fresh-clone, environment, and
   deployment checklist.
+- [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md) — evidence-led
+  friend handoff for the unresolved production create failure.
 - [`docs/SPEC.md`](docs/SPEC.md) — five-day delivery schedule and the quiet-proof
   visual/copy direction.
 - [`docs/DAY-2-PLAN.md`](docs/DAY-2-PLAN.md) — detailed lifecycle, concurrency,
@@ -178,7 +182,7 @@ available.
 | Innovation | Browser-only encryption and atomic reveal authorization | Text slice implemented; advanced factors pending |
 | Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Text slice covered |
-| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Current `main` gates pass; owner deployment pending |
+| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Current `main` gates pass; production create incident remains open |
 | Documentation | This README, threat model, security policy, runbook | Present |
 
 ## Security and limitations

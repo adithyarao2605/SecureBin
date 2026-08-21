@@ -8,6 +8,8 @@ unreviewed deployment is production-safe.
 The current implemented release is the Day 1 encrypted plain-text slice. A
 production host has not yet been verified, so repository tests are evidence of
 implementation quality, not evidence that a live deployment is safe.
+The unresolved create failure and safe investigation boundary are documented
+in [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md).
 
 ## Reporting a vulnerability
 

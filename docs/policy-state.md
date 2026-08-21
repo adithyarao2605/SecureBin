@@ -40,3 +40,5 @@ database and test suites. The broader Day 2 concurrency matrix and a real
 production-backed policy run remain required before claiming the entire
 lifecycle milestone. Hand off an exact commit and test results; never use a
 deployed share URL as test documentation because its fragment is secret.
+Production create currently fails before lifecycle evidence can be collected;
+follow [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md) first.

@@ -6,6 +6,9 @@ Audience: low-context implementation agents; follow the order and do not invent 
 
 Companion: [`DAY-2-UI.md`](DAY-2-UI.md)
 
+Production prerequisite: close
+[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md) before starting this plan.
+
 ## Outcome and boundaries
 
 Day 2 turns the Day 1 encrypted-note slice into a lifecycle-correct service. Availability, expiry, reveal limits, retries, revocation, rate limiting, and cleanup must remain correct under concurrency. The UI exposes only policies the server enforces.

@@ -9,6 +9,11 @@ slice. Later factors, files, richer renderers, cleanup scheduling, and a live
 production host remain unverified scope even where this threat model defines
 their required controls.
 
+The active failure is tracked in
+[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Temporary diagnostics may
+record envelope shape and lengths only—never values, ciphertext, plaintext,
+capabilities, or credentials.
+
 ## Security objectives
 
 1. Infrastructure must not learn plaintext content, filenames, plaintext MIME

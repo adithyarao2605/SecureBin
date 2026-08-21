@@ -18,6 +18,10 @@ routes, the Privacy Receipt, scheduled cleanup HTTP operation, and a verified
 production deployment remain planned. Sections below define their intended
 release contract and must not be read as evidence that they have shipped.
 
+The current Vercel create path is blocked by
+[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Do not weaken envelope
+validation based on its public redacted error.
+
 SecureBin provides anonymous, browser-encrypted sharing with server-enforced availability, expiry, revocation, and reveal limits. The server stores ciphertext and lifecycle metadata but never receives content keys, passwords, unlock codes, filenames, plaintext MIME types, or plaintext content.
 
 The release boundary is intentionally narrow enough to harden thoroughly. Recipient-bound sharing, passkeys, Secure Rooms, encrypted discussions, richer previews, localization, Argon2id, size padding, alternate storage adapters, and SDKs remain compatible future phases.
@@ -192,6 +196,12 @@ Stores a server-HMACed network discriminator, action, fixed bucket start, count,
 ## 7. API Contracts
 
 All APIs use strict shared schemas, size limits, JSON error codes, request IDs, and `Cache-Control: no-store`. Unknown fields are rejected.
+
+Supabase SQLSTATE `22023` validation failures surface from PostgREST as `400`;
+the server dependency boundary deliberately maps them to a uniform public
+failure. The current production example is documented in
+[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Diagnostics may compare
+field names/types and decoded lengths, never envelope values or ciphertext.
 
 ### `POST /api/uploads`
 

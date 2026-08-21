@@ -4,6 +4,9 @@ Status: **approved Day 2 design contract**
 
 Implementation plan: [`DAY-2-PLAN.md`](DAY-2-PLAN.md)
 
+Do not implement this UI while
+[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md) remains open.
+
 ## Product idea
 
 SecureBin is a calm evidence desk, not a security dashboard. Use one writing/reveal surface and one narrow evidence rail. The signature is a restrained proofline:

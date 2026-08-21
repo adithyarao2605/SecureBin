@@ -27,6 +27,7 @@ REQUIRED_FILES = (
     "docs/DAY-2-PLAN.md",
     "docs/DAY-2-UI.md",
     "docs/DAY-3-PLAN.md",
+    "docs/PRODUCTION-INCIDENT.md",
     "docs/architecture.md",
     "docs/threat-model.md",
     "docs/architecture-diagrams.md",

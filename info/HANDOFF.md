@@ -19,9 +19,10 @@ Updated: 2026-08-21 (Asia/Kolkata)
 - Updated every maintained Markdown document (`AGENTS.md`, `README.md`, all files in `docs/`, and this handoff) with accurate Day 1/deployment status. Added a detailed friend handoff, least-privilege provider access, clean-clone validation, owner-only Supabase/Vercel deployment, production evidence, and rollback procedure. Read-only challenge references and `info/plan.md` were not modified or committed.
 - Corrected fresh-clone command ordering so both friend and owner instructions install the pinned Playwright Chromium runtime before running E2E/accessibility gates; Linux hosts without browser libraries are directed to the `--with-deps` variant.
 - Removed competition, roadmap, and handoff language from the rendered frontend. The page now speaks directly to people sharing a note, with user-facing unavailable labels for unfinished modes and a plain private-sharing footer.
-- Live deployment testing reproduced `POST /api/shares` returning 503 while health and status RPC paths were reachable. The cause was new Supabase `sb_secret_...` keys being sent as Bearer JWTs; the RPC client now sends opaque secret keys only through `apikey` while retaining Bearer authentication for legacy service-role JWTs.
+- Live deployment testing reproduced `POST /api/shares` returning 503 while health was reachable. One confirmed defect was new Supabase `sb_secret_...` keys being sent as Bearer JWTs; the RPC client now sends opaque secret keys only through `apikey` while retaining Bearer authentication for legacy service-role JWTs. That fix did not close the incident.
 - Added executor-grade Day 2 lifecycle, Day 2 quiet-proof UI, and Day 3 safe-content/attachment plans. Luna-high audits mapped the plans to the actual SQL, API, frontend, and test gaps. A separate Luna-high review rejected successive drafts until reservation, idempotency, v2 envelope, size, renderer, and migration contracts were exact, then approved all three plans and the synchronized architecture with no release-blocking contradictions.
-- Re-tested production on 2026-08-21: `/api/health` returned 200, but the synthetic browser-encrypted create flow still returned `POST /api/shares` 503 with an `sb_secret_...` credential configured. The public response is intentionally redacted; the owner must inspect the matching Vercel function log and confirm the deployed commit and variable bindings without sharing values.
+- Re-tested production on 2026-08-21: `/api/health` returned 200, but synthetic create still returned 503. A correlated Supabase Postgres log proved the RPC executed and raised SQLSTATE `22023` `invalid content envelope`; a later direct synthetic envelope against the same project/key form returned 200. Authentication is therefore no longer the leading boundary. The exact friend workflow is in `docs/PRODUCTION-INCIDENT.md`.
+- Added `docs/PRODUCTION-INCIDENT.md` and synchronized every maintained repository document with the open production blocker, safe friend access, evidence-led diagnostic order, redaction boundary, decision table, and closure criteria. A Luna-high reconnaissance pass informed the handoff; the user explicitly cancelled the final audit and requested immediate push. No tests were run in this final documentation run at the user’s request.
 
 ## Validation
 
@@ -41,11 +42,11 @@ Updated: 2026-08-21 (Asia/Kolkata)
 
 ## Remaining / Blockers
 
-- A live production deployment needs project credentials and is not yet claimed.
+- A live host exists but is not accepted as a working production deployment.
 - The original Day 1 “working deployed vertical slice” remains incomplete until the owner performs the documented deployment and records a real backend-backed create/reveal smoke result. The local Day 1 milestone is complete and green.
-- Production create remains blocked by an unexplained Supabase RPC-side 503 even though health is 200 and the opaque-key header fix is pushed. Do not begin Day 2 feature implementation until the Vercel log identifies and resolves this prerequisite.
+- Production create remains blocked by a public 503 wrapping a Supabase 400/SQLSTATE `22023` envelope rejection even though health is 200 and the opaque-key header fix is pushed. Do not begin Day 2 until `docs/PRODUCTION-INCIDENT.md` is closed.
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
-- Next starting task: begin Day 2 concurrency/RLS coverage from `docs/SPEC.md`, preserving the green text-share slice.
+- Next starting task: give the friend commit and provider team access, then close `docs/PRODUCTION-INCIDENT.md` before Day 2.
 
 ## Recent Commits
 
