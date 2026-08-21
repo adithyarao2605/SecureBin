@@ -5,12 +5,19 @@ import { openContent } from "../../../lib/crypto/content";
 import { bytesToBase64Url, randomBytes } from "../../../lib/crypto/encoding";
 import {
   type ContentEnvelope,
+  type FileEnvelope,
   validateContentEnvelope,
+  validateFileEnvelope,
   validateLinkSecret,
   validatePublicId,
 } from "../../../lib/crypto/envelope";
+import { openFile, type FilePayload } from "../../../lib/crypto/file";
+import type { ContentPayload } from "../../../lib/crypto/payload";
 import { isMaxReveals, type MaxReveals } from "../../../lib/shares/contracts";
 import { formatLocalizedDateTime, type ProoflinePhase } from "../../../lib/shares/policy-ui";
+import { CodeView } from "../../components/code-view";
+import { FilePreview } from "../../components/file-preview";
+import { MarkdownView } from "../../components/markdown-view";
 import { Proofline } from "../../components/proofline";
 
 type ActiveStatus = {
@@ -35,12 +42,29 @@ type ScheduledStatus = {
 
 type ShareStatus = ActiveStatus | ScheduledStatus | { status: "unavailable" };
 
+interface ParsedReveal {
+  readonly contentEnvelope: ContentEnvelope;
+  readonly file: {
+    readonly envelope: FileEnvelope;
+    readonly ciphertextSize: number;
+    readonly downloadUrl: string;
+  } | null;
+  readonly retryExpiresAt: string;
+}
+
 class ViewerPayloadError extends Error {}
 
 function exactKeys(value: Record<string, unknown>, keys: readonly string[]) {
   const actual = Object.keys(value).sort();
   const expected = [...keys].sort();
   if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    throw new ViewerPayloadError();
+  }
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, required: readonly string[], optional: readonly string[]) {
+  const allowed = new Set([...required, ...optional]);
+  if (!required.every((k) => k in value) || !Object.keys(value).every((k) => allowed.has(k))) {
     throw new ViewerPayloadError();
   }
 }
@@ -71,11 +95,12 @@ function parseRevealCounters(value: Record<string, unknown>): {
 }
 
 function parseStatus(value: unknown): ShareStatus {
-  if (!record(value) || typeof value.status !== "string") throw new ViewerPayloadError();
+  if (!record(value)) throw new ViewerPayloadError();
   if (value.status === "unavailable") {
     exactKeys(value, ["status"]);
     return { status: "unavailable" };
   }
+
   if (value.status === "scheduled") {
     exactKeys(value, [
       "availableAt",
@@ -104,7 +129,11 @@ function parseStatus(value: unknown): ShareStatus {
       unlockRequired: false,
     };
   }
-  if (value.status !== "active") throw new ViewerPayloadError();
+
+  if (value.status !== "active") {
+    throw new ViewerPayloadError();
+  }
+
   exactKeys(value, [
     "availableAt",
     "expiresAt",
@@ -115,8 +144,8 @@ function parseStatus(value: unknown): ShareStatus {
     "unlockRequired",
   ]);
   if (
-    typeof value.expiresAt !== "string" ||
     (value.availableAt !== null && typeof value.availableAt !== "string") ||
+    typeof value.expiresAt !== "string" ||
     value.passwordRequired !== false ||
     value.unlockRequired !== false
   ) {
@@ -133,13 +162,34 @@ function parseStatus(value: unknown): ShareStatus {
   };
 }
 
-function parseReveal(value: unknown): ContentEnvelope {
+function parseReveal(value: unknown): ParsedReveal {
   if (!record(value)) throw new ViewerPayloadError();
-  exactKeys(value, ["contentEnvelope", "retryExpiresAt", "status"]);
+  hasOnlyKeys(value, ["contentEnvelope", "retryExpiresAt", "status"], ["file"]);
   if (value.status !== "authorized" || typeof value.retryExpiresAt !== "string") {
     throw new ViewerPayloadError();
   }
-  return validateContentEnvelope(value.contentEnvelope);
+  const contentEnvelope = validateContentEnvelope(value.contentEnvelope);
+
+  let fileMetadata: ParsedReveal["file"] = null;
+  if (value.file !== undefined && value.file !== null) {
+    if (!record(value.file)) throw new ViewerPayloadError();
+    exactKeys(value.file, ["ciphertextSize", "downloadUrl", "envelope"]);
+    if (typeof value.file.ciphertextSize !== "number" || typeof value.file.downloadUrl !== "string") {
+      throw new ViewerPayloadError();
+    }
+    const fileEnvelope = validateFileEnvelope(value.file.envelope);
+    fileMetadata = {
+      envelope: fileEnvelope,
+      ciphertextSize: value.file.ciphertextSize,
+      downloadUrl: value.file.downloadUrl,
+    };
+  }
+
+  return {
+    contentEnvelope,
+    file: fileMetadata,
+    retryExpiresAt: value.retryExpiresAt,
+  };
 }
 
 export type ViewerState =
@@ -158,7 +208,8 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [state, setState] = useState<ViewerState>("checking");
   const [shareStatus, setShareStatus] = useState<ShareStatus | null>(null);
   const [linkSecret, setLinkSecret] = useState<string | null>(null);
-  const [content, setContent] = useState<import("../../../lib/crypto/payload").ContentPayload | null>(null);
+  const [content, setContent] = useState<ContentPayload | null>(null);
+  const [attachedFile, setAttachedFile] = useState<FilePayload | null>(null);
   const [requestToken, setRequestToken] = useState<string | null>(null);
   const requestTokenRef = useRef<string | null>(null);
   const revealInFlightRef = useRef(false);
@@ -255,9 +306,32 @@ export function Viewer({ publicId }: { publicId: string }) {
         return;
       }
 
-      const envelope = parseReveal(await response.json());
-      const plaintext = await openContent(envelope, publicId, linkSecret);
+      const revealPayload = parseReveal(await response.json());
+      const plaintext = await openContent(revealPayload.contentEnvelope, publicId, linkSecret);
+
+      let decryptedAttachment: FilePayload | null = null;
+      if (revealPayload.file) {
+        const fileRes = await fetch(revealPayload.file.downloadUrl, {
+          cache: "no-store",
+        });
+        if (!fileRes.ok) {
+          throw new Error("file_download_failed");
+        }
+        const arrayBuf = await fileRes.arrayBuffer();
+        const downloadedBytes = new Uint8Array(arrayBuf);
+        if (downloadedBytes.length !== revealPayload.file.ciphertextSize) {
+          throw new Error("file_size_mismatch");
+        }
+        decryptedAttachment = await openFile(
+          revealPayload.file.envelope,
+          downloadedBytes,
+          publicId,
+          linkSecret
+        );
+      }
+
       setContent(plaintext);
+      setAttachedFile(decryptedAttachment);
       setState("opened");
       clearRequestToken();
     } catch {
@@ -273,70 +347,80 @@ export function Viewer({ publicId }: { publicId: string }) {
         return "draft";
       case "incomplete":
       case "network_error":
-      case "unavailable":
-        return "unavailable";
       case "scheduled":
-        return "scheduled";
       case "ready_unlimited":
       case "ready_limited":
       case "confirming":
-        return "ready";
+        return "created";
       case "pending":
-        return "revealing";
+        return "creating";
       case "opened":
         return "opened";
+      case "unavailable":
+        return "unavailable";
     }
   }, [state]);
 
   return (
-    <main className="viewer-shell" aria-labelledby="viewer-heading">
-      <div className="viewer-header">
-        <Proofline phase={prooflinePhase} compact />
-      </div>
+    <main className="view-shell" role="main">
+      <header className="brand-header">
+        <h1 className="brand-title">SecureBin</h1>
+        <p className="brand-subtitle">Zero-knowledge secure sharing</p>
+      </header>
+
+      <section className="evidence-rail" aria-label="Evidence rail">
+        <Proofline phase={prooflinePhase} />
+      </section>
 
       <div className="surface-card viewer-card">
-        <h1 id="viewer-heading" className="surface-heading">
-          {state === "opened" ? "Decrypted note" : "View private share"}
-        </h1>
+        <div className="viewer-header">
+          <h2 className="surface-heading">Decrypted share</h2>
+          <p className="trust-line">Decrypted in your browser using the link fragment.</p>
+        </div>
 
         {state === "checking" && (
-          <p className="viewer-status-text" role="status" aria-live="polite">
-            Checking this share…
-          </p>
+          <div className="viewer-message-box" role="status">
+            <p className="viewer-status-text">Checking share availability…</p>
+          </div>
         )}
 
         {state === "incomplete" && (
           <div className="viewer-message-box" role="alert">
             <p className="viewer-status-text">
-              This link is incomplete. Ask the sender for the full link.
+              The link is missing its decryption key. Ask the sender for the complete link with fragment.
             </p>
           </div>
         )}
 
         {state === "network_error" && (
           <div className="viewer-message-box" role="alert">
-            <p className="viewer-status-text">We could not check this share.</p>
+            <p className="viewer-status-text">
+              Could not reach the server to verify this share.
+            </p>
             <button
               type="button"
-              className="action-button primary-button"
+              className="action-button secondary-button"
               onClick={() => void checkShare()}
             >
-              Try again
+              Retry
             </button>
           </div>
         )}
 
-        {state === "scheduled" && shareStatus?.status === "scheduled" && (
+        {state === "scheduled" && shareStatus && shareStatus.status === "scheduled" && (
           <div className="viewer-message-box" role="status">
             <p className="viewer-status-text">
-              This share becomes available {formatLocalizedDateTime(shareStatus.availableAt)}.
+              This share is scheduled to unlock at {formatLocalizedDateTime(shareStatus.availableAt)}.
             </p>
           </div>
         )}
 
-        {state === "ready_unlimited" && (
+        {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && (
           <div className="viewer-action-box">
-            <p className="viewer-status-text">Ready to reveal</p>
+            <div className="viewer-policy-meta">
+              <span className="policy-badge">Expires {formatLocalizedDateTime(shareStatus.expiresAt)}</span>
+            </div>
+            <p className="viewer-status-text">Ready to reveal.</p>
             <button
               type="button"
               className="action-button primary-button"
@@ -347,31 +431,39 @@ export function Viewer({ publicId }: { publicId: string }) {
           </div>
         )}
 
-        {state === "ready_limited" && (
+        {state === "ready_limited" && shareStatus && shareStatus.status === "active" && (
           <div className="viewer-action-box">
-            <p className="viewer-status-text">This authorizes one ciphertext release.</p>
+            <div className="viewer-policy-meta">
+              <span className="policy-badge">
+                {shareStatus.remainingReveals} / {shareStatus.maxReveals} reveals remaining
+              </span>
+              <span className="policy-badge">Expires {formatLocalizedDateTime(shareStatus.expiresAt)}</span>
+            </div>
+            <p className="viewer-status-text">
+              This share has a reveal limit. Revealing will consume one count.
+            </p>
             <button
               type="button"
               className="action-button primary-button"
               onClick={() => void handleReveal()}
             >
-              Reveal once
+              Reveal
             </button>
           </div>
         )}
 
-        {state === "confirming" && (
-          <div className="viewer-confirm-box" role="alert">
-            <p className="viewer-confirm-text">
-              Continue? This cannot restore the consumed authorization.
+        {state === "confirming" && shareStatus && shareStatus.status === "active" && (
+          <div className="viewer-action-box confirm-box" role="alert">
+            <p className="viewer-status-text confirm-text">
+              Consuming this reveal cannot be undone. Do you want to open it now?
             </p>
-            <div className="viewer-confirm-actions">
+            <div className="confirm-actions-row">
               <button
                 type="button"
                 className="action-button primary-button"
                 onClick={() => void handleReveal()}
               >
-                Continue
+                Yes, reveal now
               </button>
               <button
                 type="button"
@@ -400,9 +492,28 @@ export function Viewer({ publicId }: { publicId: string }) {
             <p className="viewer-success-note">
               Opened locally. The server released ciphertext; this browser did the decryption.
             </p>
-            <article className="decrypted-content-box" aria-label="Decrypted note">
-              <pre className="decrypted-text">{content.text}</pre>
-            </article>
+
+            {content.text && (
+              <div className="decrypted-content-container">
+                {content.mode === "note" && (
+                  <article className="decrypted-content-box" aria-label="Decrypted note">
+                    <pre className="decrypted-text">{content.text}</pre>
+                  </article>
+                )}
+
+                {content.mode === "markdown" && (
+                  <MarkdownView markdown={content.text} />
+                )}
+
+                {content.mode === "code" && (
+                  <CodeView code={content.text} language={content.language} />
+                )}
+              </div>
+            )}
+
+            {attachedFile && (
+              <FilePreview file={attachedFile} />
+            )}
           </div>
         )}
 
