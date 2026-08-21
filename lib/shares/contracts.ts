@@ -9,8 +9,15 @@
 export const PUBLIC_ID_LENGTH = 22;
 export const PUBLIC_ID_BYTES = 16;
 export const DIGEST_LENGTH = 43;
-export const MAX_CONTENT_CIPHERTEXT_CHARS = 699_072;
-export const MAX_FILE_CIPHERTEXT_SIZE = 10_485_776;
+
+export const MAX_CONTENT_CIPHERTEXT_CHARS_V1 = 699_072;
+export const MAX_CONTENT_CIPHERTEXT_BYTES_V1 = 524_304;
+
+export const MAX_CONTENT_CIPHERTEXT_CHARS_V2 = 699_087;
+export const MAX_CONTENT_CIPHERTEXT_BYTES_V2 = 524_315;
+
+export const MAX_CONTENT_CIPHERTEXT_CHARS = MAX_CONTENT_CIPHERTEXT_CHARS_V2;
+export const MAX_FILE_CIPHERTEXT_SIZE = 10_486_422;
 export const MAX_EXPIRY_DAYS = 30;
 
 const ISO_UTC_PATTERN =
@@ -25,7 +32,7 @@ export type FactorMask =
 export type ObjectType = "content" | "file";
 
 export interface Envelope {
-  readonly version: 1;
+  readonly version: 1 | 2;
   readonly objectType: ObjectType;
   readonly algorithm: "AES-256-GCM";
   readonly nonce: string;
@@ -50,21 +57,15 @@ export interface CreateShareInput {
   readonly passwordRequired: boolean;
   readonly unlockRequired: boolean;
   readonly idempotencyKeyHash: string;
-  readonly fileEnvelope: (Envelope & { readonly objectType: "file"; readonly ciphertext?: never }) | null;
+  readonly fileEnvelope: (Envelope & { readonly objectType: "file"; readonly version: 2; readonly ciphertext?: never }) | null;
   readonly fileCiphertextSize: number | null;
 }
 
 export interface UploadReservationInput {
   readonly publicId: string;
   readonly idempotencyKeyHash: string;
-  readonly fileEnvelope: Envelope & { readonly objectType: "file"; readonly ciphertext?: never };
+  readonly fileEnvelope: Envelope & { readonly objectType: "file"; readonly version: 2; readonly ciphertext?: never };
   readonly expectedCiphertextSize: number;
-}
-
-interface SharePolicyInput {
-  readonly availableAt: string | null;
-  readonly expiresAt: string;
-  readonly maxReveals: MaxReveals;
 }
 
 export interface RevealInput {
@@ -102,9 +103,16 @@ export type ShareStatus =
   | ShareStatusScheduled
   | ShareStatusUnavailable;
 
+export interface RevealFileMetadata {
+  readonly envelope: Envelope & { readonly objectType: "file"; readonly version: 2; readonly ciphertext?: never };
+  readonly ciphertextSize: number;
+  readonly downloadUrl: string;
+}
+
 export interface RevealResult {
   readonly status: "authorized" | "unavailable" | "request_expired";
-  readonly contentEnvelope: Envelope & { readonly objectType: "content"; readonly ciphertext: string } | null;
+  readonly contentEnvelope: (Envelope & { readonly objectType: "content"; readonly ciphertext: string }) | null;
+  readonly file?: RevealFileMetadata | null;
   readonly retryExpiresAt: string | null;
 }
 
@@ -172,8 +180,16 @@ function parseEnvelope(value: unknown, objectType: ObjectType, requireCiphertext
     ? ["algorithm", "ciphertext", "factorMask", "hkdfSalt", "kdf", "kdfParameters", "nonce", "objectType", "passwordSalt", "version"]
     : ["algorithm", "factorMask", "hkdfSalt", "kdf", "kdfParameters", "nonce", "objectType", "passwordSalt", "version"];
   if (!hasExactKeys(value, keys)) return null;
+
+  if (objectType === "content") {
+    if (value.version !== 1 && value.version !== 2) return null;
+  } else if (objectType === "file") {
+    if (value.version !== 2) return null; // File envelopes MUST be version 2
+  } else {
+    return null;
+  }
+
   if (
-    value.version !== 1 ||
     value.objectType !== objectType ||
     value.algorithm !== "AES-256-GCM" ||
     !isBase64Url(value.nonce, 12) ||
@@ -190,9 +206,12 @@ function parseEnvelope(value: unknown, objectType: ObjectType, requireCiphertext
   if (expectedKdf !== "none" && value.passwordSalt === null) return null;
 
   if (requireCiphertext) {
-    if (typeof value.ciphertext !== "string" || value.ciphertext.length > MAX_CONTENT_CIPHERTEXT_CHARS) return null;
+    const maxChars = value.version === 1 ? MAX_CONTENT_CIPHERTEXT_CHARS_V1 : MAX_CONTENT_CIPHERTEXT_CHARS_V2;
+    const maxBytes = value.version === 1 ? MAX_CONTENT_CIPHERTEXT_BYTES_V1 : MAX_CONTENT_CIPHERTEXT_BYTES_V2;
+
+    if (typeof value.ciphertext !== "string" || value.ciphertext.length > maxChars) return null;
     const ciphertextBytes = decodeBase64Url(value.ciphertext);
-    if (ciphertextBytes === null || ciphertextBytes.length < 16 || ciphertextBytes.length > 524_304) return null;
+    if (ciphertextBytes === null || ciphertextBytes.length < 16 || ciphertextBytes.length > maxBytes) return null;
   }
   return value as unknown as Envelope;
 }
@@ -202,9 +221,9 @@ export function parseContentEnvelope(value: unknown): CreateShareInput["contentE
   return envelope as CreateShareInput["contentEnvelope"] | null;
 }
 
-export function parseFileEnvelope(value: unknown): CreateShareInput["fileEnvelope"] | null {
+export function parseFileEnvelope(value: unknown): NonNullable<CreateShareInput["fileEnvelope"]> | null {
   const envelope = parseEnvelope(value, "file", false);
-  return envelope as CreateShareInput["fileEnvelope"] | null;
+  return envelope as NonNullable<CreateShareInput["fileEnvelope"]> | null;
 }
 
 export function parseCreateShareInput(value: unknown, nowMillis: number = Date.now()): CreateShareInput | null {
@@ -283,8 +302,12 @@ export function isPublicId(value: string): boolean {
   return isBase64Url(value, PUBLIC_ID_BYTES);
 }
 
-export function parseRpcEnvelope(value: unknown): RevealResult["contentEnvelope"] {
+export function parseRpcEnvelope(value: unknown): CreateShareInput["contentEnvelope"] | null {
   return parseContentEnvelope(value);
+}
+
+export function parseRpcFileEnvelope(value: unknown): NonNullable<CreateShareInput["fileEnvelope"]> | null {
+  return parseFileEnvelope(value);
 }
 
 export function parseStatus(value: unknown): ShareStatus | null {

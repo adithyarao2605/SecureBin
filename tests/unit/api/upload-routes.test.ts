@@ -10,7 +10,7 @@ import { parseUploadReservationInput } from "@/lib/shares/contracts";
 const publicId = "AQEBAQEBAQEBAQEBAQEBAQ";
 const digest = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE";
 const validFileEnvelope = {
-  version: 1 as const,
+  version: 2 as const,
   objectType: "file" as const,
   algorithm: "AES-256-GCM" as const,
   nonce: "AQEBAQEBAQEBAQEB",
@@ -79,10 +79,10 @@ describe("upload route contracts and parsing", () => {
     expect(parseUploadReservationInput(input)).toBeNull();
   });
 
-  it("rejects expectedCiphertextSize smaller than 16 or larger than 10MiB", () => {
+  it("rejects expectedCiphertextSize smaller than 16 or larger than 10_486_422", () => {
     expect(parseUploadReservationInput(validUploadPayload({ expectedCiphertextSize: 15 }))).toBeNull();
-    expect(parseUploadReservationInput(validUploadPayload({ expectedCiphertextSize: 10_485_777 }))).toBeNull();
-    expect(parseUploadReservationInput(validUploadPayload({ expectedCiphertextSize: 10_485_776 }))).not.toBeNull();
+    expect(parseUploadReservationInput(validUploadPayload({ expectedCiphertextSize: 10_486_423 }))).toBeNull();
+    expect(parseUploadReservationInput(validUploadPayload({ expectedCiphertextSize: 10_486_422 }))).not.toBeNull();
   });
 
   it("rejects invalid publicId or idempotency digest", () => {

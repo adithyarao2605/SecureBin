@@ -32,9 +32,9 @@ function randomDigest(): string {
   return randomBytes(32).toString("base64url");
 }
 
-function validFileEnvelope(): Envelope & { readonly objectType: "file"; readonly ciphertext?: never } {
+function validFileEnvelope(): Envelope & { readonly objectType: "file"; readonly version: 2; readonly ciphertext?: never } {
   return {
-    version: 1,
+    version: 2,
     objectType: "file",
     algorithm: "AES-256-GCM",
     nonce: randomBytes(12).toString("base64url"),
