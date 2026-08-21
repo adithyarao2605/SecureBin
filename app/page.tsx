@@ -44,9 +44,9 @@ export default function HomePage() {
           </div>
           <div className="hero-aside" aria-label="Product status">
             <div className="aside-rule" />
-            <p className="aside-label">Foundation / 01</p>
-            <p className="aside-copy">A focused composer is ready. The browser-side seal is next.</p>
-            <p className="aside-footnote">No account required · No content uploaded in this preview</p>
+            <p className="aside-label">Private by default</p>
+            <p className="aside-copy">Write here, then seal the note in your browser before it leaves the page.</p>
+            <p className="aside-footnote">No account required · Nothing is sent until you seal it</p>
           </div>
         </section>
 
@@ -61,7 +61,7 @@ export default function HomePage() {
             <article>
               <span className="principle-number" aria-hidden="true">A</span>
               <h3>Local first</h3>
-              <p>Encryption, keys, and future previews stay in the browser you control.</p>
+              <p>Encryption and keys stay in the browser you control.</p>
             </article>
             <article>
               <span className="principle-number" aria-hidden="true">B</span>
@@ -78,8 +78,8 @@ export default function HomePage() {
       </main>
 
       <footer className="site-footer">
-        <span>SecureBin / CloneFest foundation</span>
-        <span>Made for careful handoffs.</span>
+        <span>SecureBin / private sharing</span>
+        <span>Keep the key close.</span>
       </footer>
     </div>
   );

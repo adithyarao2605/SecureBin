@@ -18,6 +18,7 @@ Updated: 2026-08-21 (Asia/Kolkata)
 - Commit `478d74a` changed CI concurrency so every pushed `main` commit queues and completes while superseded pull-request runs may still cancel. The repository-local reproducibility checker now protects that rule and requires the complete maintained documentation set.
 - Updated every maintained Markdown document (`AGENTS.md`, `README.md`, all files in `docs/`, and this handoff) with accurate Day 1/deployment status. Added a detailed friend handoff, least-privilege provider access, clean-clone validation, owner-only Supabase/Vercel deployment, production evidence, and rollback procedure. Read-only challenge references and `info/plan.md` were not modified or committed.
 - Corrected fresh-clone command ordering so both friend and owner instructions install the pinned Playwright Chromium runtime before running E2E/accessibility gates; Linux hosts without browser libraries are directed to the `--with-deps` variant.
+- Removed competition, roadmap, and handoff language from the rendered frontend. The page now speaks directly to people sharing a note, with user-facing unavailable labels for unfinished modes and a plain private-sharing footer.
 
 ## Validation
 

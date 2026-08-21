@@ -8,14 +8,14 @@ type Protection = "standard" | "password" | "two-channel";
 
 const contentKinds: readonly { value: ContentKind; label: string; disabled?: boolean }[] = [
   { value: "note", label: "Plain note" },
-  { value: "markdown", label: "Markdown · coming next", disabled: true },
-  { value: "code", label: "Code · coming next", disabled: true }
+  { value: "markdown", label: "Markdown · unavailable", disabled: true },
+  { value: "code", label: "Code · unavailable", disabled: true }
 ];
 
 const protections: readonly { value: Protection; label: string; detail: string }[] = [
   { value: "standard", label: "Private link", detail: "Browser-sealed" },
-  { value: "password", label: "Password · coming next", detail: "Upcoming factor" },
-  { value: "two-channel", label: "Two-channel · coming next", detail: "Upcoming factor" }
+  { value: "password", label: "Password · unavailable", detail: "Not available" },
+  { value: "two-channel", label: "Two-channel · unavailable", detail: "Not available" }
 ];
 
 export function Composer() {

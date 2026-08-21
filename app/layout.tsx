@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "SecureBin — private sharing, by design",
-  description: "A browser-first foundation for sharing sensitive notes and files.",
+  description: "Browser-encrypted sharing for sensitive notes and files.",
   applicationName: "SecureBin",
   referrer: "no-referrer"
 };
