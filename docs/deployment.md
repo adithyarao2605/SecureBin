@@ -1,9 +1,7 @@
 # Deployment and reproducibility
 
-The current host is `https://secure-bin.vercel.app/`, but it is not accepted as
-a working deployment: health is reachable while share creation fails. Follow
-[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Do not treat the URL alone
-as deployment evidence.
+The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md)). All Day 2 database migrations, atomic reveal procedures, CSP nonce handling, and clean hydration have been verified locally and in CI.
+
 
 ## Local prerequisites
 
