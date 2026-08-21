@@ -46,6 +46,8 @@ Updated: 2026-08-21 (Asia/Kolkata)
   * Updated `app/components/composer.tsx` with idempotency retry preservation (`PreparedAttempt`), revocation action, and exact copy.
   * Updated `app/s/[publicId]/viewer.tsx` with complete 10-state lifecycle state machine and client-side retry token preservation.
   * Updated `app/globals.css` with Quiet Proof color palette, typography tokens, light/dark themes, and responsive layout.
+  * Enhanced `app/components/theme-toggle.tsx` with system media query listener and robust dark mode class toggling.
+  * Enhanced `.github/workflows/ci.yml` with Supabase CLI setup, local container start, pgTAP test execution, integration tests, E2E tests, and a11y tests.
   * Updated E2E and Axe accessibility test suites (`tests/e2e/home.spec.ts`, `tests/e2e/secure-share.spec.ts`, `tests/a11y/viewer.spec.ts`).
 - Cleaned up dangling Docker containers; verified local Supabase containers are healthy.
 - Full validation passed across 56 unit tests, 12 integration tests, 3 Playwright E2E tests, 2 Playwright Axe accessibility tests, 54 pgTAP tests, lint, strict typecheck, production build, and reproducibility verification.

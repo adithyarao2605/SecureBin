@@ -37,11 +37,20 @@ jobs:
     env:
       CI: "true"
       COREPACK_DEFAULT_TO_LATEST: "0"
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "*REMOVED*<public-demo-anon-token>"
+      SUPABASE_SERVICE_ROLE_KEY: "*REMOVED*<local-CLI-constant>"
+      RATE_LIMIT_HMAC_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      CRON_SECRET: "test-cron-secret-1234567890123456"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
       - name: Activate the package manager declared by package.json
         shell: bash
         run: |
@@ -51,6 +60,10 @@ jobs:
           test "$(pnpm --version)" = "$expected"
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - name: Start local Supabase instance
+        run: supabase start
+      - name: Run Supabase pgTAP database tests
+        run: pnpm supabase:test
       - name: Run validation gate
         run: pnpm validate
       - name: Run integration tests

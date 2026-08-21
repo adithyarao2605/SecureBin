@@ -9,9 +9,13 @@ const themes: readonly Theme[] = ["light", "dark", "system"];
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.dataset.theme = theme;
-  root.classList.toggle("dark", theme === "dark");
-  if (theme === "system") {
+  if (theme === "dark") {
+    root.classList.add("dark");
+  } else if (theme === "light") {
     root.classList.remove("dark");
+  } else {
+    const isDark = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    root.classList.toggle("dark", isDark);
   }
 }
 
@@ -23,7 +27,19 @@ export function ThemeToggle() {
     if (stored === "light" || stored === "dark" || stored === "system") {
       setTheme(stored);
       applyTheme(stored);
+    } else {
+      applyTheme("system");
     }
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      const current = (window.localStorage.getItem("securebin-theme") as Theme) || "system";
+      if (current === "system") {
+        applyTheme("system");
+      }
+    };
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
   }, []);
 
   function chooseTheme(nextTheme: Theme) {
