@@ -1,0 +1,25 @@
+name: Trigger Vercel Deploy
+ 
+on:
+  push:
+    branches: [ main ]
+ 
+jobs:
+  trigger-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+ 
+      - name: Trigger Vercel Deploy
+        run: |
+          git config user.name "${{ github.repository_owner }}"
+          git config user.email "263117876+adithyarao2605@users.noreply.github.com"
+          echo "$(date)" > .deploy-trigger
+          git add .deploy-trigger
+          git commit -m "chore: trigger deploy [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.DEPLOY_TRIGGER_PAT }}
