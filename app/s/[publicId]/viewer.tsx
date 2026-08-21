@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { openContent } from "../../../lib/crypto/content";
 import { bytesToBase64Url, randomBytes } from "../../../lib/crypto/encoding";
 import {
@@ -9,6 +9,7 @@ import {
   validateLinkSecret,
   validatePublicId,
 } from "../../../lib/crypto/envelope";
+import { isMaxReveals, type MaxReveals } from "../../../lib/shares/contracts";
 import { formatLocalizedDateTime, type ProoflinePhase } from "../../../lib/shares/policy-ui";
 import { Proofline } from "../../components/proofline";
 
@@ -16,7 +17,7 @@ type ActiveStatus = {
   status: "active";
   availableAt: string | null;
   expiresAt: string;
-  maxReveals: number | null;
+  maxReveals: MaxReveals;
   remainingReveals: number | null;
   passwordRequired: false;
   unlockRequired: false;
@@ -26,7 +27,7 @@ type ScheduledStatus = {
   status: "scheduled";
   availableAt: string;
   expiresAt: string;
-  maxReveals: number | null;
+  maxReveals: MaxReveals;
   remainingReveals: number | null;
   passwordRequired: false;
   unlockRequired: false;
@@ -46,6 +47,27 @@ function exactKeys(value: Record<string, unknown>, keys: readonly string[]) {
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseRevealCounters(value: Record<string, unknown>): {
+  maxReveals: MaxReveals;
+  remainingReveals: number | null;
+} {
+  if (!isMaxReveals(value.maxReveals)) throw new ViewerPayloadError();
+  const remainingReveals = value.remainingReveals;
+  if (value.maxReveals === null) {
+    if (remainingReveals !== null) throw new ViewerPayloadError();
+    return { maxReveals: null, remainingReveals: null };
+  }
+  if (
+    typeof remainingReveals !== "number" ||
+    !Number.isInteger(remainingReveals) ||
+    remainingReveals < 0 ||
+    remainingReveals > value.maxReveals
+  ) {
+    throw new ViewerPayloadError();
+  }
+  return { maxReveals: value.maxReveals, remainingReveals };
 }
 
 function parseStatus(value: unknown): ShareStatus {
@@ -72,12 +94,12 @@ function parseStatus(value: unknown): ShareStatus {
     ) {
       throw new ViewerPayloadError();
     }
+    const counters = parseRevealCounters(value);
     return {
       status: "scheduled",
       availableAt: value.availableAt,
       expiresAt: value.expiresAt,
-      maxReveals: typeof value.maxReveals === "number" ? value.maxReveals : null,
-      remainingReveals: typeof value.remainingReveals === "number" ? value.remainingReveals : null,
+      ...counters,
       passwordRequired: false,
       unlockRequired: false,
     };
@@ -95,28 +117,17 @@ function parseStatus(value: unknown): ShareStatus {
   if (
     typeof value.expiresAt !== "string" ||
     (value.availableAt !== null && typeof value.availableAt !== "string") ||
-    (value.maxReveals !== null && typeof value.maxReveals !== "number") ||
-    (value.remainingReveals !== null && typeof value.remainingReveals !== "number") ||
     value.passwordRequired !== false ||
     value.unlockRequired !== false
   ) {
     throw new ViewerPayloadError();
   }
-  if (
-    value.maxReveals !== null &&
-    (![1, 3, 5, 10].includes(value.maxReveals) ||
-      value.remainingReveals === null ||
-      value.remainingReveals < 0 ||
-      value.remainingReveals > value.maxReveals)
-  ) {
-    throw new ViewerPayloadError();
-  }
+  const counters = parseRevealCounters(value);
   return {
     status: "active",
     availableAt: value.availableAt,
     expiresAt: value.expiresAt,
-    maxReveals: value.maxReveals,
-    remainingReveals: value.remainingReveals,
+    ...counters,
     passwordRequired: false,
     unlockRequired: false,
   };
@@ -149,6 +160,13 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [linkSecret, setLinkSecret] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [requestToken, setRequestToken] = useState<string | null>(null);
+  const requestTokenRef = useRef<string | null>(null);
+  const revealInFlightRef = useRef(false);
+
+  function clearRequestToken() {
+    requestTokenRef.current = null;
+    setRequestToken(null);
+  }
 
   async function checkShare() {
     setState("checking");
@@ -199,7 +217,13 @@ export function Viewer({ publicId }: { publicId: string }) {
   }, [publicId]);
 
   async function handleReveal() {
-    if (state === "pending" || !linkSecret || !shareStatus || shareStatus.status !== "active") {
+    if (
+      revealInFlightRef.current ||
+      state === "pending" ||
+      !linkSecret ||
+      !shareStatus ||
+      shareStatus.status !== "active"
+    ) {
       return;
     }
 
@@ -208,9 +232,11 @@ export function Viewer({ publicId }: { publicId: string }) {
       return;
     }
 
-    const token = requestToken ?? bytesToBase64Url(randomBytes(32));
-    if (!requestToken) setRequestToken(token);
+    const token = requestTokenRef.current ?? bytesToBase64Url(randomBytes(32));
+    requestTokenRef.current = token;
+    if (requestToken !== token) setRequestToken(token);
 
+    revealInFlightRef.current = true;
     setState("pending");
     try {
       const response = await fetch(`/api/shares/${encodeURIComponent(publicId)}/reveal`, {
@@ -222,7 +248,7 @@ export function Viewer({ publicId }: { publicId: string }) {
       if (!response.ok) {
         if (response.status === 404) {
           setState("unavailable");
-          setRequestToken(null);
+          clearRequestToken();
           return;
         }
         setState(shareStatus.maxReveals === null ? "ready_unlimited" : "ready_limited");
@@ -233,10 +259,11 @@ export function Viewer({ publicId }: { publicId: string }) {
       const plaintext = await openContent(envelope, publicId, linkSecret);
       setContent(plaintext);
       setState("opened");
-      setRequestToken(null);
+      clearRequestToken();
     } catch {
-      setState("unavailable");
-      setRequestToken(null);
+      setState(shareStatus.maxReveals === null ? "ready_unlimited" : "ready_limited");
+    } finally {
+      revealInFlightRef.current = false;
     }
   }
 

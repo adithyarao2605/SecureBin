@@ -4,6 +4,9 @@ Updated: 2026-08-21 (Asia/Kolkata)
 
 ## Completed
 
+- Completed the 2026-08-21 Day 2 stabilization pass with three bounded `gpt-5.6-luna` high-reasoning delegations. The reveal-limit agent restored the authoritative `1 | 3 | 5 | 10 | null` contract across UI/API/viewer/history plus a forward migration; the reveal-retry agent preserved one authorization token across every uncertain response and added focused browser-component tests; the Storage agent added a private forced-RLS rotation cleanup queue, transactionally retained replaced paths, and extended cleanup tests. The primary agent reviewed and integrated every result.
+- Corrected reveal/revoke race evidence to use the production UTF-8 capability digest and assert valid race outcomes. Upgraded Playwright, Vitest, PostCSS, and the scoped Sharp/PostCSS transitive graph; `pnpm audit` now reports zero advisories.
+- Added forward migrations `20260821010000_upload_rotation_cleanup.sql` and `20260822000000_restore_reveal_limit_presets.sql`; existing deployed migrations remain unchanged.
 - Built the Day 1 browser-encrypted plain-text sharing slice with strict ciphertext-only API contracts.
 - Added atomic Supabase lifecycle foundations, CSP hardening, responsive UI, and accessibility coverage.
 - Pinned Node 22.23.2 and pnpm 10.15.1; created the repo-local `.venv` reproducibility workflow.
@@ -49,7 +52,7 @@ Updated: 2026-08-21 (Asia/Kolkata)
   * Enhanced `app/components/theme-toggle.tsx` with dedicated Light/Dark/Auto SVG segmented toggle and system media query listener.
   * Added bespoke SVG site icon (`app/icon.svg`, `public/icon.svg`, `app/layout.tsx`) with dark/light vault geometry and mineral accent.
   * Enriched the **Evidence Rail** (`app/components/evidence-rail.tsx`, `app/globals.css`) with a clean, focused 3-stage Zero-Knowledge Architecture Flowchart (Sender Browser → Sealed Parcel → Recipient Browser) balancing vertical height with the Composer desk.
-  * Added custom reveal limits (`1` to `100`) across database constraint (`supabase/migrations/20260821000000_day2_policy_hardening.sql`), contracts (`lib/shares/contracts.ts`), UI validation (`lib/shares/policy-ui.ts`), accessible native controls (`app/components/policy-controls.tsx`), and automated tests (`tests/unit/policy-ui.test.ts`, `tests/e2e/home.spec.ts`).
+  * An experimental custom `1`–`100` reveal-limit surface was later removed by the stabilization pass because it contradicted the authoritative preset contract and the atomic create RPC.
   * Applied Stitch OLED pure black dark mode palette (`#000000` canvas, `#0d0d0d` cards, `#141414` controls, `#79b8b0` mineral green actions) with high-contrast monochrome typography.
   * Added top-level tabbed navigation (`app/page.tsx`, `app/globals.css`) organizing the interface into accessible panels: **New share**, **My shares** (with dynamic count badge and empty state switch), and **How it works** (with refined principle cards and boundary architecture).
   * Added Browser-Local Share History Desk (`lib/shares/share-history.ts`, `app/components/share-history.tsx`, `tests/unit/share-history.test.ts`) enabling creators to view shares created on this device, check live remaining reveals, copy links, or revoke access directly from history while preserving zero-knowledge principles.
@@ -61,17 +64,17 @@ Updated: 2026-08-21 (Asia/Kolkata)
 
 ## Validation
 
-- `pnpm validate`: passed (lint, strict typecheck, 62 unit tests, production build).
-- `pnpm test:integration`: passed (12 integration tests across share service, concurrency, upload service, and cleanup service).
-- `pnpm test:e2e`: passed (8/8 Playwright browser tests across dark theme, theme toggle, tabbed navigation, custom expiry, custom reveal limits, history desk, mobile narrow viewport, and browser decryption).
-- `pnpm test:a11y`: passed (2/2 Playwright Axe accessibility tests, 0 critical violations).
-- `pnpm supabase:test`: passed (54 pgTAP tests: 25 foundation + 29 policy and role isolation).
-- `.venv/bin/python scripts/verify-reproducibility.py`: passed.
+- Current stabilization: `pnpm validate` passed (lint, strict typecheck, 74 unit tests, production build).
+- Current stabilization: `pnpm test:e2e` passed (8/8) and `pnpm test:a11y` passed (2/2).
+- Current stabilization: full `pnpm audit` passed with zero advisories; the frozen patched dependency graph installs successfully.
+- Current stabilization: `.venv/Scripts/python.exe scripts/verify-reproducibility.py` and `git diff --check` passed on Windows.
+- Current database/integration rerun is environment-blocked because this workstation has neither Docker nor Podman. The non-database share-service integration tests pass; the eight database-backed cases fail only at the unavailable local Supabase dependency. The new SQL tests remain mandatory in CI or a Docker-equipped environment before deployment.
+- Historical pre-stabilization evidence recorded 12/12 integration and 54/54 pgTAP tests against local Supabase; it does not substitute for rerunning the new forward migrations.
 
 ## Remaining / Blockers
 
-- Day 2 Phases 4–10 are 100% complete and fully verified!
-- Next: Day 3 preparation (attachments, two-channel factors, password authentication, Markdown sanitizer, and Privacy Receipt generation).
+- Day 2 stabilization is locally green outside the Docker-backed database gate; rerun clean reset, pgTAP, and integration/concurrency tests in CI or on a Docker-equipped host.
+- Day 3 implementation is active. Its scope is v2 plain/Markdown/code content plus one encrypted attachment and safe local preview/download; passwords, two-channel unlock, QR, and Privacy Receipt remain Day 4.
 
 ## Deployment Instructions (Owner-Operated)
 

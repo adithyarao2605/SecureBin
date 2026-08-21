@@ -78,7 +78,7 @@ export function createUploadService(
       }
 
       try {
-        const signed = await storage.createSignedUpload(objectPath, 900);
+        const signed = await storage.createSignedUpload(objectPath);
         return {
           uploadUrl: signed.url,
           token: signed.token,

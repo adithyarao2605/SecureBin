@@ -8,6 +8,7 @@ import {
   updateShareInHistory,
   type ShareHistoryItem,
 } from "../../lib/shares/share-history";
+import type { MaxReveals } from "../../lib/shares/contracts";
 import { formatLocalizedDateTime } from "../../lib/shares/policy-ui";
 
 export interface ShareHistoryDeskProps {
@@ -53,7 +54,7 @@ export function ShareHistoryDesk({ refreshSignal, onSwitchToCreate }: ShareHisto
       const data = (await response.json()) as {
         status: string;
         remainingReveals?: number | null;
-        maxReveals?: number | null;
+        maxReveals?: MaxReveals;
       };
 
       if (data.status === "unavailable") {

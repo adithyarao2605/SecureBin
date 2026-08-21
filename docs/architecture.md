@@ -180,7 +180,7 @@ Database constraints enforce supported reveal limits, timestamp ordering, size b
 
 ### `upload_reservations`
 
-Stores a random object path, future public ID, idempotency digest, metadata-only file envelope, expected ciphertext size, creation/expiry time, attachment state, and optional share ID. Reservations expire after 15 minutes. Only the unexpired unattached reservation matching the complete future-share tuple and actual object size can be attached. No separate attachment capability exists.
+Stores a random object path, future public ID, idempotency digest, metadata-only file envelope, expected ciphertext size, creation/expiry time, attachment state, and optional share ID. Reservations expire after 15 minutes. Only the unexpired unattached reservation matching the complete future-share tuple and actual object size can be attached. No separate attachment capability exists. When an expired unattached tuple is retried, the RPC rotates to a fresh path and transactionally records the old path in the private forced-RLS `upload_rotation_cleanup_queue`.
 
 ### `reveal_leases`
 
@@ -202,9 +202,9 @@ field names/types and decoded lengths, never envelope values or ciphertext.
 
 ### `POST /api/uploads`
 
-Accept the future share public ID, idempotency digest, metadata-only file envelope, and expected ciphertext size. Store a reservation bound to that exact tuple and return a random object path plus short-lived signed upload operation with overwrite disabled. No attachment bearer capability is created or sent. Rate-limit before issuing a reservation. Before attachment, verify the stored object's actual size.
+Accept the future share public ID, idempotency digest, metadata-only file envelope, and expected ciphertext size. Store a reservation bound to that exact tuple and return a random object path plus a signed upload operation with overwrite disabled. No attachment bearer capability is created or sent. Rate-limit before issuing a reservation. Before attachment, verify the stored object's actual size; the 15-minute reservation expiry remains the server authorization boundary.
 
-The replacement RPC is `create_upload_reservation(text, bytea, jsonb, bigint)` for public ID, idempotency digest, exact metadata-only file envelope, and size. The table uniquely binds `(reserved_public_id, idempotency_key_hash)`. An identical live retry reuses the path and receives a fresh signed operation; changed envelope/size returns `409 reservation_conflict`; an expired unattached tuple is reinitialized with a fresh path; attached tuples cannot be uploaded again. File envelopes reject `ciphertext` and unknown fields. Cleanup identifies abandonment only by an unattached expired reservation.
+The replacement RPC is `create_upload_reservation(text, bytea, jsonb, bigint)` for public ID, idempotency digest, exact metadata-only file envelope, and size. The table uniquely binds `(reserved_public_id, idempotency_key_hash)`. An identical live retry reuses the path and receives a fresh signed operation; changed envelope/size returns `409 reservation_conflict`; an expired unattached tuple is reinitialized with a fresh path while its old path is queued for cleanup; attached tuples cannot be uploaded again. File envelopes reject `ciphertext` and unknown fields. Cleanup removes abandoned reservation paths and queued rotation paths through Storage first, then finalizes only successful or already-missing objects.
 
 ### `POST /api/shares`
 

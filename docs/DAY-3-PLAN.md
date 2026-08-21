@@ -190,7 +190,7 @@ Day 2 owns the reservation endpoint, Storage abstraction, signed upload operatio
 }
 ```
 
-Never accept filename, MIME, plaintext/ciphertext body, link/deletion secret, or attachment capability. Response contains only the short-lived signed Storage operation and expiry. The create request matches the stored public-ID/idempotency/envelope/size tuple and sends no reservation credential. Use private `securebin-files`, octet-stream, random content-free path, overwrite disabled, and secret-free logs.
+Never accept filename, MIME, plaintext/ciphertext body, link/deletion secret, or attachment capability. Response contains only the signed Storage operation and reservation expiry. The create request matches the stored public-ID/idempotency/envelope/size tuple and sends no reservation credential. Use private `securebin-files`, octet-stream, random content-free path, overwrite disabled, and secret-free logs.
 
 Test exact keys, size/type bounds, explicit metadata rejection, upload rate limit, idempotency, expiry, overwrite disabled, octet-stream, redacted upstream failure, and logs.
 

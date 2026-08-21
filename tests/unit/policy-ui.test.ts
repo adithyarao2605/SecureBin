@@ -96,33 +96,29 @@ describe("policy-ui helper functions", () => {
     expect(invalidRes.valid).toBe(false);
   });
 
-  it("validates and formats custom reveal limits within 1-100", () => {
-    const customDraft = {
-      ...defaultPolicyDraft(),
-      revealPreset: "custom" as const,
-      customMaxReveals: 7,
-      maxReveals: 7,
-    };
-    const res = validatePolicyDraft(customDraft, fixedNow);
-    expect(res.valid).toBe(true);
-    if (res.valid) {
-      expect(res.maxReveals).toBe(7);
+  it("validates only the supported reveal presets", () => {
+    for (const [revealPreset, maxReveals] of [
+      ["burn", 1],
+      ["3", 3],
+      ["5", 5],
+      ["10", 10],
+      ["unlimited", null],
+    ] as const) {
+      const result = validatePolicyDraft(
+        { ...defaultPolicyDraft(), revealPreset, maxReveals },
+        fixedNow,
+      );
+      expect(result.valid).toBe(true);
+      if (result.valid) expect(result.maxReveals).toBe(maxReveals);
     }
-    expect(formatRevealLimitLabel(7)).toBe("7 reveals");
 
-    const overMaxDraft = {
-      ...customDraft,
-      customMaxReveals: 105,
+    const mismatchedDraft = {
+      ...defaultPolicyDraft(),
+      revealPreset: "3" as const,
+      maxReveals: null,
     };
-    const overRes = validatePolicyDraft(overMaxDraft, fixedNow);
-    expect(overRes.valid).toBe(false);
-
-    const invalidDraft = {
-      ...customDraft,
-      customMaxReveals: 0,
-    };
-    const invalidRes = validatePolicyDraft(invalidDraft, fixedNow);
-    expect(invalidRes.valid).toBe(false);
+    const mismatchedResult = validatePolicyDraft(mismatchedDraft, fixedNow);
+    expect(mismatchedResult.valid).toBe(false);
   });
 
   it("rejects scheduled availability in the past", () => {
@@ -131,7 +127,7 @@ describe("policy-ui helper functions", () => {
       availableLocalDate: "2020-01-01",
       availableLocalTime: "10:00",
       expiryPreset: "24h" as const,
-      maxReveals: 1,
+      maxReveals: 1 as const,
     };
     const result = validatePolicyDraft(draft, fixedNow);
 
@@ -147,7 +143,7 @@ describe("policy-ui helper functions", () => {
       availableLocalDate: "2026-08-30",
       availableLocalTime: "10:00",
       expiryPreset: "24h" as const,
-      maxReveals: 3,
+      maxReveals: 3 as const,
     };
     const result = validatePolicyDraft(draft, fixedNow);
 

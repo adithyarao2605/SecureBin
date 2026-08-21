@@ -186,7 +186,7 @@ Locked end-to-end flow:
 
 1. Browser prepares the future public ID, idempotency digest, metadata-only file envelope, and ciphertext size.
 2. `/api/uploads` stores a reservation bound to that exact tuple; add the required columns and constraints in the Day 2 migration.
-3. API returns only the short-lived signed Storage upload operation and expiry. No attachment token, digest, or reference is created.
+3. API returns only the signed Storage upload operation and reservation expiry. No attachment token, digest, or reference is created.
 4. Browser uploads ciphertext with that operation.
 5. `POST /api/shares` sends its normal public ID, idempotency digest, file envelope, and size; no reservation credential.
 6. `create_share` locks the one unexpired unattached matching tuple, verifies actual size, and attaches it.
@@ -243,7 +243,7 @@ Server-only injectable boundary:
 
 ```ts
 interface SecureStorage {
-  createSignedUpload(path: string, expiresInSeconds: number): Promise<{ url: string; token?: string }>;
+  createSignedUpload(path: string): Promise<{ url: string; token?: string }>;
   createSignedDownload(path: string, expiresInSeconds: number): Promise<string>;
   inspectSize(path: string): Promise<number | null>;
   remove(path: string): Promise<"deleted" | "missing">;

@@ -74,7 +74,7 @@ describe("share policy and contract freezing", () => {
   const fixedNow = 1_700_000_000_000;
 
   it("accepts valid MaxReveals values and rejects invalid ones", () => {
-    const validMaxReveals = [null, 1, 2, 3, 5, 7, 10, 50, 100];
+    const validMaxReveals = [...VALID_MAX_REVEALS];
     for (const valid of validMaxReveals) {
       expect(isMaxReveals(valid)).toBe(true);
       const input = validPayload({ policy: { availableAt: null, expiresAt: new Date(fixedNow + 86400000).toISOString(), maxReveals: valid } });
@@ -83,7 +83,7 @@ describe("share policy and contract freezing", () => {
       expect(parsed?.maxReveals).toBe(valid);
     }
 
-    const invalidMaxReveals = [0, 101, 200, -1, -5, 1.5, 3.14, "1", "3", "5", "10", "burn", true, false, {}, []];
+    const invalidMaxReveals = [0, 2, 7, 11, 100, -1, -5, 1.5, 3.14, "1", "3", "5", "10", "burn", true, false, {}, []];
     for (const invalid of invalidMaxReveals) {
       expect(isMaxReveals(invalid)).toBe(false);
       const input = validPayload({ policy: { availableAt: null, expiresAt: new Date(fixedNow + 86400000).toISOString(), maxReveals: invalid } });
@@ -164,11 +164,48 @@ describe("share policy and contract freezing", () => {
     });
 
     expect(parseStatus({ status: "unavailable" })).toEqual({ status: "unavailable" });
+    expect(parseStatus({
+      status: "active",
+      available_at: null,
+      expires_at: "2099-01-01T00:00:00.000Z",
+      password_required: false,
+      unlock_required: false,
+      max_reveals: 7,
+      remaining_reveals: 7,
+    })).toBeNull();
+    expect(parseStatus({
+      status: "active",
+      available_at: null,
+      expires_at: "2099-01-01T00:00:00.000Z",
+      password_required: false,
+      unlock_required: false,
+      max_reveals: 3,
+      remaining_reveals: 4,
+    })).toBeNull();
     expect(parseStatus({ status: "unknown" })).toBeNull();
   });
 });
 
 describe("share route handlers", () => {
+  it("rejects unsupported reveal limits before calling the create RPC", async () => {
+    for (const maxReveals of [2, 7, 100]) {
+      const deps = dependencies();
+      const handler = createPostShareHandler(deps);
+      const response = await handler(new Request("http://localhost/api/shares", {
+        method: "POST",
+        body: JSON.stringify(validPayload({
+          policy: {
+            availableAt: null,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            maxReveals,
+          },
+        })),
+      }));
+      expect(response.status).toBe(400);
+      expect(deps.service.createShare).not.toHaveBeenCalled();
+    }
+  });
+
   it("rejects unknown create fields before calling the service", async () => {
     const deps = dependencies();
     const handler = createPostShareHandler(deps);

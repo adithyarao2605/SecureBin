@@ -15,6 +15,7 @@ function cleanupDependencies(
       runCleanup: vi.fn(async () => ({
         deletedShares: 2,
         deletedUploads: 1,
+        deletedUploadRotations: 0,
         deletedLeases: 4,
         deletedBuckets: 3,
       })),
@@ -65,6 +66,7 @@ describe("POST /api/internal/cleanup route handler", () => {
     await expect(response.json()).resolves.toEqual({
       deletedShares: 2,
       deletedUploads: 1,
+      deletedUploadRotations: 0,
       deletedLeases: 4,
       deletedBuckets: 3,
     });
@@ -85,6 +87,7 @@ describe("POST /api/internal/cleanup route handler", () => {
     await expect(response.json()).resolves.toEqual({
       deletedShares: 2,
       deletedUploads: 1,
+      deletedUploadRotations: 0,
       deletedLeases: 4,
       deletedBuckets: 3,
     });

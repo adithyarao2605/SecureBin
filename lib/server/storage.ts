@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { readServerConfig, type ServerConfig } from "./config";
 
 export interface SecureStorage {
-  createSignedUpload(path: string, expiresInSeconds: number): Promise<{ url: string; token?: string }>;
+  createSignedUpload(path: string): Promise<{ url: string; token?: string }>;
   createSignedDownload(path: string, expiresInSeconds: number): Promise<string>;
   inspectSize(path: string): Promise<number | null>;
   remove(path: string): Promise<"deleted" | "missing">;
@@ -21,7 +21,7 @@ export function createSecureStorage(
   const bucket = "securebin-files";
 
   return {
-    async createSignedUpload(path: string, expiresInSeconds: number) {
+    async createSignedUpload(path: string) {
       const { data, error } = await client.storage
         .from(bucket)
         .createSignedUploadUrl(path, { upsert: false });

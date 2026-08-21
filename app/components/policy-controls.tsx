@@ -19,7 +19,7 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
       ? "10"
       : draft.maxReveals === null
       ? "unlimited"
-      : "custom");
+      : "unlimited");
 
   return (
     <div className="policy-controls-container">
@@ -225,25 +225,6 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
             <input
               type="radio"
               name="maxReveals"
-              value="custom"
-              checked={currentRevealPreset === "custom"}
-              disabled={disabled}
-              onChange={() => {
-                const val = draft.customMaxReveals ?? 5;
-                onChange({
-                  ...draft,
-                  revealPreset: "custom",
-                  customMaxReveals: val,
-                  maxReveals: val,
-                });
-              }}
-            />
-            <span>Custom</span>
-          </label>
-          <label className="policy-radio-label">
-            <input
-              type="radio"
-              name="maxReveals"
               value="unlimited"
               checked={currentRevealPreset === "unlimited"}
               disabled={disabled}
@@ -258,35 +239,6 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
             <span>Unlimited</span>
           </label>
         </div>
-
-        {currentRevealPreset === "custom" && (
-          <div className="policy-custom-reveals-input">
-            <div className="policy-input-group">
-              <label htmlFor="custom-reveals-value" className="policy-input-label">
-                Custom reveal limit
-              </label>
-              <input
-                id="custom-reveals-value"
-                type="number"
-                min={1}
-                max={100}
-                className="policy-number-input"
-                value={draft.customMaxReveals ?? 5}
-                disabled={disabled}
-                onChange={(e) => {
-                  const val = Number.parseInt(e.target.value, 10) || 1;
-                  onChange({
-                    ...draft,
-                    revealPreset: "custom",
-                    customMaxReveals: val,
-                    maxReveals: val,
-                  });
-                }}
-              />
-            </div>
-            <p className="policy-hint">Enter between 1 and 100 authorized reveals.</p>
-          </div>
-        )}
 
         <p className="policy-hint">
           A reveal authorizes one ciphertext release. It does not know whether the recipient read it.

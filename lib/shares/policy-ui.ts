@@ -1,4 +1,4 @@
-import type { MaxReveals } from "./contracts";
+import { isMaxReveals, type MaxReveals } from "./contracts";
 
 export type ProoflinePhase =
   | "draft"
@@ -12,7 +12,7 @@ export type ProoflinePhase =
 
 export type ExpiryPreset = "24h" | "7d" | "30d" | "custom";
 export type ExpiryUnit = "hours" | "days";
-export type RevealPreset = "burn" | "3" | "5" | "10" | "custom" | "unlimited";
+export type RevealPreset = "burn" | "3" | "5" | "10" | "unlimited";
 
 export interface PolicyDraft {
   readonly availability: "now" | "scheduled";
@@ -22,7 +22,6 @@ export interface PolicyDraft {
   readonly customExpiryValue?: number;
   readonly customExpiryUnit?: ExpiryUnit;
   readonly revealPreset?: RevealPreset;
-  readonly customMaxReveals?: number;
   readonly maxReveals: MaxReveals;
 }
 
@@ -42,7 +41,6 @@ export function defaultPolicyDraft(): PolicyDraft {
     customExpiryValue: 24,
     customExpiryUnit: "hours",
     revealPreset: "unlimited",
-    customMaxReveals: 5,
     maxReveals: null,
   };
 }
@@ -130,6 +128,23 @@ export function formatRevealLimitLabel(maxReveals: MaxReveals): string {
   return `${maxReveals} reveals`;
 }
 
+function maxRevealsForPreset(preset: RevealPreset): MaxReveals | undefined {
+  switch (preset) {
+    case "burn":
+      return 1;
+    case "3":
+      return 3;
+    case "5":
+      return 5;
+    case "10":
+      return 10;
+    case "unlimited":
+      return null;
+    default:
+      return undefined;
+  }
+}
+
 export type ValidatedPolicy =
   | {
       readonly valid: true;
@@ -181,16 +196,13 @@ export function validatePolicyDraft(
     };
   }
 
-  let maxReveals = draft.maxReveals;
-  if (draft.revealPreset === "custom") {
-    const val = draft.customMaxReveals ?? 5;
-    if (!Number.isInteger(val) || val <= 0) {
-      return { valid: false, error: "Custom reveal limit must be a positive integer." };
-    }
-    if (val > 100) {
-      return { valid: false, error: "Custom reveal limit cannot exceed 100 reveals." };
-    }
-    maxReveals = val;
+  if (!isMaxReveals(draft.maxReveals)) {
+    return { valid: false, error: "Please choose a supported reveal limit." };
+  }
+
+  const maxReveals = draft.maxReveals;
+  if (draft.revealPreset !== undefined && maxRevealsForPreset(draft.revealPreset) !== maxReveals) {
+    return { valid: false, error: "Please choose a supported reveal limit." };
   }
 
   return {

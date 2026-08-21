@@ -22,7 +22,7 @@ flowchart LR
   R[Recipient browser\nfragment + optional code] -->|status / reveal token| A
   S -->|encrypted file bytes| ST[(Private Storage)]
   A -->|atomic lifecycle RPC| DB[(Supabase Postgres)]
-  A -->|short-lived signed operation| ST
+  A -->|signed operation| ST
   C[Hourly cleanup] --> DB
   C --> ST
   S -. never sends keys/plaintext .-> A

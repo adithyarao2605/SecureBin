@@ -6,13 +6,15 @@
  * and all queries use public IDs.
  */
 
+import { isMaxReveals, type MaxReveals } from "./contracts";
+
 export interface ShareHistoryItem {
   readonly publicId: string;
   readonly shareUrl: string;
   readonly createdAt: string;
   readonly expiresAt: string;
   readonly availableAt: string | null;
-  readonly maxReveals: number | null;
+  readonly maxReveals: MaxReveals;
   readonly deleteCapability: string | null;
   readonly noteSnippet?: string;
   status?: "active" | "scheduled" | "unavailable" | "checking" | "revoked";
@@ -36,6 +38,7 @@ function parseHistoryItem(item: unknown): ShareHistoryItem | null {
   ) {
     return null;
   }
+  if (!isMaxReveals(item.maxReveals)) return null;
 
   return {
     publicId: item.publicId,
@@ -43,7 +46,7 @@ function parseHistoryItem(item: unknown): ShareHistoryItem | null {
     createdAt: item.createdAt,
     expiresAt: item.expiresAt,
     availableAt: typeof item.availableAt === "string" ? item.availableAt : null,
-    maxReveals: typeof item.maxReveals === "number" ? item.maxReveals : null,
+    maxReveals: item.maxReveals,
     deleteCapability: typeof item.deleteCapability === "string" ? item.deleteCapability : null,
     noteSnippet: typeof item.noteSnippet === "string" ? item.noteSnippet : undefined,
     status: typeof item.status === "string" ? (item.status as ShareHistoryItem["status"]) : undefined,

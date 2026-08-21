@@ -37,7 +37,7 @@ export interface Envelope {
   readonly ciphertext?: string;
 }
 
-export type MaxReveals = number | null;
+export type MaxReveals = 1 | 3 | 5 | 10 | null;
 export const VALID_MAX_REVEALS = [1, 3, 5, 10, null] as const;
 
 export interface CreateShareInput {
@@ -159,7 +159,7 @@ function parseFactorMask(value: unknown): value is FactorMask {
 }
 
 export function isMaxReveals(value: unknown): value is MaxReveals {
-  return value === null || (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 100);
+  return value === null || value === 1 || value === 3 || value === 5 || value === 10;
 }
 
 function isNonNegativeInteger(value: unknown): value is number {
@@ -299,7 +299,11 @@ export function parseStatus(value: unknown): ShareStatus | null {
       (value.password_required !== true && value.password_required !== false) ||
       (value.unlock_required !== true && value.unlock_required !== false) ||
       !isMaxReveals(maxReveals) ||
-      (remainingReveals !== null && !isNonNegativeInteger(remainingReveals))) return null;
+      (maxReveals === null
+        ? remainingReveals !== null
+        : remainingReveals === null ||
+          !isNonNegativeInteger(remainingReveals) ||
+          remainingReveals > maxReveals)) return null;
   if (value.status === "scheduled" && !availableAt) return null;
   return {
     status: value.status,

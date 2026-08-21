@@ -1,7 +1,8 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import { createShareService } from "@/lib/server/share-service";
+import { sha256Base64Url } from "@/lib/server/hashing";
 import { createRpcClient } from "@/lib/server/supabase-rpc";
 import type { Envelope } from "@/lib/shares/contracts";
 
@@ -21,10 +22,6 @@ function randomPublicId(): string {
 
 function randomDigest(): string {
   return randomBytes(32).toString("base64url");
-}
-
-function sha256Digest(rawBase64Url: string): string {
-  return createHash("sha256").update(Buffer.from(rawBase64Url, "base64url")).digest("base64url");
 }
 
 function validEnvelope(): Envelope & { readonly objectType: "content"; readonly ciphertext: string } {
@@ -158,7 +155,7 @@ describe("reveal concurrency and race conditions", () => {
     const publicId = randomPublicId();
     const contentEnvelope = validEnvelope();
     const rawDeleteCapability = randomBytes(32).toString("base64url");
-    const deleteTokenHash = sha256Digest(rawDeleteCapability);
+    const deleteTokenHash = sha256Base64Url(rawDeleteCapability);
     const idempotencyKeyHash = randomDigest();
 
     await service.createShare({
@@ -177,14 +174,21 @@ describe("reveal concurrency and race conditions", () => {
 
     const revealToken = randomBytes(32).toString("base64url");
 
+    // Prove this fixture uses the same UTF-8 capability digest semantics as
+    // production before racing the valid capability.
+    expect(await service.revoke(publicId, randomBytes(32).toString("base64url"))).toBe(false);
+
     // Launch reveal and revoke concurrently
     const [revealRes, revokeRes] = await Promise.allSettled([
       service.reveal(publicId, revealToken),
       service.revoke(publicId, rawDeleteCapability),
     ]);
 
-    expect(revealRes.status).toBe("fulfilled");
-    expect(revokeRes.status).toBe("fulfilled");
+    if (revealRes.status !== "fulfilled" || revokeRes.status !== "fulfilled") {
+      throw new Error("reveal/revoke race unexpectedly rejected");
+    }
+    expect(revokeRes.value).toBe(true);
+    expect(["authorized", "unavailable"]).toContain(revealRes.value.status);
 
     // Post-condition: status must be unavailable
     const status = await service.getStatus(publicId);
