@@ -37,7 +37,7 @@ export interface Envelope {
   readonly ciphertext?: string;
 }
 
-export type MaxReveals = 1 | 3 | 5 | 10 | null;
+export type MaxReveals = number | null;
 export const VALID_MAX_REVEALS = [1, 3, 5, 10, null] as const;
 
 export interface CreateShareInput {
@@ -159,7 +159,7 @@ function parseFactorMask(value: unknown): value is FactorMask {
 }
 
 export function isMaxReveals(value: unknown): value is MaxReveals {
-  return value === null || value === 1 || value === 3 || value === 5 || value === 10;
+  return value === null || (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 100);
 }
 
 function isNonNegativeInteger(value: unknown): value is number {

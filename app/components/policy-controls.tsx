@@ -1,4 +1,4 @@
-import type { ExpiryPreset, PolicyDraft } from "@/lib/shares/policy-ui";
+import type { ExpiryPreset, PolicyDraft, RevealPreset } from "@/lib/shares/policy-ui";
 
 export interface PolicyControlsProps {
   readonly draft: PolicyDraft;
@@ -7,6 +7,20 @@ export interface PolicyControlsProps {
 }
 
 export function PolicyControls({ draft, onChange, disabled = false }: PolicyControlsProps) {
+  const currentRevealPreset: RevealPreset =
+    draft.revealPreset ??
+    (draft.maxReveals === 1
+      ? "burn"
+      : draft.maxReveals === 3
+      ? "3"
+      : draft.maxReveals === 5
+      ? "5"
+      : draft.maxReveals === 10
+      ? "10"
+      : draft.maxReveals === null
+      ? "unlimited"
+      : "custom");
+
   return (
     <div className="policy-controls-container">
       {/* Availability Fieldset */}
@@ -143,10 +157,16 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
             <input
               type="radio"
               name="maxReveals"
-              value="1"
-              checked={draft.maxReveals === 1}
+              value="burn"
+              checked={currentRevealPreset === "burn"}
               disabled={disabled}
-              onChange={() => onChange({ ...draft, maxReveals: 1 })}
+              onChange={() =>
+                onChange({
+                  ...draft,
+                  revealPreset: "burn",
+                  maxReveals: 1,
+                })
+              }
             />
             <span>Once — burn after opening</span>
           </label>
@@ -155,9 +175,15 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
               type="radio"
               name="maxReveals"
               value="3"
-              checked={draft.maxReveals === 3}
+              checked={currentRevealPreset === "3"}
               disabled={disabled}
-              onChange={() => onChange({ ...draft, maxReveals: 3 })}
+              onChange={() =>
+                onChange({
+                  ...draft,
+                  revealPreset: "3",
+                  maxReveals: 3,
+                })
+              }
             />
             <span>3 reveals</span>
           </label>
@@ -166,9 +192,15 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
               type="radio"
               name="maxReveals"
               value="5"
-              checked={draft.maxReveals === 5}
+              checked={currentRevealPreset === "5"}
               disabled={disabled}
-              onChange={() => onChange({ ...draft, maxReveals: 5 })}
+              onChange={() =>
+                onChange({
+                  ...draft,
+                  revealPreset: "5",
+                  maxReveals: 5,
+                })
+              }
             />
             <span>5 reveals</span>
           </label>
@@ -177,9 +209,15 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
               type="radio"
               name="maxReveals"
               value="10"
-              checked={draft.maxReveals === 10}
+              checked={currentRevealPreset === "10"}
               disabled={disabled}
-              onChange={() => onChange({ ...draft, maxReveals: 10 })}
+              onChange={() =>
+                onChange({
+                  ...draft,
+                  revealPreset: "10",
+                  maxReveals: 10,
+                })
+              }
             />
             <span>10 reveals</span>
           </label>
@@ -187,14 +225,69 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
             <input
               type="radio"
               name="maxReveals"
-              value="null"
-              checked={draft.maxReveals === null}
+              value="custom"
+              checked={currentRevealPreset === "custom"}
               disabled={disabled}
-              onChange={() => onChange({ ...draft, maxReveals: null })}
+              onChange={() => {
+                const val = draft.customMaxReveals ?? 5;
+                onChange({
+                  ...draft,
+                  revealPreset: "custom",
+                  customMaxReveals: val,
+                  maxReveals: val,
+                });
+              }}
+            />
+            <span>Custom</span>
+          </label>
+          <label className="policy-radio-label">
+            <input
+              type="radio"
+              name="maxReveals"
+              value="unlimited"
+              checked={currentRevealPreset === "unlimited"}
+              disabled={disabled}
+              onChange={() =>
+                onChange({
+                  ...draft,
+                  revealPreset: "unlimited",
+                  maxReveals: null,
+                })
+              }
             />
             <span>Unlimited</span>
           </label>
         </div>
+
+        {currentRevealPreset === "custom" && (
+          <div className="policy-custom-reveals-input">
+            <div className="policy-input-group">
+              <label htmlFor="custom-reveals-value" className="policy-input-label">
+                Custom reveal limit
+              </label>
+              <input
+                id="custom-reveals-value"
+                type="number"
+                min={1}
+                max={100}
+                className="policy-number-input"
+                value={draft.customMaxReveals ?? 5}
+                disabled={disabled}
+                onChange={(e) => {
+                  const val = Number.parseInt(e.target.value, 10) || 1;
+                  onChange({
+                    ...draft,
+                    revealPreset: "custom",
+                    customMaxReveals: val,
+                    maxReveals: val,
+                  });
+                }}
+              />
+            </div>
+            <p className="policy-hint">Enter between 1 and 100 authorized reveals.</p>
+          </div>
+        )}
+
         <p className="policy-hint">
           A reveal authorizes one ciphertext release. It does not know whether the recipient read it.
         </p>

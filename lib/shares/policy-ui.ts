@@ -12,6 +12,7 @@ export type ProoflinePhase =
 
 export type ExpiryPreset = "24h" | "7d" | "30d" | "custom";
 export type ExpiryUnit = "hours" | "days";
+export type RevealPreset = "burn" | "3" | "5" | "10" | "custom" | "unlimited";
 
 export interface PolicyDraft {
   readonly availability: "now" | "scheduled";
@@ -20,6 +21,8 @@ export interface PolicyDraft {
   readonly expiryPreset: ExpiryPreset;
   readonly customExpiryValue?: number;
   readonly customExpiryUnit?: ExpiryUnit;
+  readonly revealPreset?: RevealPreset;
+  readonly customMaxReveals?: number;
   readonly maxReveals: MaxReveals;
 }
 
@@ -38,6 +41,8 @@ export function defaultPolicyDraft(): PolicyDraft {
     expiryPreset: "24h",
     customExpiryValue: 24,
     customExpiryUnit: "hours",
+    revealPreset: "unlimited",
+    customMaxReveals: 5,
     maxReveals: null,
   };
 }
@@ -116,18 +121,13 @@ export function formatExpiryLabel(preset: ExpiryPreset, customValue = 24, custom
 }
 
 export function formatRevealLimitLabel(maxReveals: MaxReveals): string {
-  switch (maxReveals) {
-    case 1:
-      return "Once — burn after opening";
-    case 3:
-      return "3 reveals";
-    case 5:
-      return "5 reveals";
-    case 10:
-      return "10 reveals";
-    case null:
-      return "Unlimited";
+  if (maxReveals === null) {
+    return "Unlimited";
   }
+  if (maxReveals === 1) {
+    return "Once — burn after opening";
+  }
+  return `${maxReveals} reveals`;
 }
 
 export type ValidatedPolicy =
@@ -181,10 +181,22 @@ export function validatePolicyDraft(
     };
   }
 
+  let maxReveals = draft.maxReveals;
+  if (draft.revealPreset === "custom") {
+    const val = draft.customMaxReveals ?? 5;
+    if (!Number.isInteger(val) || val <= 0) {
+      return { valid: false, error: "Custom reveal limit must be a positive integer." };
+    }
+    if (val > 100) {
+      return { valid: false, error: "Custom reveal limit cannot exceed 100 reveals." };
+    }
+    maxReveals = val;
+  }
+
   return {
     valid: true,
     availableAt,
     expiresAt,
-    maxReveals: draft.maxReveals,
+    maxReveals,
   };
 }

@@ -33,6 +33,10 @@ alter table public.shares
   drop constraint if exists shares_file_path_format,
   add constraint shares_file_path_format check (file_object_path is null or file_object_path ~ '^objects/[0-9a-f]{48}[.]bin$');
 
+alter table public.shares
+  drop constraint if exists shares_reveal_limit,
+  add constraint shares_reveal_limit check (max_reveals is null or (max_reveals >= 1 and max_reveals <= 100));
+
 -- 2. Drop old RPC overloads
 drop function if exists public.create_upload_reservation(bytea, bigint);
 drop function if exists public.create_share(text, jsonb, timestamptz, timestamptz, integer, bytea, boolean, boolean, bytea, bytea, jsonb, bigint);

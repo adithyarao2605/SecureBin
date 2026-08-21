@@ -15,7 +15,7 @@ templates, or visual identity.
 
 Day 1 (Core Cryptographic Engine & Foundation) and Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, Browser-Local Share History Desk with Reveal Tracking, and the Stitch MCP Quiet Proof Design System v1 with Refined Dark Mode Default & Custom Expiry) are **100% complete and fully verified**.
 
-All 61 unit tests, 12 integration/concurrency tests, 54 pgTAP database tests, 7 Playwright E2E tests, and 2 Axe accessibility tests pass with zero critical violations. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)).
+All 62 unit tests, 12 integration/concurrency tests, 54 pgTAP database tests, 8 Playwright E2E tests, and 2 Axe accessibility tests pass with zero critical violations. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)).
 
 CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request. Markdown sanitization, password factors, two-channel unlock codes, encrypted file attachments, and the Privacy Receipt are scheduled for Day 3.
 

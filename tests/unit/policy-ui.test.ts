@@ -96,37 +96,64 @@ describe("policy-ui helper functions", () => {
     expect(invalidRes.valid).toBe(false);
   });
 
+  it("validates and formats custom reveal limits within 1-100", () => {
+    const customDraft = {
+      ...defaultPolicyDraft(),
+      revealPreset: "custom" as const,
+      customMaxReveals: 7,
+      maxReveals: 7,
+    };
+    const res = validatePolicyDraft(customDraft, fixedNow);
+    expect(res.valid).toBe(true);
+    if (res.valid) {
+      expect(res.maxReveals).toBe(7);
+    }
+    expect(formatRevealLimitLabel(7)).toBe("7 reveals");
+
+    const overMaxDraft = {
+      ...customDraft,
+      customMaxReveals: 105,
+    };
+    const overRes = validatePolicyDraft(overMaxDraft, fixedNow);
+    expect(overRes.valid).toBe(false);
+
+    const invalidDraft = {
+      ...customDraft,
+      customMaxReveals: 0,
+    };
+    const invalidRes = validatePolicyDraft(invalidDraft, fixedNow);
+    expect(invalidRes.valid).toBe(false);
+  });
+
   it("rejects scheduled availability in the past", () => {
     const draft = {
       availability: "scheduled" as const,
       availableLocalDate: "2020-01-01",
-      availableLocalTime: "12:00",
+      availableLocalTime: "10:00",
       expiryPreset: "24h" as const,
-      maxReveals: 1 as const,
+      maxReveals: 1,
     };
     const result = validatePolicyDraft(draft, fixedNow);
+
     expect(result.valid).toBe(false);
     if (!result.valid) {
-      expect(result.error).toMatch(/past/i);
+      expect(result.error).toContain("cannot be in the past");
     }
   });
 
-  it("rejects scheduled availability after expiration date", () => {
-    const futureDate = new Date(fixedNow + 10 * 86_400_000);
-    const dateStr = futureDate.toISOString().slice(0, 10);
-    const timeStr = "12:00";
-
+  it("rejects scheduled availability after expiry", () => {
     const draft = {
       availability: "scheduled" as const,
-      availableLocalDate: dateStr,
-      availableLocalTime: timeStr,
-      expiryPreset: "24h" as const, // 24h expires before 10 days
-      maxReveals: 5 as const,
+      availableLocalDate: "2026-08-30",
+      availableLocalTime: "10:00",
+      expiryPreset: "24h" as const,
+      maxReveals: 3,
     };
     const result = validatePolicyDraft(draft, fixedNow);
+
     expect(result.valid).toBe(false);
     if (!result.valid) {
-      expect(result.error).toMatch(/before the expiration/i);
+      expect(result.error).toContain("must be before the expiration date");
     }
   });
 });

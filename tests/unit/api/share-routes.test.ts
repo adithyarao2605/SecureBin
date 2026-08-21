@@ -73,8 +73,9 @@ function validPayload(overrides: Record<string, unknown> = {}) {
 describe("share policy and contract freezing", () => {
   const fixedNow = 1_700_000_000_000;
 
-  it("accepts all five valid MaxReveals values and rejects invalid ones", () => {
-    for (const valid of VALID_MAX_REVEALS) {
+  it("accepts valid MaxReveals values and rejects invalid ones", () => {
+    const validMaxReveals = [null, 1, 2, 3, 5, 7, 10, 50, 100];
+    for (const valid of validMaxReveals) {
       expect(isMaxReveals(valid)).toBe(true);
       const input = validPayload({ policy: { availableAt: null, expiresAt: new Date(fixedNow + 86400000).toISOString(), maxReveals: valid } });
       const parsed = parseCreateShareInput(input, fixedNow);
@@ -82,7 +83,7 @@ describe("share policy and contract freezing", () => {
       expect(parsed?.maxReveals).toBe(valid);
     }
 
-    const invalidMaxReveals = [0, 2, 4, 6, 7, 8, 9, 11, 20, -1, -5, 1.5, 3.14, "1", "3", "5", "10", "burn", true, false, {}, []];
+    const invalidMaxReveals = [0, 101, 200, -1, -5, 1.5, 3.14, "1", "3", "5", "10", "burn", true, false, {}, []];
     for (const invalid of invalidMaxReveals) {
       expect(isMaxReveals(invalid)).toBe(false);
       const input = validPayload({ policy: { availableAt: null, expiresAt: new Date(fixedNow + 86400000).toISOString(), maxReveals: invalid } });

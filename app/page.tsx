@@ -191,7 +191,7 @@ export default function HomePage() {
                 The boundary matters
               </p>
               <h2 id="how-heading" className="how-main-title">
-                A share should reveal as little as possible.
+                a share should reveal as little as possible.
               </h2>
               <p className="how-subtext">
                 SecureBin separates client encryption from server authorization. Here is what infrastructure can see and what never leaves your device.

@@ -70,6 +70,20 @@ test("the user can select custom expiration duration", async ({ page }) => {
   await expect(page.getByLabel("Evidence rail")).toBeVisible();
 });
 
+test("the user can select custom reveal limit", async ({ page }) => {
+  await page.goto("/");
+
+  // Select Custom reveals radio
+  await page.getByLabel("Custom", { exact: true }).click();
+
+  const customRevealsInput = page.getByLabel("Custom reveal limit");
+  await expect(customRevealsInput).toBeVisible();
+  await customRevealsInput.fill("7");
+
+  // Evidence rail updates
+  await expect(page.getByLabel("Evidence rail")).toBeVisible();
+});
+
 test("created share appears in the local history desk with live actions", async ({ page }) => {
   await page.route(/\/api\/shares(?:\/|$)/u, async (route) => {
     const request = route.request();
@@ -85,7 +99,7 @@ test("created share appears in the local history desk with live actions", async 
           policy: {
             availableAt: null,
             expiresAt: new Date(Date.now() + 86400000).toISOString(),
-            maxReveals: null,
+            maxReveals: 7,
             passwordRequired: false,
             unlockRequired: false,
           },
