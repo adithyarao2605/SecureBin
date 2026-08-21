@@ -166,10 +166,9 @@ the provider stores, never in a tracked file.
    creates it with a 14 MiB object limit and keeps anonymous table/RPC/Storage
    access revoked. Also confirm RLS is enabled and forced on application tables.
 4. Generate independent server secrets locally, for example with
-   `openssl rand -base64 32`, for `RATE_LIMIT_HMAC_KEY` and the future
-   `CRON_SECRET`. Store them only in Vercel. The current text-only slice uses
-   the rate-limit key; do not configure a cron schedule yet because the cleanup
-   HTTP endpoint is not implemented.
+   `openssl rand -base64 32`, for `RATE_LIMIT_HMAC_KEY` and `CRON_SECRET`.
+   Store them only in Vercel. `CRON_SECRET` protects the internal cleanup endpoint
+   `POST /api/internal/cleanup` via `Authorization: Bearer <CRON_SECRET>` or `x-cron-secret`.
 5. In Vercel, import the `adithyarao2605/SecureBin` GitHub repository, keep the
    detected Next.js framework, and use the committed `vercel.json`. Configure
    these Production values:
@@ -180,7 +179,7 @@ the provider stores, never in a tracked file.
    NEXT_PUBLIC_SUPABASE_ANON_KEY=<browser-safe anon or publishable key>
    SUPABASE_SERVICE_ROLE_KEY=<server-only sb_secret key or legacy service-role JWT>
    RATE_LIMIT_HMAC_KEY=<independent random value>
-   CRON_SECRET=<independent random value reserved for the future cleanup route>
+   CRON_SECRET=<independent random value for POST /api/internal/cleanup>
    ```
 
    SecureBin accepts Supabase's recommended `sb_secret_...` key as well as the

@@ -8,7 +8,9 @@ export interface SecureStorage {
   remove(path: string): Promise<"deleted" | "missing">;
 }
 
-export function createSecureStorage(config: ServerConfig = readServerConfig()): SecureStorage {
+export function createSecureStorage(
+  config: Pick<ServerConfig, "supabaseUrl" | "serviceRoleKey"> & Partial<ServerConfig> = readServerConfig()
+): SecureStorage {
   const client = createClient(config.supabaseUrl, config.serviceRoleKey, {
     auth: {
       persistSession: false,

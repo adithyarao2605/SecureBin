@@ -18,7 +18,9 @@ export interface RpcClient {
   call(functionName: string, args: Record<string, unknown>): Promise<unknown>;
 }
 
-export function createRpcClient(config: ServerConfig = readServerConfig()): RpcClient {
+export function createRpcClient(
+  config: Pick<ServerConfig, "supabaseUrl" | "serviceRoleKey"> & Partial<ServerConfig> = readServerConfig()
+): RpcClient {
   const endpoint = `${config.supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/`;
   return {
     async call(functionName: string, args: Record<string, unknown>): Promise<unknown> {
