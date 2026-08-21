@@ -28,18 +28,24 @@ Updated: 2026-08-21 (Asia/Kolkata)
 - Diagnosed and fixed server-side timestamp parsing in `lib/shares/contracts.ts` and `lib/server/share-service.ts`: `ISO_UTC_PATTERN` required a strict trailing `Z` with at most 3 decimal digits, rejecting valid PostgREST `timestamptz` responses with offset formats (such as `+00:00`) or microsecond timestamps. Broadened `ISO_UTC_PATTERN` and normalized all parsed timestamps to ISO UTC strings in `getStatus` and `reveal`.
 - Completed Day 2 Phase 4 (Freeze contracts and fixtures): centralized `MaxReveals = 1 | 3 | 5 | 10 | null`, added deterministic controllable clock verification for expiry and scheduled bounds, locked active/scheduled/unavailable/limited/burn fixtures, and asserted uniform unavailable responses.
 - Completed Day 2 Phase 5 (Database policy hardening): created migration `20260821000000_day2_policy_hardening.sql` and test suite `supabase/tests/02_policy.sql`. Implemented strict idempotent create with full input comparison and SQLSTATE 23505 `idempotency_conflict` mapping to HTTP 409, bound upload reservations directly to `(reserved_public_id, idempotency_key_hash)`, hardened atomic row-locked reveal leasing and revocation, and revoked lifecycle execution from public/anon/authenticated roles.
-- Validation passed across pgTAP (46 tests), lint, strict typecheck, 29 unit tests, production build, 4 integration tests, and reproducibility check.
+- Completed Day 2 Phase 6 (Real concurrency and access evidence): created `tests/integration/reveal-concurrency.test.ts` and extended `supabase/tests/02_policy.sql` with real `anon` and `authenticated` role isolation assertions. Concurrency race results:
+  * 20 concurrent reveal requests on `max_reveals = 1` burn note: exactly 1 authorized (winner token), exactly 19 unavailable. Winner retry within 5-min lease confirmed authorized with no counter increment; subsequent status confirmed uniform unavailable.
+  * 20 concurrent reveal requests on `max_reveals = 3` note: exactly 3 authorized, exactly 17 unavailable. Winner retries confirmed authorized with no counter increment; subsequent status confirmed uniform unavailable.
+  * Concurrent reveal vs revoke race safely settled; post-condition confirmed uniform unavailable.
+  * Pre-scheduled share reveals safely rejected before `availableAt`.
+  * pgTAP role assertions confirmed `anon` and `authenticated` roles receive SQLSTATE 42501 on direct SELECT on `shares`, `upload_reservations`, `reveal_leases` and EXECUTE on lifecycle RPCs.
+- Validation passed across pgTAP (54 tests), lint, strict typecheck, 29 unit tests, production build, 8 integration tests, and reproducibility check.
 
 ## Validation
 
 - `pnpm validate`: passed (lint, strict typecheck, 29 unit tests, production build).
-- `pnpm test:integration`: passed (4 tests).
-- `pnpm supabase:test`: passed (46 pgTAP tests: 25 foundation + 21 policy).
+- `pnpm test:integration`: passed (8 integration tests across share service and reveal concurrency).
+- `pnpm supabase:test`: passed (54 pgTAP tests: 25 foundation + 29 policy and role isolation).
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed.
 
 ## Remaining / Blockers
 
-- Day 2 Phase 5 complete. Next step: Phase 6 (Real concurrency and access evidence in `tests/integration/reveal-concurrency.test.ts`).
+- Day 2 Phase 6 complete. Next step: Phase 7 (Upload reservation boundary - `app/api/uploads/route.ts`, `lib/server/upload-service.ts`, `lib/server/storage.ts`, tests).
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
 
 ## Recent Commits

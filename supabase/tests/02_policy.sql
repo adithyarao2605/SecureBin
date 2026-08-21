@@ -1,6 +1,6 @@
 begin;
 
-select plan(21);
+select plan(29);
 
 -- 1. Check function signatures
 select has_function('public', 'create_upload_reservation', array['text','bytea','jsonb','bigint'], 'tuple upload reservation RPC exists');
@@ -270,6 +270,69 @@ select is(
   'unavailable',
   'status of revoked share is uniform unavailable'
 );
+
+-- 7. Test real role execution and direct access restrictions
+set local role anon;
+
+select throws_ok(
+  $$ select * from public.shares $$,
+  '42501',
+  null,
+  'anon role cannot select from public.shares'
+);
+
+select throws_ok(
+  $$ select * from public.upload_reservations $$,
+  '42501',
+  null,
+  'anon role cannot select from public.upload_reservations'
+);
+
+select throws_ok(
+  $$ select * from public.reveal_leases $$,
+  '42501',
+  null,
+  'anon role cannot select from public.reveal_leases'
+);
+
+select throws_ok(
+  $$ select * from public.reveal_share('BAQEBAQEBAQEBAQEBAQEBA', decode(repeat('01', 32), 'hex')) $$,
+  '42501',
+  null,
+  'anon role cannot execute reveal_share'
+);
+
+set local role authenticated;
+
+select throws_ok(
+  $$ select * from public.shares $$,
+  '42501',
+  null,
+  'authenticated role cannot select from public.shares'
+);
+
+select throws_ok(
+  $$ select * from public.upload_reservations $$,
+  '42501',
+  null,
+  'authenticated role cannot select from public.upload_reservations'
+);
+
+select throws_ok(
+  $$ select * from public.reveal_leases $$,
+  '42501',
+  null,
+  'authenticated role cannot select from public.reveal_leases'
+);
+
+select throws_ok(
+  $$ select * from public.reveal_share('BAQEBAQEBAQEBAQEBAQEBA', decode(repeat('01', 32), 'hex')) $$,
+  '42501',
+  null,
+  'authenticated role cannot execute reveal_share'
+);
+
+reset role;
 
 select * from finish();
 rollback;
