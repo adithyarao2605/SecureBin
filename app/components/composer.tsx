@@ -1,156 +1,351 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { digestCapability, sealContent } from "../../lib/crypto/content";
+import {
+  defaultPolicyDraft,
+  validatePolicyDraft,
+  type PolicyDraft,
+  type ProoflinePhase,
+  type ValidatedPolicy,
+} from "../../lib/shares/policy-ui";
+import { PolicyControls } from "./policy-controls";
 
-type ContentKind = "note" | "markdown" | "code";
-type Protection = "standard" | "password" | "two-channel";
+interface PreparedAttempt {
+  readonly publicId: string;
+  readonly linkSecret: string;
+  readonly deleteCapability: string;
+  readonly idempotencyKey: string;
+  readonly payload: Record<string, unknown>;
+}
 
-const contentKinds: readonly { value: ContentKind; label: string; disabled?: boolean }[] = [
-  { value: "note", label: "Plain note" },
-  { value: "markdown", label: "Markdown · unavailable", disabled: true },
-  { value: "code", label: "Code · unavailable", disabled: true }
-];
+export interface ComposerProps {
+  readonly onPhaseChange?: (phase: ProoflinePhase) => void;
+  readonly onPolicyChange?: (policy: ValidatedPolicy) => void;
+}
 
-const protections: readonly { value: Protection; label: string; detail: string }[] = [
-  { value: "standard", label: "Private link", detail: "Browser-sealed" },
-  { value: "password", label: "Password · unavailable", detail: "Not available" },
-  { value: "two-channel", label: "Two-channel · unavailable", detail: "Not available" }
-];
-
-export function Composer() {
-  const [contentKind, setContentKind] = useState<ContentKind>("note");
-  const [protection, setProtection] = useState<Protection>("standard");
+export function Composer({ onPhaseChange, onPolicyChange }: ComposerProps = {}) {
   const [draft, setDraft] = useState("");
-  const [message, setMessage] = useState("");
-  const [shareUrl, setShareUrl] = useState("");
+  const [policyDraft, setPolicyDraft] = useState<PolicyDraft>(defaultPolicyDraft());
   const [isPending, setIsPending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
+  const [activeDeleteCapability, setActiveDeleteCapability] = useState<string | null>(null);
+  const [activePublicId, setActivePublicId] = useState<string | null>(null);
+  const [isRevoking, setIsRevoking] = useState(false);
+  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+  const [revokedMessage, setRevokedMessage] = useState("");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
 
-  async function sealDraft(event: FormEvent<HTMLFormElement>) {
+  const preparedRef = useRef<PreparedAttempt | null>(null);
+
+  function handleDraftChange(value: string) {
+    setDraft(value);
+    preparedRef.current = null;
+    setErrorMessage("");
+  }
+
+  function handlePolicyChange(updated: PolicyDraft) {
+    setPolicyDraft(updated);
+    preparedRef.current = null;
+    setErrorMessage("");
+    if (onPolicyChange) {
+      onPolicyChange(validatePolicyDraft(updated));
+    }
+  }
+
+  async function createShare(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isPending) return;
+
     if (!draft.trim()) {
-      setShareUrl("");
-      setMessage("Write a note before sealing it.");
+      setErrorMessage("Write a note before creating a share.");
+      return;
+    }
+
+    const validated = validatePolicyDraft(policyDraft);
+    if (!validated.valid) {
+      setErrorMessage(validated.error);
       return;
     }
 
     setIsPending(true);
-    setShareUrl("");
-    setMessage("Sealing locally…");
+    setErrorMessage("");
+    if (onPhaseChange) onPhaseChange("creating");
+
     try {
-      const sealed = await sealContent(draft);
-      const [deleteTokenHash, idempotencyKeyHash] = await Promise.all([
-        digestCapability(sealed.deleteCapability),
-        digestCapability(sealed.idempotencyKey)
-      ]);
-      const response = await fetch("/api/shares", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      let prepared = preparedRef.current;
+      if (!prepared) {
+        const sealed = await sealContent(draft);
+        const [deleteTokenHash, idempotencyKeyHash] = await Promise.all([
+          digestCapability(sealed.deleteCapability),
+          digestCapability(sealed.idempotencyKey),
+        ]);
+
+        const payload = {
           publicId: sealed.publicId,
           contentEnvelope: sealed.envelope,
           policy: {
-            availableAt: null,
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            maxReveals: null
+            availableAt: validated.availableAt,
+            expiresAt: validated.expiresAt,
+            maxReveals: validated.maxReveals,
           },
           deleteTokenHash,
           idempotencyKeyHash,
           passwordRequired: false,
-          unlockRequired: false
-        })
+          unlockRequired: false,
+        };
+
+        prepared = {
+          publicId: sealed.publicId,
+          linkSecret: sealed.linkSecret,
+          deleteCapability: sealed.deleteCapability,
+          idempotencyKey: sealed.idempotencyKey,
+          payload,
+        };
+        preparedRef.current = prepared;
+      }
+
+      const response = await fetch("/api/shares", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(prepared.payload),
       });
-      if (!response.ok) throw new Error("share_creation_failed");
-      const origin = window.location.origin;
+
+      if (!response.ok) {
+        throw new Error("create_failed");
+      }
+
       const result = (await response.json()) as { publicId?: unknown };
-      const publicId = typeof result.publicId === "string" ? result.publicId : sealed.publicId;
-      const url = `${origin}/s/${encodeURIComponent(publicId)}#${sealed.linkSecret}`;
-      setShareUrl(url);
-      setMessage("Sealed in this browser. Share the link below; the key stays in its fragment.");
+      const returnedPublicId = typeof result.publicId === "string" ? result.publicId : prepared.publicId;
+      const origin = window.location.origin;
+      const fullUrl = `${origin}/s/${encodeURIComponent(returnedPublicId)}#${prepared.linkSecret}`;
+
+      setShareUrl(fullUrl);
+      setActivePublicId(returnedPublicId);
+      setActiveDeleteCapability(prepared.deleteCapability);
+      preparedRef.current = null;
+      if (onPhaseChange) onPhaseChange("created");
     } catch {
-      setMessage("This share could not be created. Your draft is still only on this device.");
+      setErrorMessage("This share could not be created. Your draft is still only on this device.");
+      if (onPhaseChange) onPhaseChange("draft");
     } finally {
       setIsPending(false);
     }
   }
 
-  return (
-    <section className="composer-wrap" aria-labelledby="composer-heading">
-      <div className="composer-heading-row">
-        <div>
-          <p className="section-kicker">Your workspace</p>
-          <h2 id="composer-heading">Start a sealed note</h2>
-        </div>
-        <span className="local-badge"><span className="local-dot" aria-hidden="true" />local draft</span>
-      </div>
+  async function handleCopyLink() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopyStatus("copied");
+      setTimeout(() => setCopyStatus("idle"), 2000);
+    } catch {
+      // Fallback
+    }
+  }
 
-      <form className="composer-card" onSubmit={sealDraft}>
-        <div className="composer-toolbar">
-          <div className="choice-tabs" role="tablist" aria-label="Content type">
-            {contentKinds.map((kind) => (
-              <button
-                aria-selected={contentKind === kind.value}
-                aria-disabled={kind.disabled || undefined}
-                className="choice-tab"
-                data-selected={contentKind === kind.value}
-                disabled={kind.disabled}
-                key={kind.value}
-                onClick={() => setContentKind(kind.value)}
-                role="tab"
-                type="button"
-              >
-                {kind.label}
-              </button>
-            ))}
-          </div>
-          <span className="character-count" aria-live="polite">{draft.length.toLocaleString()} / 524,288</span>
+  async function handleRevoke() {
+    if (!activePublicId || !activeDeleteCapability || isRevoking) return;
+    setIsRevoking(true);
+    setRevokedMessage("");
+
+    try {
+      const response = await fetch(`/api/shares/${encodeURIComponent(activePublicId)}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deleteCapability: activeDeleteCapability }),
+      });
+
+      if (!response.ok) {
+        throw new Error("revoke_failed");
+      }
+
+      setRevokedMessage("Share revoked. Future reveals are unavailable.");
+      setShowRevokeConfirm(false);
+      setActiveDeleteCapability(null);
+      if (onPhaseChange) onPhaseChange("unavailable");
+    } catch {
+      setRevokedMessage("The share could not be revoked. Try again.");
+    } finally {
+      setIsRevoking(false);
+    }
+  }
+
+  function handleReset() {
+    setDraft("");
+    setShareUrl("");
+    setActiveDeleteCapability(null);
+    setActivePublicId(null);
+    setShowRevokeConfirm(false);
+    setRevokedMessage("");
+    setErrorMessage("");
+    preparedRef.current = null;
+    if (onPhaseChange) onPhaseChange("draft");
+  }
+
+  if (shareUrl) {
+    return (
+      <div className="surface-card result-card" role="region" aria-label="Share created">
+        <h2 className="surface-heading">Share created</h2>
+        <div className="share-link-box">
+          <input
+            type="text"
+            className="share-link-input"
+            readOnly
+            value={shareUrl}
+            aria-label="Share link"
+            onFocus={(e) => e.target.select()}
+          />
         </div>
-        <label className="sr-only" htmlFor="draft-content">Content to share</label>
-        <textarea
-          id="draft-content"
-          maxLength={524288}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder={contentKind === "code" ? "Paste a snippet worth protecting…" : "Write something only the right person should read…"}
-          value={draft}
-        />
-        <div className="composer-bottom">
-          <div className="protection-choice">
-            <span className="field-label">Protection</span>
-            <div className="protection-options" role="radiogroup" aria-label="Protection preset">
-              {protections.map((option) => (
-                <button
-                  aria-disabled={option.value !== "standard" || undefined}
-                  aria-checked={protection === option.value}
-                  className="protection-option"
-                  data-selected={protection === option.value}
-                  disabled={option.value !== "standard"}
-                  key={option.value}
-                  onClick={() => setProtection(option.value)}
-                  role="radio"
-                  type="button"
-                >
-                  <span>{option.label}</span>
-                  <small>{option.detail}</small>
-                </button>
-              ))}
-            </div>
-          </div>
-          <button className="seal-button" disabled={isPending} type="submit">
-            <span>{isPending ? "Sealing…" : "Seal this draft"}</span>
-            <span aria-hidden="true" className="button-arrow">↗</span>
+        <p className="share-hint">
+          The key stays in the link fragment. Keep the full link.
+        </p>
+
+        <div className="share-actions-row">
+          <button
+            type="button"
+            className="action-button primary-button"
+            onClick={handleCopyLink}
+          >
+            {copyStatus === "copied" ? "Copied" : "Copy link"}
+          </button>
+
+          {activeDeleteCapability && !revokedMessage && !showRevokeConfirm && (
+            <button
+              type="button"
+              className="action-button secondary-button"
+              onClick={() => setShowRevokeConfirm(true)}
+            >
+              Revoke share
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="action-button tertiary-button"
+            onClick={handleReset}
+          >
+            Create another
           </button>
         </div>
-        <p className="composer-status" aria-live="polite" role="status">{message}</p>
-        {shareUrl ? (
-          <div className="share-result" aria-label="Created share">
-            <span className="field-label">Your private link</span>
-            <a href={shareUrl}>{shareUrl}</a>
-            <p>Keep the full link. The fragment is the key and never went to SecureBin.</p>
+
+        {showRevokeConfirm && !revokedMessage && (
+          <div className="revoke-confirmation-box" role="alert">
+            <p className="revoke-warning">
+              Stop future reveals? This cannot remove content already opened or downloaded.
+            </p>
+            <div className="revoke-actions">
+              <button
+                type="button"
+                className="action-button danger-button"
+                disabled={isRevoking}
+                onClick={handleRevoke}
+              >
+                {isRevoking ? "Revoking…" : "Revoke share"}
+              </button>
+              <button
+                type="button"
+                className="action-button secondary-button"
+                disabled={isRevoking}
+                onClick={() => setShowRevokeConfirm(false)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        ) : null}
+        )}
+
+        {revokedMessage && (
+          <div className="revoked-status-box" role="status">
+            <p className="revoked-status-text">{revokedMessage}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="surface-card composer-surface">
+      <div className="composer-header">
+        <h2 className="surface-heading" id="composer-heading">
+          Create a private share
+        </h2>
+        <p className="trust-line">Your browser encrypts this before it leaves the page.</p>
+      </div>
+
+      <form className="composer-form" onSubmit={createShare}>
+        <div className="composer-toolbar">
+          <div className="mode-tabs" role="tablist" aria-label="Share mode">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={true}
+              className="mode-tab active"
+            >
+              Plain note
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={false}
+              aria-disabled={true}
+              disabled
+              className="mode-tab disabled"
+            >
+              Markdown · unavailable
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={false}
+              aria-disabled={true}
+              disabled
+              className="mode-tab disabled"
+            >
+              Code · unavailable
+            </button>
+          </div>
+          <span className="character-count" aria-live="polite">
+            {draft.length.toLocaleString()} / 524,288
+          </span>
+        </div>
+
+        <label htmlFor="draft-textarea" className="sr-only">
+          Note content
+        </label>
+        <textarea
+          id="draft-textarea"
+          className="composer-textarea"
+          maxLength={524288}
+          placeholder="Write something only the recipient should read…"
+          value={draft}
+          disabled={isPending}
+          onChange={(e) => handleDraftChange(e.target.value)}
+        />
+
+        <PolicyControls
+          draft={policyDraft}
+          disabled={isPending}
+          onChange={handlePolicyChange}
+        />
+
+        {errorMessage && (
+          <div className="composer-error" role="alert">
+            {errorMessage}
+          </div>
+        )}
+
+        <div className="composer-submit-row">
+          <button
+            type="submit"
+            className="action-button primary-button submit-button"
+            disabled={isPending}
+          >
+            {isPending ? "Creating share…" : "Create share"}
+          </button>
+        </div>
       </form>
-      <p className="composer-note"><span aria-hidden="true">✦</span> Plaintext and keys stay in your browser; only an authenticated envelope is sent.</p>
-    </section>
+    </div>
   );
 }

@@ -21,7 +21,7 @@ test("the ready viewer has no critical accessibility violations", async ({ page 
   });
 
   await page.goto(`/s/${publicId}#${linkSecret}`);
-  await expect(page.getByRole("status")).toContainText("ready");
+  await expect(page.getByRole("button", { name: "Reveal" })).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((violation) => violation.impact === "critical")).toEqual([]);
 });

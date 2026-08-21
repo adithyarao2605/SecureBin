@@ -74,7 +74,7 @@ The browser owns key generation, derivation, encryption, decryption, content ren
 ### Experience layer (non-authoritative)
 
 The browser surface follows the quiet-proof direction in
-[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof): a light-first
+[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof), [`docs/DAY-2-UI.md`](DAY-2-UI.md), and the Stitch MCP project **`SecureBin Quiet Proof Design System v1`** (`projects/12991627127209989717`): a light-first
 Linen/Ink/Mineral/Copper palette, a single compose or reveal surface, and one
 proofline connecting the browser, sealed parcel, and recipient. The proofline is
 only an explanation of the client flow. It must never be used as evidence that

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const NOTE = "Day 1 browser-sealed note: only the intended recipient should read this.";
+const NOTE = "Day 2 browser-sealed note: only the intended recipient should read this.";
 const BASE64URL = /^[A-Za-z0-9_-]+$/u;
 
 type JsonRecord = Record<string, unknown>;
@@ -37,7 +37,7 @@ function expectContentEnvelope(value: unknown) {
     "nonce",
     "objectType",
     "passwordSalt",
-    "version"
+    "version",
   ]);
   expect(value.version).toBe(1);
   expect(value.objectType).toBe("content");
@@ -73,7 +73,7 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
       await route.fulfill({
         status: 201,
         contentType: "application/json",
-        body: JSON.stringify({ publicId: capture.createBody.publicId })
+        body: JSON.stringify({ publicId: capture.createBody.publicId }),
       });
       return;
     }
@@ -88,8 +88,8 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
           maxReveals: null,
           remainingReveals: null,
           passwordRequired: false,
-          unlockRequired: false
-        })
+          unlockRequired: false,
+        }),
       });
       return;
     }
@@ -100,8 +100,8 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
         body: JSON.stringify({
           status: "authorized",
           contentEnvelope: capture.envelope,
-          retryExpiresAt: "2099-01-01T00:05:00.000Z"
-        })
+          retryExpiresAt: "2099-01-01T00:05:00.000Z",
+        }),
       });
       return;
     }
@@ -110,10 +110,11 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
   });
 
   await page.goto("/");
-  await page.getByLabel("Content to share").fill(NOTE);
-  await page.getByRole("button", { name: "Seal this draft" }).click();
-  const shareLink = page.getByRole("link", { name: /\/s\// });
-  await expect(shareLink).toBeVisible();
+  await page.getByLabel("Note content").fill(NOTE);
+  await page.getByRole("button", { name: "Create share" }).click();
+
+  const shareLinkInput = page.getByRole("textbox", { name: "Share link" });
+  await expect(shareLinkInput).toBeVisible();
 
   const createBody = capture.createBody;
   if (createBody === null) return;
@@ -128,9 +129,8 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
   expectBase64Url(createBody.idempotencyKeyHash, 32);
   expectContentEnvelope(createBody.contentEnvelope);
 
-  const shareHref = await shareLink.getAttribute("href");
+  const shareHref = await shareLinkInput.inputValue();
   expect(shareHref).not.toBeNull();
-  if (shareHref === null) return;
   const shareUrl = new URL(shareHref);
   const publicId = shareUrl.pathname.split("/").at(-1);
   const linkSecret = shareUrl.hash.slice(1);
@@ -140,10 +140,11 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
   expect(shareUrl.hash).toBe(`#${linkSecret}`);
 
   await page.goto(shareHref);
-  await expect(page.getByRole("status")).toContainText("ready");
-  await expect(page.getByRole("button", { name: "Open sealed note" })).toBeVisible();
-  await page.getByRole("button", { name: "Open sealed note" }).click();
-  await expect(page.getByRole("article", { name: "Decrypted note" })).toContainText(NOTE);
+  await expect(page.getByText("Ready to reveal").first()).toBeVisible();
+  const revealButton = page.getByRole("button", { name: "Reveal" });
+  await expect(revealButton).toBeVisible();
+  await revealButton.click();
+  await expect(page.getByText(NOTE)).toBeVisible();
 
   expect(new URL(page.url()).hash).toBe(`#${linkSecret}`);
   expect(observedRequests.every(({ url, body }) => !url.includes(linkSecret) && !body.includes(linkSecret))).toBe(true);
@@ -156,13 +157,13 @@ test("the composer remains usable from the keyboard on a narrow viewport", async
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
 
-  const textarea = page.getByLabel("Content to share");
+  const textarea = page.getByLabel("Note content");
   await textarea.focus();
   await page.keyboard.type("Keyboard check");
   await expect(textarea).toHaveValue("Keyboard check");
 
-  const sealButton = page.getByRole("button", { name: "Seal this draft" });
-  await sealButton.focus();
-  await expect(sealButton).toBeFocused();
+  const createButton = page.getByRole("button", { name: "Create share" });
+  await createButton.focus();
+  await expect(createButton).toBeFocused();
   await expect(page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).resolves.toBe(true);
 });

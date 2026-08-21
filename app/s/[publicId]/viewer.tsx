@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { bytesToBase64Url, randomBytes } from "../../../lib/crypto/encoding";
 import { openContent } from "../../../lib/crypto/content";
-import { validateContentEnvelope, validateLinkSecret, validatePublicId } from "../../../lib/crypto/envelope";
-import type { ContentEnvelope } from "../../../lib/crypto/envelope";
+import { bytesToBase64Url, randomBytes } from "../../../lib/crypto/encoding";
+import {
+  type ContentEnvelope,
+  validateContentEnvelope,
+  validateLinkSecret,
+  validatePublicId,
+} from "../../../lib/crypto/envelope";
+import { formatLocalizedDateTime, type ProoflinePhase } from "../../../lib/shares/policy-ui";
+import { Proofline } from "../../components/proofline";
 
 type ActiveStatus = {
   status: "active";
@@ -15,6 +21,7 @@ type ActiveStatus = {
   passwordRequired: false;
   unlockRequired: false;
 };
+
 type ScheduledStatus = {
   status: "scheduled";
   availableAt: string;
@@ -24,6 +31,7 @@ type ScheduledStatus = {
   passwordRequired: false;
   unlockRequired: false;
 };
+
 type ShareStatus = ActiveStatus | ScheduledStatus | { status: "unavailable" };
 
 class ViewerPayloadError extends Error {}
@@ -31,7 +39,9 @@ class ViewerPayloadError extends Error {}
 function exactKeys(value: Record<string, unknown>, keys: readonly string[]) {
   const actual = Object.keys(value).sort();
   const expected = [...keys].sort();
-  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) throw new ViewerPayloadError();
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    throw new ViewerPayloadError();
+  }
 }
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -45,8 +55,23 @@ function parseStatus(value: unknown): ShareStatus {
     return { status: "unavailable" };
   }
   if (value.status === "scheduled") {
-    exactKeys(value, ["availableAt", "expiresAt", "maxReveals", "passwordRequired", "remainingReveals", "status", "unlockRequired"]);
-    if (typeof value.availableAt !== "string" || typeof value.expiresAt !== "string" || value.passwordRequired !== false || value.unlockRequired !== false) throw new ViewerPayloadError();
+    exactKeys(value, [
+      "availableAt",
+      "expiresAt",
+      "maxReveals",
+      "passwordRequired",
+      "remainingReveals",
+      "status",
+      "unlockRequired",
+    ]);
+    if (
+      typeof value.availableAt !== "string" ||
+      typeof value.expiresAt !== "string" ||
+      value.passwordRequired !== false ||
+      value.unlockRequired !== false
+    ) {
+      throw new ViewerPayloadError();
+    }
     return {
       status: "scheduled",
       availableAt: value.availableAt,
@@ -54,13 +79,38 @@ function parseStatus(value: unknown): ShareStatus {
       maxReveals: typeof value.maxReveals === "number" ? value.maxReveals : null,
       remainingReveals: typeof value.remainingReveals === "number" ? value.remainingReveals : null,
       passwordRequired: false,
-      unlockRequired: false
+      unlockRequired: false,
     };
   }
   if (value.status !== "active") throw new ViewerPayloadError();
-  exactKeys(value, ["availableAt", "expiresAt", "maxReveals", "passwordRequired", "remainingReveals", "status", "unlockRequired"]);
-  if (typeof value.expiresAt !== "string" || (value.availableAt !== null && typeof value.availableAt !== "string") || (value.maxReveals !== null && typeof value.maxReveals !== "number") || (value.remainingReveals !== null && typeof value.remainingReveals !== "number") || value.passwordRequired !== false || value.unlockRequired !== false) throw new ViewerPayloadError();
-  if (value.maxReveals !== null && (![1, 3, 5, 10].includes(value.maxReveals) || value.remainingReveals === null || value.remainingReveals < 0 || value.remainingReveals > value.maxReveals)) throw new ViewerPayloadError();
+  exactKeys(value, [
+    "availableAt",
+    "expiresAt",
+    "maxReveals",
+    "passwordRequired",
+    "remainingReveals",
+    "status",
+    "unlockRequired",
+  ]);
+  if (
+    typeof value.expiresAt !== "string" ||
+    (value.availableAt !== null && typeof value.availableAt !== "string") ||
+    (value.maxReveals !== null && typeof value.maxReveals !== "number") ||
+    (value.remainingReveals !== null && typeof value.remainingReveals !== "number") ||
+    value.passwordRequired !== false ||
+    value.unlockRequired !== false
+  ) {
+    throw new ViewerPayloadError();
+  }
+  if (
+    value.maxReveals !== null &&
+    (![1, 3, 5, 10].includes(value.maxReveals) ||
+      value.remainingReveals === null ||
+      value.remainingReveals < 0 ||
+      value.remainingReveals > value.maxReveals)
+  ) {
+    throw new ViewerPayloadError();
+  }
   return {
     status: "active",
     availableAt: value.availableAt,
@@ -68,119 +118,281 @@ function parseStatus(value: unknown): ShareStatus {
     maxReveals: value.maxReveals,
     remainingReveals: value.remainingReveals,
     passwordRequired: false,
-    unlockRequired: false
+    unlockRequired: false,
   };
 }
 
 function parseReveal(value: unknown): ContentEnvelope {
   if (!record(value)) throw new ViewerPayloadError();
   exactKeys(value, ["contentEnvelope", "retryExpiresAt", "status"]);
-  if (value.status !== "authorized" || typeof value.retryExpiresAt !== "string") throw new ViewerPayloadError();
+  if (value.status !== "authorized" || typeof value.retryExpiresAt !== "string") {
+    throw new ViewerPayloadError();
+  }
   return validateContentEnvelope(value.contentEnvelope);
 }
 
-function formatDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.valueOf()) ? "an unknown time" : date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-}
+export type ViewerState =
+  | "checking"
+  | "incomplete"
+  | "network_error"
+  | "scheduled"
+  | "ready_unlimited"
+  | "ready_limited"
+  | "confirming"
+  | "pending"
+  | "opened"
+  | "unavailable";
 
 export function Viewer({ publicId }: { publicId: string }) {
+  const [state, setState] = useState<ViewerState>("checking");
   const [shareStatus, setShareStatus] = useState<ShareStatus | null>(null);
   const [linkSecret, setLinkSecret] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
-  const [message, setMessage] = useState("Checking this sealed share…");
-  const [isPending, setIsPending] = useState(false);
-  const [hasConfirmed, setHasConfirmed] = useState(false);
   const [requestToken, setRequestToken] = useState<string | null>(null);
 
-  const needsConfirmation = shareStatus?.status === "active" && shareStatus.maxReveals !== null && !hasConfirmed;
-  const actionLabel = useMemo(() => {
-    if (isPending) return "Opening…";
-    if (needsConfirmation) return "Confirm one reveal";
-    return "Open sealed note";
-  }, [isPending, needsConfirmation]);
+  async function checkShare() {
+    setState("checking");
+    try {
+      validatePublicId(publicId);
+      const fragment = window.location.hash.slice(1);
+      if (!fragment) {
+        setState("incomplete");
+        return;
+      }
+      validateLinkSecret(fragment);
+      setLinkSecret(fragment);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function checkShare() {
-      try {
-        validatePublicId(publicId);
-        const fragment = window.location.hash.slice(1);
-        if (!fragment) {
-          if (!cancelled) setMessage("This link is missing its key. Ask the sender for the complete link.");
+      const response = await fetch(`/api/shares/${encodeURIComponent(publicId)}/status`, {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        if (response.status === 404) {
+          setState("unavailable");
+          setShareStatus({ status: "unavailable" });
           return;
         }
-        validateLinkSecret(fragment);
-        if (!cancelled) setLinkSecret(fragment);
-        const response = await fetch(`/api/shares/${encodeURIComponent(publicId)}/status`, { cache: "no-store" });
-        if (!response.ok) throw new ViewerPayloadError();
-        const status = parseStatus(await response.json());
-        if (!cancelled) {
-          setShareStatus(status);
-          setMessage(status.status === "unavailable" ? "This share is unavailable." : status.status === "scheduled" ? `This share becomes available ${formatDate(status.availableAt)}.` : "This share is ready when you are.");
-        }
-      } catch {
-        if (!cancelled) {
-          setShareStatus({ status: "unavailable" });
-          setMessage("This share is unavailable or the link is malformed.");
-        }
+        setState("network_error");
+        return;
       }
+
+      const status = parseStatus(await response.json());
+      setShareStatus(status);
+
+      if (status.status === "unavailable") {
+        setState("unavailable");
+      } else if (status.status === "scheduled") {
+        setState("scheduled");
+      } else if (status.maxReveals === null) {
+        setState("ready_unlimited");
+      } else {
+        setState("ready_limited");
+      }
+    } catch {
+      setState("unavailable");
+      setShareStatus({ status: "unavailable" });
     }
+  }
+
+  useEffect(() => {
     void checkShare();
-    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicId]);
 
-  async function reveal() {
-    if (isPending || shareStatus?.status !== "active" || linkSecret === null) return;
-    if (needsConfirmation) {
-      setHasConfirmed(true);
-      setMessage("One reveal will be authorized if you continue. This cannot be undone.");
+  async function handleReveal() {
+    if (state === "pending" || !linkSecret || !shareStatus || shareStatus.status !== "active") {
       return;
     }
+
+    if (state === "ready_limited") {
+      setState("confirming");
+      return;
+    }
+
     const token = requestToken ?? bytesToBase64Url(randomBytes(32));
-    if (requestToken === null) setRequestToken(token);
-    setIsPending(true);
-    setMessage("Requesting the sealed ciphertext…");
+    if (!requestToken) setRequestToken(token);
+
+    setState("pending");
     try {
       const response = await fetch(`/api/shares/${encodeURIComponent(publicId)}/reveal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestToken: token })
+        body: JSON.stringify({ requestToken: token }),
       });
-      if (!response.ok) throw new ViewerPayloadError();
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          setState("unavailable");
+          setRequestToken(null);
+          return;
+        }
+        setState(shareStatus.maxReveals === null ? "ready_unlimited" : "ready_limited");
+        return;
+      }
+
       const envelope = parseReveal(await response.json());
       const plaintext = await openContent(envelope, publicId, linkSecret);
       setContent(plaintext);
-      setMessage("Opened locally. The server released ciphertext; this browser did the decryption.");
+      setState("opened");
       setRequestToken(null);
     } catch {
-      setMessage("This link could not be opened. Check the complete link and try again.");
-    } finally {
-      setIsPending(false);
+      setState("unavailable");
+      setRequestToken(null);
     }
   }
 
+  const prooflinePhase: ProoflinePhase = useMemo(() => {
+    switch (state) {
+      case "checking":
+        return "draft";
+      case "incomplete":
+      case "network_error":
+      case "unavailable":
+        return "unavailable";
+      case "scheduled":
+        return "scheduled";
+      case "ready_unlimited":
+      case "ready_limited":
+      case "confirming":
+        return "ready";
+      case "pending":
+        return "revealing";
+      case "opened":
+        return "opened";
+    }
+  }, [state]);
+
   return (
     <main className="viewer-shell" aria-labelledby="viewer-heading">
-      <p className="eyebrow"><span className="eyebrow-dot" aria-hidden="true" />SecureBin / sealed share</p>
-      <section className="viewer-card">
-        <h1 id="viewer-heading">A note sealed<br /><em>for the right eyes.</em></h1>
-        <p className="viewer-copy">The key in this link stays in your browser. SecureBin can only authorize and release the encrypted envelope.</p>
-        <p className="viewer-status" aria-live="polite" role="status">{message}</p>
-        {shareStatus?.status === "active" ? (
-          <>
-            <button className="viewer-action" disabled={isPending} onClick={() => void reveal()} type="button">
-              <span>{actionLabel}</span><span aria-hidden="true" className="button-arrow">↗</span>
+      <div className="viewer-header">
+        <Proofline phase={prooflinePhase} compact />
+      </div>
+
+      <div className="surface-card viewer-card">
+        <h1 id="viewer-heading" className="surface-heading">
+          {state === "opened" ? "Decrypted note" : "View private share"}
+        </h1>
+
+        {state === "checking" && (
+          <p className="viewer-status-text" role="status" aria-live="polite">
+            Checking this share…
+          </p>
+        )}
+
+        {state === "incomplete" && (
+          <div className="viewer-message-box" role="alert">
+            <p className="viewer-status-text">
+              This link is incomplete. Ask the sender for the full link.
+            </p>
+          </div>
+        )}
+
+        {state === "network_error" && (
+          <div className="viewer-message-box" role="alert">
+            <p className="viewer-status-text">We could not check this share.</p>
+            <button
+              type="button"
+              className="action-button primary-button"
+              onClick={() => void checkShare()}
+            >
+              Try again
             </button>
-            <div className="viewer-meta" aria-label="Share policy">
-              <span>Expires {formatDate(shareStatus.expiresAt)}</span>
-              <span>{shareStatus.maxReveals === null ? "Unlimited reveals" : `${shareStatus.remainingReveals} reveal${shareStatus.remainingReveals === 1 ? "" : "s"} remaining`}</span>
+          </div>
+        )}
+
+        {state === "scheduled" && shareStatus?.status === "scheduled" && (
+          <div className="viewer-message-box" role="status">
+            <p className="viewer-status-text">
+              This share becomes available {formatLocalizedDateTime(shareStatus.availableAt)}.
+            </p>
+          </div>
+        )}
+
+        {state === "ready_unlimited" && (
+          <div className="viewer-action-box">
+            <p className="viewer-status-text">Ready to reveal</p>
+            <button
+              type="button"
+              className="action-button primary-button"
+              onClick={() => void handleReveal()}
+            >
+              Reveal
+            </button>
+          </div>
+        )}
+
+        {state === "ready_limited" && (
+          <div className="viewer-action-box">
+            <p className="viewer-status-text">This authorizes one ciphertext release.</p>
+            <button
+              type="button"
+              className="action-button primary-button"
+              onClick={() => void handleReveal()}
+            >
+              Reveal once
+            </button>
+          </div>
+        )}
+
+        {state === "confirming" && (
+          <div className="viewer-confirm-box" role="alert">
+            <p className="viewer-confirm-text">
+              Continue? This cannot restore the consumed authorization.
+            </p>
+            <div className="viewer-confirm-actions">
+              <button
+                type="button"
+                className="action-button primary-button"
+                onClick={() => void handleReveal()}
+              >
+                Continue
+              </button>
+              <button
+                type="button"
+                className="action-button secondary-button"
+                onClick={() => setState("ready_limited")}
+              >
+                Cancel
+              </button>
             </div>
-          </>
-        ) : null}
-        {content !== null ? <article className="decrypted-note" aria-label="Decrypted note"><p>{content}</p></article> : null}
-        <p className="viewer-link">Public ID: <span>{publicId}</span></p>
-      </section>
+          </div>
+        )}
+
+        {state === "pending" && (
+          <div className="viewer-action-box">
+            <p className="viewer-status-text" role="status" aria-live="polite">
+              Authorizing one reveal…
+            </p>
+            <button type="button" className="action-button primary-button" disabled>
+              Opening…
+            </button>
+          </div>
+        )}
+
+        {state === "opened" && content !== null && (
+          <div className="viewer-opened-box">
+            <p className="viewer-success-note">
+              Opened locally. The server released ciphertext; this browser did the decryption.
+            </p>
+            <article className="decrypted-content-box" aria-label="Decrypted note">
+              <pre className="decrypted-text">{content}</pre>
+            </article>
+          </div>
+        )}
+
+        {state === "unavailable" && (
+          <div className="viewer-message-box" role="alert">
+            <p className="viewer-status-text">
+              This share is no longer available. Ask the sender for a new link.
+            </p>
+          </div>
+        )}
+
+        <div className="viewer-footer">
+          <p className="public-id-tag">
+            Public ID: <code>{publicId}</code>
+          </p>
+        </div>
+      </div>
     </main>
   );
 }

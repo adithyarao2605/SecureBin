@@ -37,19 +37,48 @@ Updated: 2026-08-21 (Asia/Kolkata)
 - Completed Day 2 Phase 7 (Upload reservation boundary): created `app/api/uploads/route.ts`, `lib/server/upload-routes.ts`, `lib/server/upload-service.ts`, `lib/server/storage.ts`, `tests/unit/api/upload-routes.test.ts`, and `tests/integration/upload-service.test.ts`. Removed client upload bearer tokens entirely in favor of binding reservations directly to `(public_id, idempotency_key_hash)` tuple. Generated signed upload operations via pinned `@supabase/supabase-js@2.50.0` with session persistence disabled.
 - Completed Day 2 Phase 8 (Cleanup operation): created `lib/server/cleanup-service.ts`, `lib/server/cleanup-routes.ts`, `app/api/internal/cleanup/route.ts`, `tests/unit/api/cleanup-route.test.ts`, and `tests/integration/cleanup-service.test.ts`. Added server-only `CRON_SECRET` authentication using constant-time comparison, safe storage object candidate validation, and atomic database row finalization for expired shares, abandoned upload reservations, stale reveal leases, and expired rate-limit buckets.
 - Completed Day 2 Phase 9 (Safe observability and rate limiting): created `lib/server/observability.ts` and `tests/unit/api/observability.test.ts`. Implemented strict request ID validation/sanitization, coarse status classification, coarse payload size bucketing, and structured audit logs with zero-knowledge property guarantees (strictly omitting content, ciphertext, fragments, keys, passwords, unlock codes, tokens, capabilities, IP addresses, filenames, and MIME types).
-- Validation passed across pgTAP (54 tests), lint, strict typecheck, 50 unit tests, production build, 12 integration tests, and reproducibility check.
+- Completed Day 2 Phase 10 (Day 2 UI controls & Quiet Proof Design System):
+  * Extracted and implemented the approved design contract from Stitch MCP project **`SecureBin Quiet Proof Design System v1`** (`projects/12991627127209989717`).
+  * Created `lib/shares/policy-ui.ts` (pure date/time/policy mapping and validation helpers) and `tests/unit/policy-ui.test.ts`.
+  * Created `app/components/proofline.tsx` (restrained 3-node lifecycle flow visualizer with accessible text states).
+  * Created `app/components/evidence-rail.tsx` (sidebar summarizing access policy and browser trust boundary).
+  * Created `app/components/policy-controls.tsx` (accessible native controls for availability scheduling, expiry presets 24h/7d/30d, and reveal limits Burn/3/5/10/Unlimited).
+  * Updated `app/components/composer.tsx` with idempotency retry preservation (`PreparedAttempt`), revocation action, and exact copy.
+  * Updated `app/s/[publicId]/viewer.tsx` with complete 10-state lifecycle state machine and client-side retry token preservation.
+  * Updated `app/globals.css` with Quiet Proof color palette, typography tokens, light/dark themes, and responsive layout.
+  * Updated E2E and Axe accessibility test suites (`tests/e2e/home.spec.ts`, `tests/e2e/secure-share.spec.ts`, `tests/a11y/viewer.spec.ts`).
+- Cleaned up dangling Docker containers; verified local Supabase containers are healthy.
+- Full validation passed across 56 unit tests, 12 integration tests, 3 Playwright E2E tests, 2 Playwright Axe accessibility tests, 54 pgTAP tests, lint, strict typecheck, production build, and reproducibility verification.
 
 ## Validation
 
-- `pnpm validate`: passed (lint, strict typecheck, 50 unit tests, production build).
+- `pnpm validate`: passed (lint, strict typecheck, 56 unit tests, production build).
 - `pnpm test:integration`: passed (12 integration tests across share service, concurrency, upload service, and cleanup service).
+- `pnpm test:e2e`: passed (3/3 Playwright browser tests).
+- `pnpm test:a11y`: passed (2/2 Playwright Axe accessibility tests, 0 critical violations).
 - `pnpm supabase:test`: passed (54 pgTAP tests: 25 foundation + 29 policy and role isolation).
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed.
 
 ## Remaining / Blockers
 
-- Day 2 Phase 9 complete. Next step: Phase 10 (Day 2 UI - Expose lifecycle policy controls: expiry bounds, scheduled availability, reveal limits).
-- Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
+- Day 2 Phases 4–10 are 100% complete and fully verified!
+- Next: Day 3 preparation (attachments, two-channel factors, password authentication, Markdown sanitizer, and Privacy Receipt generation).
+
+## Deployment Instructions (Owner-Operated)
+
+To deploy or update production:
+1. Ensure the following environment variables are set in your hosting platform (e.g. Vercel):
+   - `NEXT_PUBLIC_APP_URL`: Production origin (e.g. `https://your-domain.com`)
+   - `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL (`https://<project-ref>.supabase.co`)
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase project anon/public key
+   - `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role secret key (server-only)
+   - `RATE_LIMIT_HMAC_KEY`: 32+ byte random secret for rate limit IP discriminator hashing
+   - `CRON_SECRET`: Random secret for authenticating `POST /api/internal/cleanup`
+2. Push database migrations to remote Supabase:
+   ```bash
+   pnpm supabase db push
+   ```
+3. Set up recurring cron (e.g. every 10–30 mins) to call `POST https://<your-domain>/api/internal/cleanup` with header `Authorization: Bearer <CRON_SECRET>`.
 
 ## Recent Commits
 

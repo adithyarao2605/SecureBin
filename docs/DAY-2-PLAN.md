@@ -287,7 +287,7 @@ Commit: `feat(api): add safe request auditing`
 
 ## 10. Day 2 UI
 
-Follow [`DAY-2-UI.md`](DAY-2-UI.md). Exact mapping:
+Follow [`DAY-2-UI.md`](DAY-2-UI.md) and the approved design system in Stitch MCP project **`SecureBin Quiet Proof Design System v1`** (`projects/12991627127209989717`). Exact mapping:
 
 ```text
 Available now -> null

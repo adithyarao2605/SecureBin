@@ -2,10 +2,9 @@
 
 Status: **approved Day 2 design contract**
 
-Implementation plan: [`DAY-2-PLAN.md`](DAY-2-PLAN.md)
+Design Source: **Stitch MCP Project: `SecureBin Quiet Proof Design System v1`** (`projects/12991627127209989717`)
 
-Do not implement this UI while
-[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md) remains open.
+Implementation plan: [`DAY-2-PLAN.md`](DAY-2-PLAN.md)
 
 ## Product idea
 
