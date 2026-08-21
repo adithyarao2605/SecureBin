@@ -158,7 +158,7 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [state, setState] = useState<ViewerState>("checking");
   const [shareStatus, setShareStatus] = useState<ShareStatus | null>(null);
   const [linkSecret, setLinkSecret] = useState<string | null>(null);
-  const [content, setContent] = useState<string | null>(null);
+  const [content, setContent] = useState<import("../../../lib/crypto/payload").ContentPayload | null>(null);
   const [requestToken, setRequestToken] = useState<string | null>(null);
   const requestTokenRef = useRef<string | null>(null);
   const revealInFlightRef = useRef(false);
@@ -401,7 +401,7 @@ export function Viewer({ publicId }: { publicId: string }) {
               Opened locally. The server released ciphertext; this browser did the decryption.
             </p>
             <article className="decrypted-content-box" aria-label="Decrypted note">
-              <pre className="decrypted-text">{content}</pre>
+              <pre className="decrypted-text">{content.text}</pre>
             </article>
           </div>
         )}

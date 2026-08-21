@@ -72,7 +72,7 @@ async function renderReady(fetchMock: ReturnType<typeof vi.fn>) {
 describe("viewer reveal retry token", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedOpenContent.mockResolvedValue("opened locally");
+    mockedOpenContent.mockResolvedValue({ mode: "note", text: "opened locally" });
   });
 
   it.each(retryFailures)("reuses the byte-identical token after %s", async (_failure, failure) => {
