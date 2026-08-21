@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   description: "Browser-encrypted sharing for sensitive notes and files.",
   applicationName: "SecureBin",
   referrer: "no-referrer",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

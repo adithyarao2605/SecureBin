@@ -47,6 +47,8 @@ Updated: 2026-08-21 (Asia/Kolkata)
   * Updated `app/s/[publicId]/viewer.tsx` with complete 10-state lifecycle state machine and client-side retry token preservation.
   * Updated `app/globals.css` with Quiet Proof color palette, typography tokens, light/dark themes, and responsive layout.
   * Enhanced `app/components/theme-toggle.tsx` with dedicated Light/Dark/Auto SVG segmented toggle and system media query listener.
+  * Added bespoke SVG site icon (`app/icon.svg`, `public/icon.svg`, `app/layout.tsx`) with dark/light vault geometry and mineral accent.
+  * Enriched the **Evidence Rail** (`app/components/evidence-rail.tsx`, `app/globals.css`) with a complete Zero-Knowledge Architecture Flowchart and security invariants checklist balancing vertical height with the Composer desk.
   * Added custom reveal limits (`1` to `100`) across database constraint (`supabase/migrations/20260821000000_day2_policy_hardening.sql`), contracts (`lib/shares/contracts.ts`), UI validation (`lib/shares/policy-ui.ts`), accessible native controls (`app/components/policy-controls.tsx`), and automated tests (`tests/unit/policy-ui.test.ts`, `tests/e2e/home.spec.ts`).
   * Applied Stitch OLED pure black dark mode palette (`#000000` canvas, `#0d0d0d` cards, `#141414` controls, `#79b8b0` mineral green actions) with high-contrast monochrome typography.
   * Added top-level tabbed navigation (`app/page.tsx`, `app/globals.css`) organizing the interface into accessible panels: **New share**, **My shares** (with dynamic count badge and empty state switch), and **How it works** (with refined principle cards and boundary architecture).
