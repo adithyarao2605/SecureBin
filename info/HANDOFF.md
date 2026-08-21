@@ -38,14 +38,15 @@ Updated: 2026-08-21 (Asia/Kolkata)
 
 ## Remaining / Blockers
 
-- A live host exists (`https://secure-bin.vercel.app/`); verify the redeployed commit containing the viewer schema fix.
+- Production deployment at `https://secure-bin.vercel.app/` is verified working end-to-end (create, status, reveal, decrypt). `docs/PRODUCTION-INCIDENT.md` is closed.
+- Ready to proceed with Day 2 implementation (`docs/DAY-2-PLAN.md` and `docs/DAY-2-UI.md`).
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
 
 ## Recent Commits
 
+- `fd7e0db fix(contracts): accept PostgREST timestamptz formats in share status`
+- `0c93b5c fix(viewer): match exact status and reveal response payloads`
 - `53b5533 docs: hand off production create incident`
 - `7cd519f docs: add detailed Day 2 and Day 3 plans`
 - `c07804a fix(api): support Supabase secret keys`
 - `6c756ca fix(ui): remove meta-facing copy`
-- `3bfbeb6 docs: fix clean-clone browser setup`
-- `640f841 docs: record CI and release handoff`

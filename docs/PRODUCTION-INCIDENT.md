@@ -1,11 +1,18 @@
 # Production incident handoff: share creation
 
-Status: **open — do not claim the production Day 1 flow works**
+Status: **resolved and closed**
 
-This document gives the next maintainer the evidence and safe investigation
-order for the unresolved production failure at
-`https://secure-bin.vercel.app/`. It is a diagnostic handoff, not a proposed
-database change and not proof of a root cause.
+This document records the diagnostic history, root causes, and verification
+evidence for the production create and viewer issues at
+`https://secure-bin.vercel.app/`.
+
+## Resolution Summary
+
+1. **Authentication & RPC Header:** Commit `c07804a` fixed Supabase `sb_secret_...` key authentication by sending it through the `apikey` header instead of `Authorization: Bearer`.
+2. **Viewer Response Schema:** Commit `0c93b5c` fixed client-side exact key validation in `app/s/[publicId]/viewer.tsx` to expect the full 7-key status payload (`availableAt` included) and 3-key reveal payload (`status`, `contentEnvelope`, `retryExpiresAt`).
+3. **PostgREST Timestamp Parsing:** Commit `fd7e0db` broadened `ISO_UTC_PATTERN` in `lib/shares/contracts.ts` and normalized `timestamptz` strings from PostgREST (`+00:00` offset format) to ISO UTC strings in `getStatus` and `reveal`.
+
+Live testing confirmed `GET /api/health` (200), `POST /api/shares` (201), `GET /api/shares/[id]/status` (200), and `POST /api/shares/[id]/reveal` (200) all operate cleanly.
 
 ## User-visible symptom
 
