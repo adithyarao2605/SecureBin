@@ -10,7 +10,8 @@ export type ApiErrorCode =
   | "invalid_request"
   | "unavailable"
   | "rate_limited"
-  | "server_error";
+  | "server_error"
+  | "idempotency_conflict";
 
 export function jsonResponse(body: unknown, status = 200): NextResponse {
   return NextResponse.json(body, { status, headers: JSON_HEADERS });

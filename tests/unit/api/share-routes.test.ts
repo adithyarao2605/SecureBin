@@ -13,7 +13,7 @@ import {
   parseStatus,
   VALID_MAX_REVEALS,
 } from "@/lib/shares/contracts";
-import type { ShareService } from "@/lib/server/share-service";
+import { ShareServiceError, type ShareService } from "@/lib/server/share-service";
 
 const publicId = "AQEBAQEBAQEBAQEBAQEBAQ";
 const digest = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE";
@@ -53,7 +53,7 @@ function dependencies(service: Partial<ShareService> = {}): ShareRouteDependenci
 }
 
 function validPayload(overrides: Record<string, unknown> = {}) {
-  const now = 1_700_000_000_000;
+  const now = Date.now();
   return {
     publicId,
     contentEnvelope: envelope,
@@ -310,5 +310,17 @@ describe("share route handlers", () => {
       unlockRequired: false,
     };
     expect(parseCreateShareInput(input)).toBeNull();
+  });
+
+  it("returns HTTP 409 and idempotency_conflict on create conflict", async () => {
+    const deps = dependencies();
+    deps.service.createShare = vi.fn().mockRejectedValue(new ShareServiceError("conflict"));
+    const handler = createPostShareHandler(deps);
+    const response = await handler(new Request("http://localhost/api/shares", {
+      method: "POST",
+      body: JSON.stringify(validPayload()),
+    }));
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({ error: "idempotency_conflict" });
   });
 });

@@ -53,6 +53,9 @@ export function createPostShareHandler(dependencies: ShareRouteDependencies): (r
         },
       }, 201);
     } catch (error) {
+      if (error instanceof ShareServiceError && error.kind === "conflict") {
+        return errorResponse("idempotency_conflict", 409);
+      }
       return isDependencyFailure(error) ? errorResponse("server_error", 503) : errorResponse("server_error", 500);
     }
   };

@@ -37,8 +37,8 @@ select ok(
   'canonical unpadded base64url decodes to 12 bytes'
 );
 
-select has_function('public', 'create_upload_reservation', array['bytea','bigint'], 'reservation RPC exists');
-select has_function('public', 'create_share', array['text','jsonb','timestamp with time zone','timestamp with time zone','integer','bytea','boolean','boolean','bytea','bytea','jsonb','bigint'], 'share creation RPC exists');
+select has_function('public', 'create_upload_reservation', array['text','bytea','jsonb','bigint'], 'reservation RPC exists');
+select has_function('public', 'create_share', array['text','jsonb','timestamp with time zone','timestamp with time zone','integer','bytea','boolean','boolean','bytea','jsonb','bigint'], 'share creation RPC exists');
 select has_function('public', 'get_share_status', array['text'], 'status RPC exists');
 select has_function('public', 'reveal_share', array['text','bytea'], 'atomic reveal RPC exists');
 select has_function('public', 'revoke_share', array['text','bytea'], 'revocation RPC exists');

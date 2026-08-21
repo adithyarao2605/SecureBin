@@ -81,7 +81,7 @@ function bytea(base64UrlValue: string): string {
 }
 
 describe("share service RPC mapping", () => {
-  it("maps create arguments without exposing plaintext and hashes upload capabilities", async () => {
+  it("maps create arguments without exposing plaintext and matches 11-arg signature", async () => {
     const rpc = new FakeRpcClient();
     const service = createShareService(rpc);
 
@@ -93,8 +93,27 @@ describe("share service RPC mapping", () => {
     expect(call?.args.p_content_envelope).toBe(contentEnvelope);
     expect(call?.args.p_delete_token_hash).toBe(bytea(digest));
     expect(call?.args.p_idempotency_key_hash).toBe(bytea(digest));
-    expect(call?.args.p_reservation_token_hash).toBe("\\x1f97981b2ce3956f7971a7460e23ce391d845f27c5aa5e33859e394bf861b779");
+    expect(call?.args.p_file_envelope).toBeNull();
+    expect(call?.args.p_file_ciphertext_size).toBeNull();
+    expect(call?.args).not.toHaveProperty("p_reservation_token_hash");
     expect(call?.args).not.toHaveProperty("plaintext");
+  });
+
+  it("maps SQLSTATE 23505 or idempotency_conflict to ShareServiceError with conflict kind", async () => {
+    class ConflictRpcClient implements RpcClient {
+      async call(): Promise<unknown> {
+        const error = new Error("idempotency_conflict");
+        (error as unknown as { code: string; errorDetails: string }).code = "23505";
+        (error as unknown as { code: string; errorDetails: string }).errorDetails = "idempotency_conflict";
+        throw error;
+      }
+    }
+
+    const service = createShareService(new ConflictRpcClient());
+    await expect(service.createShare(createInput)).rejects.toMatchObject({
+      name: "ShareServiceError",
+      kind: "conflict",
+    });
   });
 
   it("maps status, preserves ciphertext on reveal, and hashes raw retry/delete capabilities", async () => {

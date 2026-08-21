@@ -27,9 +27,9 @@ export interface ShareService {
 export type RateLimitAction = "upload" | "create" | "status" | "reveal" | "delete";
 
 export class ShareServiceError extends Error {
-  readonly kind: "dependency" | "invalid";
+  readonly kind: "dependency" | "invalid" | "conflict";
 
-  constructor(kind: "dependency" | "invalid") {
+  constructor(kind: "dependency" | "invalid" | "conflict") {
     super("SecureBin share operation failed");
     this.name = "ShareServiceError";
     this.kind = kind;
@@ -85,7 +85,6 @@ export function createShareService(rpc: RpcClient = createRpcClient()): ShareSer
           p_password_required: input.passwordRequired,
           p_unlock_required: input.unlockRequired,
           p_idempotency_key_hash: bytesHex(input.idempotencyKeyHash),
-          p_reservation_token_hash: input.uploadReservationCapability ? bytesHex(sha256Base64Url(input.uploadReservationCapability)) : null,
           p_file_envelope: input.fileEnvelope,
           p_file_ciphertext_size: input.fileCiphertextSize,
         });
@@ -94,6 +93,14 @@ export function createShareService(rpc: RpcClient = createRpcClient()): ShareSer
         return { publicId: row.public_id, created: row.created };
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
+        if (
+          error &&
+          typeof error === "object" &&
+          "code" in error &&
+          (error.code === "23505" || ("errorDetails" in error && typeof error.errorDetails === "string" && error.errorDetails.includes("idempotency_conflict")))
+        ) {
+          throw new ShareServiceError("conflict");
+        }
         throw dependencyError();
       }
     },

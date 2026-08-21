@@ -27,19 +27,19 @@ Updated: 2026-08-21 (Asia/Kolkata)
 - Diagnosed and fixed client-side schema validation in `app/s/[publicId]/viewer.tsx`: `parseStatus` was missing `availableAt` from its expected keys check, and `parseReveal` was missing `status` and `retryExpiresAt`. This caused the viewer on live deployments to throw a validation error when loading valid share status or opening valid reveals. Updated Playwright E2E and accessibility test fixtures to match the exact server API contract.
 - Diagnosed and fixed server-side timestamp parsing in `lib/shares/contracts.ts` and `lib/server/share-service.ts`: `ISO_UTC_PATTERN` required a strict trailing `Z` with at most 3 decimal digits, rejecting valid PostgREST `timestamptz` responses with offset formats (such as `+00:00`) or microsecond timestamps. Broadened `ISO_UTC_PATTERN` and normalized all parsed timestamps to ISO UTC strings in `getStatus` and `reveal`.
 - Completed Day 2 Phase 4 (Freeze contracts and fixtures): centralized `MaxReveals = 1 | 3 | 5 | 10 | null`, added deterministic controllable clock verification for expiry and scheduled bounds, locked active/scheduled/unavailable/limited/burn fixtures, and asserted uniform unavailable responses.
-- Validation passed across lint, strict typecheck, 28 unit tests, production build, 3 integration tests, 3 Chromium E2E tests, 2 axe accessibility tests, and reproducibility check.
+- Completed Day 2 Phase 5 (Database policy hardening): created migration `20260821000000_day2_policy_hardening.sql` and test suite `supabase/tests/02_policy.sql`. Implemented strict idempotent create with full input comparison and SQLSTATE 23505 `idempotency_conflict` mapping to HTTP 409, bound upload reservations directly to `(reserved_public_id, idempotency_key_hash)`, hardened atomic row-locked reveal leasing and revocation, and revoked lifecycle execution from public/anon/authenticated roles.
+- Validation passed across pgTAP (46 tests), lint, strict typecheck, 29 unit tests, production build, 4 integration tests, and reproducibility check.
 
 ## Validation
 
-- `pnpm validate`: passed (lint, strict typecheck, 28 unit tests, production build).
-- `pnpm test:integration`: passed (3 tests).
-- `pnpm test:e2e`: passed (3 Chromium tests).
-- `pnpm test:a11y`: passed (2 Chromium/axe tests).
+- `pnpm validate`: passed (lint, strict typecheck, 29 unit tests, production build).
+- `pnpm test:integration`: passed (4 tests).
+- `pnpm supabase:test`: passed (46 pgTAP tests: 25 foundation + 21 policy).
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed.
 
 ## Remaining / Blockers
 
-- Day 2 Phase 4 complete. Next step: Phase 5 (Database policy hardening in new migration).
+- Day 2 Phase 5 complete. Next step: Phase 6 (Real concurrency and access evidence in `tests/integration/reveal-concurrency.test.ts`).
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
 
 ## Recent Commits

@@ -3,12 +3,14 @@ import { readServerConfig, type ServerConfig } from "./config";
 export class RpcRequestError extends Error {
   readonly status: number;
   readonly code: string | null;
+  readonly errorDetails: string | null;
 
-  constructor(status: number, code: string | null) {
+  constructor(status: number, code: string | null, errorDetails: string | null = null) {
     super("SecureBin server dependency request failed");
     this.name = "RpcRequestError";
     this.status = status;
     this.code = code;
+    this.errorDetails = errorDetails;
   }
 }
 
@@ -39,19 +41,22 @@ export function createRpcClient(config: ServerConfig = readServerConfig()): RpcC
           cache: "no-store",
         });
       } catch {
-        throw new RpcRequestError(503, null);
+        throw new RpcRequestError(503, null, null);
       }
       if (!response.ok) {
         let code: string | null = null;
+        let details: string | null = null;
         try {
           const payload: unknown = await response.json();
-          if (typeof payload === "object" && payload !== null && "code" in payload && typeof payload.code === "string") {
-            code = payload.code;
+          if (typeof payload === "object" && payload !== null) {
+            if ("code" in payload && typeof payload.code === "string") code = payload.code;
+            if ("message" in payload && typeof payload.message === "string") details = payload.message;
           }
         } catch {
           code = null;
+          details = null;
         }
-        throw new RpcRequestError(response.status, code);
+        throw new RpcRequestError(response.status, code, details);
       }
       try {
         const payload: unknown = await response.json();

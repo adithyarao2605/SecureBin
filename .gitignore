@@ -39,3 +39,6 @@ supabase/.branches/
 !/info/HANDOFF.md
 /info/plan.md
 /info/PrivateBin/
+
+# Local Antigravity MCP credentials
+.agents/mcp_config.json
