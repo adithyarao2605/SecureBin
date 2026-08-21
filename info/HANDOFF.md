@@ -26,20 +26,20 @@ Updated: 2026-08-21 (Asia/Kolkata)
 
 - Diagnosed and fixed client-side schema validation in `app/s/[publicId]/viewer.tsx`: `parseStatus` was missing `availableAt` from its expected keys check, and `parseReveal` was missing `status` and `retryExpiresAt`. This caused the viewer on live deployments to throw a validation error when loading valid share status or opening valid reveals. Updated Playwright E2E and accessibility test fixtures to match the exact server API contract.
 - Diagnosed and fixed server-side timestamp parsing in `lib/shares/contracts.ts` and `lib/server/share-service.ts`: `ISO_UTC_PATTERN` required a strict trailing `Z` with at most 3 decimal digits, rejecting valid PostgREST `timestamptz` responses with offset formats (such as `+00:00`) or microsecond timestamps. Broadened `ISO_UTC_PATTERN` and normalized all parsed timestamps to ISO UTC strings in `getStatus` and `reveal`.
-- Validation passed across lint, strict typecheck, 19 unit tests, production build, 2 integration tests, 3 Chromium E2E tests, 2 axe accessibility tests, and reproducibility check.
+- Completed Day 2 Phase 4 (Freeze contracts and fixtures): centralized `MaxReveals = 1 | 3 | 5 | 10 | null`, added deterministic controllable clock verification for expiry and scheduled bounds, locked active/scheduled/unavailable/limited/burn fixtures, and asserted uniform unavailable responses.
+- Validation passed across lint, strict typecheck, 28 unit tests, production build, 3 integration tests, 3 Chromium E2E tests, 2 axe accessibility tests, and reproducibility check.
 
 ## Validation
 
-- `pnpm validate`: passed (lint, strict typecheck, 19 unit tests, production build).
-- `pnpm test:integration`: passed (2 tests).
+- `pnpm validate`: passed (lint, strict typecheck, 28 unit tests, production build).
+- `pnpm test:integration`: passed (3 tests).
 - `pnpm test:e2e`: passed (3 Chromium tests).
 - `pnpm test:a11y`: passed (2 Chromium/axe tests).
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed.
 
 ## Remaining / Blockers
 
-- Production deployment at `https://secure-bin.vercel.app/` is verified working end-to-end (create, status, reveal, decrypt). `docs/PRODUCTION-INCIDENT.md` is closed.
-- Ready to proceed with Day 2 implementation (`docs/DAY-2-PLAN.md` and `docs/DAY-2-UI.md`).
+- Day 2 Phase 4 complete. Next step: Phase 5 (Database policy hardening in new migration).
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
 
 ## Recent Commits

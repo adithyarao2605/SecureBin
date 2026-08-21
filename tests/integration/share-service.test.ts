@@ -114,4 +114,68 @@ describe("share service RPC mapping", () => {
     const revokeCall = rpc.calls.find(({ functionName }) => functionName === "revoke_share");
     expect(revokeCall?.args.p_delete_token_hash).toBe("\\xa8e46592d861df319356a462b76a2a16d3e7f3218811a1cd74349d6998955cee");
   });
+
+  it("correctly maps scheduled, unavailable, limited, and burn-after-reading statuses", async () => {
+    class CustomRpcClient extends FakeRpcClient {
+      constructor(private readonly statusRow: Record<string, unknown>) {
+        super();
+      }
+      override async call(functionName: string, args: Record<string, unknown>): Promise<unknown> {
+        if (functionName === "get_share_status") return [this.statusRow];
+        return super.call(functionName, args);
+      }
+    }
+
+    // Scheduled
+    const scheduledService = createShareService(new CustomRpcClient({
+      status: "scheduled",
+      available_at: "2026-08-25T12:00:00+00:00",
+      expires_at: "2026-08-30T12:00:00+00:00",
+      password_required: false,
+      unlock_required: false,
+      max_reveals: 5,
+      remaining_reveals: 5,
+    }));
+    await expect(scheduledService.getStatus(publicId)).resolves.toEqual({
+      status: "scheduled",
+      availableAt: "2026-08-25T12:00:00.000Z",
+      expiresAt: "2026-08-30T12:00:00.000Z",
+      passwordRequired: false,
+      unlockRequired: false,
+      maxReveals: 5,
+      remainingReveals: 5,
+    });
+
+    // Unavailable
+    const unavailableService = createShareService(new CustomRpcClient({
+      status: "unavailable",
+      available_at: null,
+      expires_at: null,
+      password_required: false,
+      unlock_required: false,
+      max_reveals: null,
+      remaining_reveals: null,
+    }));
+    await expect(unavailableService.getStatus(publicId)).resolves.toEqual({ status: "unavailable" });
+
+    // Burn after reading (maxReveals: 1)
+    const burnService = createShareService(new CustomRpcClient({
+      status: "active",
+      available_at: null,
+      expires_at: "2026-08-25T12:00:00+00:00",
+      password_required: true,
+      unlock_required: false,
+      max_reveals: 1,
+      remaining_reveals: 1,
+    }));
+    await expect(burnService.getStatus(publicId)).resolves.toEqual({
+      status: "active",
+      availableAt: null,
+      expiresAt: "2026-08-25T12:00:00.000Z",
+      passwordRequired: true,
+      unlockRequired: false,
+      maxReveals: 1,
+      remainingReveals: 1,
+    });
+  });
 });

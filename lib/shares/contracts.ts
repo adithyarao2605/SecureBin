@@ -37,12 +37,15 @@ export interface Envelope {
   readonly ciphertext?: string;
 }
 
+export type MaxReveals = 1 | 3 | 5 | 10 | null;
+export const VALID_MAX_REVEALS = [1, 3, 5, 10, null] as const;
+
 export interface CreateShareInput {
   readonly publicId: string;
   readonly contentEnvelope: Envelope & { readonly objectType: "content"; readonly ciphertext: string };
   readonly availableAt: string | null;
   readonly expiresAt: string;
-  readonly maxReveals: 1 | 3 | 5 | 10 | null;
+  readonly maxReveals: MaxReveals;
   readonly deleteTokenHash: string;
   readonly passwordRequired: boolean;
   readonly unlockRequired: boolean;
@@ -55,7 +58,7 @@ export interface CreateShareInput {
 interface SharePolicyInput {
   readonly availableAt: string | null;
   readonly expiresAt: string;
-  readonly maxReveals: 1 | 3 | 5 | 10 | null;
+  readonly maxReveals: MaxReveals;
 }
 
 export interface RevealInput {
@@ -69,7 +72,7 @@ export interface DeleteInput {
 export interface SharePolicy {
   readonly availableAt: string | null;
   readonly expiresAt: string;
-  readonly maxReveals: 1 | 3 | 5 | 10 | null;
+  readonly maxReveals: MaxReveals;
   readonly passwordRequired: boolean;
   readonly unlockRequired: boolean;
   readonly remainingReveals: number | null;
@@ -149,7 +152,7 @@ function parseFactorMask(value: unknown): value is FactorMask {
   return value === "link" || value === "link+password" || value === "link+unlock" || value === "link+password+unlock";
 }
 
-function isMaxReveals(value: unknown): value is 1 | 3 | 5 | 10 | null {
+export function isMaxReveals(value: unknown): value is MaxReveals {
   return value === null || value === 1 || value === 3 || value === 5 || value === 10;
 }
 
@@ -198,7 +201,7 @@ export function parseFileEnvelope(value: unknown): CreateShareInput["fileEnvelop
   return envelope as CreateShareInput["fileEnvelope"] | null;
 }
 
-export function parseCreateShareInput(value: unknown): CreateShareInput | null {
+export function parseCreateShareInput(value: unknown, nowMillis: number = Date.now()): CreateShareInput | null {
   if (!isRecord(value) || !hasOnlyKeys(value,
     ["contentEnvelope", "deleteTokenHash", "idempotencyKeyHash", "passwordRequired", "policy", "publicId", "unlockRequired"],
     ["fileCiphertextSize", "fileEnvelope", "uploadReservationCapability"],
@@ -218,8 +221,7 @@ export function parseCreateShareInput(value: unknown): CreateShareInput | null {
   const expiresAt = parseIsoUtc(value.policy.expiresAt);
   if (value.policy.availableAt !== null && availableAt === null || expiresAt === null) return null;
   const expiryMillis = Date.parse(expiresAt);
-  const now = Date.now();
-  if (expiryMillis <= now || expiryMillis > now + MAX_EXPIRY_DAYS * 86_400_000) return null;
+  if (expiryMillis <= nowMillis || expiryMillis > nowMillis + MAX_EXPIRY_DAYS * 86_400_000) return null;
   if (availableAt !== null && Date.parse(availableAt) >= expiryMillis) return null;
   const uploadReservationCapability = value.uploadReservationCapability === undefined || value.uploadReservationCapability === null ? null : value.uploadReservationCapability;
   const fileEnvelope = value.fileEnvelope === undefined || value.fileEnvelope === null ? null : parseFileEnvelope(value.fileEnvelope);
