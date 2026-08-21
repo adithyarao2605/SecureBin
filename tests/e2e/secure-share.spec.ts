@@ -83,6 +83,7 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
         contentType: "application/json",
         body: JSON.stringify({
           status: "active",
+          availableAt: null,
           expiresAt: "2099-01-01T00:00:00.000Z",
           maxReveals: null,
           remainingReveals: null,
@@ -94,7 +95,14 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
     }
 
     if (pathname.endsWith("/reveal") && request.method() === "POST") {
-      await route.fulfill({ contentType: "application/json", body: JSON.stringify({ contentEnvelope: capture.envelope }) });
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          status: "authorized",
+          contentEnvelope: capture.envelope,
+          retryExpiresAt: "2099-01-01T00:05:00.000Z"
+        })
+      });
       return;
     }
 

@@ -10,6 +10,7 @@ test("the ready viewer has no critical accessibility violations", async ({ page 
       contentType: "application/json",
       body: JSON.stringify({
         status: "active",
+        availableAt: null,
         expiresAt: "2099-01-01T00:00:00.000Z",
         maxReveals: null,
         remainingReveals: null,

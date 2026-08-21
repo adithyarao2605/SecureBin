@@ -24,43 +24,27 @@ Updated: 2026-08-21 (Asia/Kolkata)
 - Re-tested production on 2026-08-21: `/api/health` returned 200, but synthetic create still returned 503. A correlated Supabase Postgres log proved the RPC executed and raised SQLSTATE `22023` `invalid content envelope`; a later direct synthetic envelope against the same project/key form returned 200. Authentication is therefore no longer the leading boundary. The exact friend workflow is in `docs/PRODUCTION-INCIDENT.md`.
 - Added `docs/PRODUCTION-INCIDENT.md` and synchronized every maintained repository document with the open production blocker, safe friend access, evidence-led diagnostic order, redaction boundary, decision table, and closure criteria. A Luna-high reconnaissance pass informed the handoff; the user explicitly cancelled the final audit and requested immediate push. No tests were run in this final documentation run at the user’s request.
 
+- Diagnosed and fixed client-side schema validation in `app/s/[publicId]/viewer.tsx`: `parseStatus` was missing `availableAt` from its expected keys check, and `parseReveal` was missing `status` and `retryExpiresAt`. This caused the viewer on live deployments to throw a validation error when loading valid share status or opening valid reveals. Updated Playwright E2E and accessibility test fixtures to match the exact server API contract.
+- Validation passed across lint, strict typecheck, 19 unit tests, production build, 2 integration tests, 3 Chromium E2E tests, 2 axe accessibility tests, and reproducibility check.
+
 ## Validation
 
-- Current code/doc state passed local lint, strict typecheck, 17 unit tests, production build, and 2 integration tests using the installed locked dependencies. This shell did not expose Corepack/pnpm on `PATH`; both pushed GitHub runs independently passed Corepack activation, exact pnpm version verification, and `pnpm install --frozen-lockfile` before running `pnpm validate`.
+- `pnpm validate`: passed (lint, strict typecheck, 19 unit tests, production build).
 - `pnpm test:integration`: passed (2 tests).
 - `pnpm test:e2e`: passed (3 Chromium tests).
 - `pnpm test:a11y`: passed (2 Chromium/axe tests).
-- Documentation-plan run: `pnpm validate` passed (lint, strict typecheck, 19 unit tests, production build). The shell used Node 26.7.0 and emitted the expected engine warning because the repository pins Node 22.23.2; CI remains the pinned-runtime authority.
-- Documentation-plan run: `.venv/bin/python scripts/verify-reproducibility.py` and `git diff --check` passed.
-- `.venv/bin/python scripts/verify-reproducibility.py`: passed after the document move.
-- `pnpm supabase:reset`: passed from a recreated local database.
-- `pnpm supabase:test`: passed all 25 pgTAP checks.
-- `main` was published to the configured GitHub `origin`; the branch now tracks `origin/main`.
-- GitHub Actions run `32404737782` passed on CI-fix commit `478d74a`.
-- GitHub Actions run `32404915570` passed on documentation commit `a5ed288`: reproducibility, frozen install, lint, strict typecheck, 17 unit tests, 2 integration tests, production build, 3 Chromium E2E tests, and 2 accessibility tests. It completed independently after the prior run, proving pushed `main` runs are no longer cancelled.
-- Local Playwright verification passed after installing the project-pinned Chromium build: 3 E2E tests and 2 axe accessibility tests. The initial local attempt failed before assertions only because the browser binary was absent; no test or application fix was required.
+- `.venv/bin/python scripts/verify-reproducibility.py`: passed.
 
 ## Remaining / Blockers
 
-- A live host exists but is not accepted as a working production deployment.
-- The original Day 1 “working deployed vertical slice” remains incomplete until the owner performs the documented deployment and records a real backend-backed create/reveal smoke result. The local Day 1 milestone is complete and green.
-- Production create remains blocked by a public 503 wrapping a Supabase 400/SQLSTATE `22023` envelope rejection even though health is 200 and the opaque-key header fix is pushed. Do not begin Day 2 until `docs/PRODUCTION-INCIDENT.md` is closed.
+- A live host exists (`https://secure-bin.vercel.app/`); verify the redeployed commit containing the viewer schema fix.
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
-- Next starting task: give the friend commit and provider team access, then close `docs/PRODUCTION-INCIDENT.md` before Day 2.
 
 ## Recent Commits
 
-- `a5ed288 docs: complete deployment handoff`
-- `478d74a fix(ci): preserve main run history`
-- `85cb5b8 docs: record repaired CI and merged updates`
-- `1fb0645 Merge pull request #11` (setup-node v7; final combined dependency state)
-- `ab83cbc Merge pull request #13` (Autoprefixer 10.5.4)
-- `57c5dd7 Merge pull request #12` (Testing Library 16.3.2)
-- `2ad2825 Merge pull request #10` (setup-python v7)
-- `71d175c Merge pull request #9` (checkout v7)
-- `f0379bd fix(ci): make workflow evaluable`
-- `d8b2c92 docs: record verified Day 1 handoff`
-- `b44cbe3 fix(db): harden envelope and reveal validation`
-- `f4bfbc3 docs: define five-day delivery workflow`
-- `2408d2e test: complete reproducible browser gates`
-- `10bc403 feat: ship encrypted text sharing slice`
+- `53b5533 docs: hand off production create incident`
+- `7cd519f docs: add detailed Day 2 and Day 3 plans`
+- `c07804a fix(api): support Supabase secret keys`
+- `6c756ca fix(ui): remove meta-facing copy`
+- `3bfbeb6 docs: fix clean-clone browser setup`
+- `640f841 docs: record CI and release handoff`

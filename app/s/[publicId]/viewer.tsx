@@ -8,13 +8,22 @@ import type { ContentEnvelope } from "../../../lib/crypto/envelope";
 
 type ActiveStatus = {
   status: "active";
+  availableAt: string | null;
   expiresAt: string;
   maxReveals: number | null;
   remainingReveals: number | null;
   passwordRequired: false;
   unlockRequired: false;
 };
-type ScheduledStatus = { status: "scheduled"; availableAt: string; expiresAt: string };
+type ScheduledStatus = {
+  status: "scheduled";
+  availableAt: string;
+  expiresAt: string;
+  maxReveals: number | null;
+  remainingReveals: number | null;
+  passwordRequired: false;
+  unlockRequired: false;
+};
 type ShareStatus = ActiveStatus | ScheduledStatus | { status: "unavailable" };
 
 class ViewerPayloadError extends Error {}
@@ -36,16 +45,25 @@ function parseStatus(value: unknown): ShareStatus {
     return { status: "unavailable" };
   }
   if (value.status === "scheduled") {
-    exactKeys(value, ["status", "availableAt", "expiresAt"]);
-    if (typeof value.availableAt !== "string" || typeof value.expiresAt !== "string") throw new ViewerPayloadError();
-    return { status: "scheduled", availableAt: value.availableAt, expiresAt: value.expiresAt };
+    exactKeys(value, ["availableAt", "expiresAt", "maxReveals", "passwordRequired", "remainingReveals", "status", "unlockRequired"]);
+    if (typeof value.availableAt !== "string" || typeof value.expiresAt !== "string" || value.passwordRequired !== false || value.unlockRequired !== false) throw new ViewerPayloadError();
+    return {
+      status: "scheduled",
+      availableAt: value.availableAt,
+      expiresAt: value.expiresAt,
+      maxReveals: typeof value.maxReveals === "number" ? value.maxReveals : null,
+      remainingReveals: typeof value.remainingReveals === "number" ? value.remainingReveals : null,
+      passwordRequired: false,
+      unlockRequired: false
+    };
   }
   if (value.status !== "active") throw new ViewerPayloadError();
-  exactKeys(value, ["status", "expiresAt", "maxReveals", "remainingReveals", "passwordRequired", "unlockRequired"]);
-  if (typeof value.expiresAt !== "string" || (value.maxReveals !== null && typeof value.maxReveals !== "number") || (value.remainingReveals !== null && typeof value.remainingReveals !== "number") || value.passwordRequired !== false || value.unlockRequired !== false) throw new ViewerPayloadError();
+  exactKeys(value, ["availableAt", "expiresAt", "maxReveals", "passwordRequired", "remainingReveals", "status", "unlockRequired"]);
+  if (typeof value.expiresAt !== "string" || (value.availableAt !== null && typeof value.availableAt !== "string") || (value.maxReveals !== null && typeof value.maxReveals !== "number") || (value.remainingReveals !== null && typeof value.remainingReveals !== "number") || value.passwordRequired !== false || value.unlockRequired !== false) throw new ViewerPayloadError();
   if (value.maxReveals !== null && (![1, 3, 5, 10].includes(value.maxReveals) || value.remainingReveals === null || value.remainingReveals < 0 || value.remainingReveals > value.maxReveals)) throw new ViewerPayloadError();
   return {
     status: "active",
+    availableAt: value.availableAt,
     expiresAt: value.expiresAt,
     maxReveals: value.maxReveals,
     remainingReveals: value.remainingReveals,
@@ -56,7 +74,8 @@ function parseStatus(value: unknown): ShareStatus {
 
 function parseReveal(value: unknown): ContentEnvelope {
   if (!record(value)) throw new ViewerPayloadError();
-  exactKeys(value, ["contentEnvelope"]);
+  exactKeys(value, ["contentEnvelope", "retryExpiresAt", "status"]);
+  if (value.status !== "authorized" || typeof value.retryExpiresAt !== "string") throw new ViewerPayloadError();
   return validateContentEnvelope(value.contentEnvelope);
 }
 
