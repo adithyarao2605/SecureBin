@@ -36,18 +36,19 @@ Updated: 2026-08-21 (Asia/Kolkata)
   * pgTAP role assertions confirmed `anon` and `authenticated` roles receive SQLSTATE 42501 on direct SELECT on `shares`, `upload_reservations`, `reveal_leases` and EXECUTE on lifecycle RPCs.
 - Completed Day 2 Phase 7 (Upload reservation boundary): created `app/api/uploads/route.ts`, `lib/server/upload-routes.ts`, `lib/server/upload-service.ts`, `lib/server/storage.ts`, `tests/unit/api/upload-routes.test.ts`, and `tests/integration/upload-service.test.ts`. Removed client upload bearer tokens entirely in favor of binding reservations directly to `(public_id, idempotency_key_hash)` tuple. Generated signed upload operations via pinned `@supabase/supabase-js@2.50.0` with session persistence disabled.
 - Completed Day 2 Phase 8 (Cleanup operation): created `lib/server/cleanup-service.ts`, `lib/server/cleanup-routes.ts`, `app/api/internal/cleanup/route.ts`, `tests/unit/api/cleanup-route.test.ts`, and `tests/integration/cleanup-service.test.ts`. Added server-only `CRON_SECRET` authentication using constant-time comparison, safe storage object candidate validation, and atomic database row finalization for expired shares, abandoned upload reservations, stale reveal leases, and expired rate-limit buckets.
-- Validation passed across pgTAP (54 tests), lint, strict typecheck, 45 unit tests, production build, 12 integration tests, and reproducibility check.
+- Completed Day 2 Phase 9 (Safe observability and rate limiting): created `lib/server/observability.ts` and `tests/unit/api/observability.test.ts`. Implemented strict request ID validation/sanitization, coarse status classification, coarse payload size bucketing, and structured audit logs with zero-knowledge property guarantees (strictly omitting content, ciphertext, fragments, keys, passwords, unlock codes, tokens, capabilities, IP addresses, filenames, and MIME types).
+- Validation passed across pgTAP (54 tests), lint, strict typecheck, 50 unit tests, production build, 12 integration tests, and reproducibility check.
 
 ## Validation
 
-- `pnpm validate`: passed (lint, strict typecheck, 45 unit tests, production build).
+- `pnpm validate`: passed (lint, strict typecheck, 50 unit tests, production build).
 - `pnpm test:integration`: passed (12 integration tests across share service, concurrency, upload service, and cleanup service).
 - `pnpm supabase:test`: passed (54 pgTAP tests: 25 foundation + 29 policy and role isolation).
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed.
 
 ## Remaining / Blockers
 
-- Day 2 Phase 8 complete. Next step: Phase 9 (Safe observability and rate limiting - `lib/server/observability.ts`, request auditing, tests).
+- Day 2 Phase 9 complete. Next step: Phase 10 (Day 2 UI - Expose lifecycle policy controls: expiry bounds, scheduled availability, reveal limits).
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
 
 ## Recent Commits

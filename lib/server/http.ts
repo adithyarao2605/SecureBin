@@ -15,12 +15,18 @@ export type ApiErrorCode =
   | "reservation_conflict"
   | "reservation_attached";
 
-export function jsonResponse(body: unknown, status = 200): NextResponse {
-  return NextResponse.json(body, { status, headers: JSON_HEADERS });
+export function jsonResponse(body: unknown, status = 200, headers: Record<string, string> = {}): NextResponse {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      ...JSON_HEADERS,
+      ...headers,
+    },
+  });
 }
 
-export function errorResponse(code: ApiErrorCode, status: number): NextResponse {
-  return jsonResponse({ error: code }, status);
+export function errorResponse(code: ApiErrorCode, status: number, headers: Record<string, string> = {}): NextResponse {
+  return jsonResponse({ error: code }, status, headers);
 }
 
 export async function readJsonBody(request: Request, maxBytes: number): Promise<unknown | null> {
