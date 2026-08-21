@@ -1,7 +1,20 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
-import { digestCapability, sealContent } from "../../lib/crypto/content";
+import { ChangeEvent, FormEvent, useRef, useState } from "react";
+import { digestCapability, sealContent, type SealedContent } from "../../lib/crypto/content";
+import { bytesToArrayBuffer } from "../../lib/crypto/encoding";
+import {
+  MAX_FILE_PLAINTEXT_BYTES,
+  sealFile,
+  type FilePayload,
+  type SealedFile,
+} from "../../lib/crypto/file";
+import {
+  CODE_LANGUAGES,
+  type CodeLanguage,
+  type ContentPayload,
+} from "../../lib/crypto/payload";
+import { generateShareContext, type ShareCryptoContext } from "../../lib/crypto/share-context";
 import {
   defaultPolicyDraft,
   validatePolicyDraft,
@@ -12,11 +25,13 @@ import {
 import { saveShareToHistory } from "../../lib/shares/share-history";
 import { PolicyControls } from "./policy-controls";
 
+export type ComposerMode = "note" | "markdown" | "code";
+
 interface PreparedAttempt {
-  readonly publicId: string;
-  readonly linkSecret: string;
-  readonly deleteCapability: string;
-  readonly idempotencyKey: string;
+  readonly context: ShareCryptoContext;
+  readonly sealedContent: SealedContent;
+  readonly sealedFile: SealedFile | null;
+  readonly fileUploaded: boolean;
   readonly payload: Record<string, unknown>;
 }
 
@@ -26,8 +41,17 @@ export interface ComposerProps {
   readonly onShareCreated?: () => void;
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: ComposerProps = {}) {
+  const [mode, setMode] = useState<ComposerMode>("note");
+  const [language, setLanguage] = useState<CodeLanguage>("typescript");
   const [draft, setDraft] = useState("");
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [policyDraft, setPolicyDraft] = useState<PolicyDraft>(defaultPolicyDraft());
   const [isPending, setIsPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -39,18 +63,52 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
   const [revokedMessage, setRevokedMessage] = useState("");
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const preparedRef = useRef<PreparedAttempt | null>(null);
 
-  function handleDraftChange(value: string) {
-    setDraft(value);
+  function resetPrepared() {
     preparedRef.current = null;
     setErrorMessage("");
   }
 
+  function handleDraftChange(value: string) {
+    setDraft(value);
+    resetPrepared();
+  }
+
+  function handleModeChange(newMode: ComposerMode) {
+    setMode(newMode);
+    resetPrepared();
+  }
+
+  function handleLanguageChange(newLang: CodeLanguage) {
+    setLanguage(newLang);
+    resetPrepared();
+  }
+
+  function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_FILE_PLAINTEXT_BYTES) {
+      setErrorMessage(`File is too large. Maximum size is 10 MB (selected: ${formatBytes(file.size)}).`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setAttachedFile(file);
+    resetPrepared();
+  }
+
+  function handleRemoveFile() {
+    setAttachedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    resetPrepared();
+  }
+
   function handlePolicyChange(updated: PolicyDraft) {
     setPolicyDraft(updated);
-    preparedRef.current = null;
-    setErrorMessage("");
+    resetPrepared();
     if (onPolicyChange) {
       onPolicyChange(validatePolicyDraft(updated));
     }
@@ -60,8 +118,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
     event.preventDefault();
     if (isPending) return;
 
-    if (!draft.trim()) {
-      setErrorMessage("Write a note before creating a share.");
+    if (!draft.trim() && !attachedFile) {
+      setErrorMessage("Write some content or attach a file before creating a share.");
       return;
     }
 
@@ -77,16 +135,41 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
 
     try {
       let prepared = preparedRef.current;
+
       if (!prepared) {
-        const sealed = await sealContent(draft);
+        const context = generateShareContext();
+
+        let contentPayload: ContentPayload;
+        if (mode === "note") {
+          contentPayload = { mode: "note", text: draft };
+        } else if (mode === "markdown") {
+          contentPayload = { mode: "markdown", text: draft };
+        } else {
+          contentPayload = { mode: "code", text: draft, language };
+        }
+
+        const sealedContent = await sealContent(contentPayload, context);
+
+        let sealedFile: SealedFile | null = null;
+        if (attachedFile) {
+          const buffer = await attachedFile.arrayBuffer();
+          const fileData = new Uint8Array(buffer);
+          const payload: FilePayload = {
+            filename: attachedFile.name,
+            mimeType: attachedFile.type || "application/octet-stream",
+            data: fileData,
+          };
+          sealedFile = await sealFile(payload, context);
+        }
+
         const [deleteTokenHash, idempotencyKeyHash] = await Promise.all([
-          digestCapability(sealed.deleteCapability),
-          digestCapability(sealed.idempotencyKey),
+          digestCapability(context.deleteCapability),
+          digestCapability(context.idempotencyKey),
         ]);
 
-        const payload = {
-          publicId: sealed.publicId,
-          contentEnvelope: sealed.envelope,
+        const payload: Record<string, unknown> = {
+          publicId: context.publicId,
+          contentEnvelope: sealedContent.envelope,
           policy: {
             availableAt: validated.availableAt,
             expiresAt: validated.expiresAt,
@@ -96,18 +179,57 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           idempotencyKeyHash,
           passwordRequired: false,
           unlockRequired: false,
+          fileEnvelope: sealedFile ? sealedFile.envelope : null,
+          fileCiphertextSize: sealedFile ? sealedFile.ciphertextSize : null,
         };
 
         prepared = {
-          publicId: sealed.publicId,
-          linkSecret: sealed.linkSecret,
-          deleteCapability: sealed.deleteCapability,
-          idempotencyKey: sealed.idempotencyKey,
+          context,
+          sealedContent,
+          sealedFile,
+          fileUploaded: false,
           payload,
         };
         preparedRef.current = prepared;
       }
 
+      // If a file is attached and not yet uploaded, perform staged upload
+      if (prepared.sealedFile && !prepared.fileUploaded) {
+        const uploadRes = await fetch("/api/uploads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            publicId: prepared.context.publicId,
+            idempotencyKeyHash: prepared.payload.idempotencyKeyHash,
+            fileEnvelope: prepared.sealedFile.envelope,
+            expectedCiphertextSize: prepared.sealedFile.ciphertextSize,
+          }),
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error("upload_reservation_failed");
+        }
+
+        const uploadData = (await uploadRes.json()) as { uploadUrl?: string };
+        if (!uploadData.uploadUrl) {
+          throw new Error("missing_upload_url");
+        }
+
+        const putRes = await fetch(uploadData.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "application/octet-stream" },
+          body: new Blob([bytesToArrayBuffer(prepared.sealedFile.ciphertext)], { type: "application/octet-stream" }),
+        });
+
+        if (!putRes.ok) {
+          throw new Error("storage_upload_failed");
+        }
+
+        prepared = { ...prepared, fileUploaded: true };
+        preparedRef.current = prepared;
+      }
+
+      // Create the share
       const response = await fetch("/api/shares", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -119,13 +241,14 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       }
 
       const result = (await response.json()) as { publicId?: unknown };
-      const returnedPublicId = typeof result.publicId === "string" ? result.publicId : prepared.publicId;
+      const returnedPublicId =
+        typeof result.publicId === "string" ? result.publicId : prepared.context.publicId;
       const origin = window.location.origin;
-      const fullUrl = `${origin}/s/${encodeURIComponent(returnedPublicId)}#${prepared.linkSecret}`;
+      const fullUrl = `${origin}/s/${encodeURIComponent(returnedPublicId)}#${prepared.context.linkSecret}`;
 
       setShareUrl(fullUrl);
       setActivePublicId(returnedPublicId);
-      setActiveDeleteCapability(prepared.deleteCapability);
+      setActiveDeleteCapability(prepared.context.deleteCapability);
 
       saveShareToHistory({
         publicId: returnedPublicId,
@@ -134,7 +257,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         expiresAt: validated.expiresAt,
         availableAt: validated.availableAt,
         maxReveals: validated.maxReveals,
-        deleteCapability: prepared.deleteCapability,
+        deleteCapability: prepared.context.deleteCapability,
         status: "active",
         remainingReveals: validated.maxReveals,
       });
@@ -190,6 +313,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
 
   function handleReset() {
     setDraft("");
+    setAttachedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setShareUrl("");
     setActiveDeleteCapability(null);
     setActivePublicId(null);
@@ -296,49 +421,112 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
             <button
               type="button"
               role="tab"
-              aria-selected={true}
-              className="mode-tab active"
+              aria-selected={mode === "note"}
+              className={`mode-tab ${mode === "note" ? "active" : ""}`}
+              onClick={() => handleModeChange("note")}
             >
               Plain note
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={false}
-              aria-disabled={true}
-              disabled
-              className="mode-tab disabled"
+              aria-selected={mode === "markdown"}
+              className={`mode-tab ${mode === "markdown" ? "active" : ""}`}
+              onClick={() => handleModeChange("markdown")}
             >
-              Markdown · unavailable
+              Markdown
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={false}
-              aria-disabled={true}
-              disabled
-              className="mode-tab disabled"
+              aria-selected={mode === "code"}
+              className={`mode-tab ${mode === "code" ? "active" : ""}`}
+              onClick={() => handleModeChange("code")}
             >
-              Code · unavailable
+              Code
             </button>
           </div>
+
+          {mode === "code" && (
+            <div className="language-selector-wrapper">
+              <label htmlFor="code-language-select" className="sr-only">
+                Programming language
+              </label>
+              <select
+                id="code-language-select"
+                className="language-select"
+                value={language}
+                disabled={isPending}
+                onChange={(e) => handleLanguageChange(e.target.value as CodeLanguage)}
+              >
+                {CODE_LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {lang}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <span className="character-count" aria-live="polite">
             {draft.length.toLocaleString()} / 524,288
           </span>
         </div>
 
         <label htmlFor="draft-textarea" className="sr-only">
-          Note content
+          {mode === "note" ? "Note content" : mode === "markdown" ? "Markdown content" : "Code content"}
         </label>
         <textarea
           id="draft-textarea"
           className="composer-textarea"
           maxLength={524288}
-          placeholder="Write something only the recipient should read…"
+          placeholder={
+            mode === "note"
+              ? "Write something only the recipient should read…"
+              : mode === "markdown"
+              ? "Write Markdown (# heading, **bold**, - list)…"
+              : "Paste code snippet…"
+          }
           value={draft}
           disabled={isPending}
           onChange={(e) => handleDraftChange(e.target.value)}
         />
+
+        <div className="file-attachment-section">
+          <input
+            type="file"
+            ref={fileInputRef}
+            id="file-attachment-input"
+            className="sr-only"
+            disabled={isPending}
+            onChange={handleFileSelect}
+          />
+          {!attachedFile ? (
+            <button
+              type="button"
+              className="action-button secondary-button attach-file-btn"
+              disabled={isPending}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Attach file (max 10 MB)
+            </button>
+          ) : (
+            <div className="attached-file-badge" role="status">
+              <span className="file-info-text">
+                📎 <strong>{attachedFile.name}</strong> ({formatBytes(attachedFile.size)})
+              </span>
+              <button
+                type="button"
+                className="remove-file-button"
+                disabled={isPending}
+                onClick={handleRemoveFile}
+                aria-label="Remove attached file"
+              >
+                ✕ Remove
+              </button>
+            </div>
+          )}
+        </div>
 
         <PolicyControls
           draft={policyDraft}
