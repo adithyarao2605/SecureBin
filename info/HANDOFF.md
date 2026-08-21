@@ -91,9 +91,9 @@ To deploy or update production:
 
 ## Recent Commits
 
-- `fd7e0db fix(contracts): accept PostgREST timestamptz formats in share status`
-- `0c93b5c fix(viewer): match exact status and reveal response payloads`
-- `53b5533 docs: hand off production create incident`
-- `7cd519f docs: add detailed Day 2 and Day 3 plans`
-- `c07804a fix(api): support Supabase secret keys`
-- `6c756ca fix(ui): remove meta-facing copy`
+- `720acbc docs: remove SECURITY.md, track Challenge_1.md and plan.md, and synchronize documentation`
+- `a044708 refactor(ui): streamline Evidence Rail to focus on zero-knowledge architecture flowchart`
+- `fdc3c1c feat(ui): add site icon, enriched Evidence Rail flowchart, and security invariants`
+- `f412ab9 feat(policy): add custom reveal limits and update test suite to 62 unit / 8 e2e tests`
+- `0eab05d style(theme): apply Stitch OLED pure black dark theme with mineral green accents`
+- `47a9f89 chore(toolchain): update node engines to >=22.23.2 for forward compatibility`
