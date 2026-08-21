@@ -34,18 +34,19 @@ Updated: 2026-08-21 (Asia/Kolkata)
   * Concurrent reveal vs revoke race safely settled; post-condition confirmed uniform unavailable.
   * Pre-scheduled share reveals safely rejected before `availableAt`.
   * pgTAP role assertions confirmed `anon` and `authenticated` roles receive SQLSTATE 42501 on direct SELECT on `shares`, `upload_reservations`, `reveal_leases` and EXECUTE on lifecycle RPCs.
-- Validation passed across pgTAP (54 tests), lint, strict typecheck, 29 unit tests, production build, 8 integration tests, and reproducibility check.
+- Completed Day 2 Phase 7 (Upload reservation boundary): created `app/api/uploads/route.ts`, `lib/server/upload-routes.ts`, `lib/server/upload-service.ts`, `lib/server/storage.ts`, `tests/unit/api/upload-routes.test.ts`, and `tests/integration/upload-service.test.ts`. Removed client upload bearer tokens entirely in favor of binding reservations directly to `(public_id, idempotency_key_hash)` tuple. Generated signed upload operations via pinned `@supabase/supabase-js@2.50.0` with session persistence disabled.
+- Validation passed across pgTAP (54 tests), lint, strict typecheck, 40 unit tests, production build, 10 integration tests, and reproducibility check.
 
 ## Validation
 
-- `pnpm validate`: passed (lint, strict typecheck, 29 unit tests, production build).
-- `pnpm test:integration`: passed (8 integration tests across share service and reveal concurrency).
+- `pnpm validate`: passed (lint, strict typecheck, 40 unit tests, production build).
+- `pnpm test:integration`: passed (10 integration tests across share service, concurrency, and upload service).
 - `pnpm supabase:test`: passed (54 pgTAP tests: 25 foundation + 29 policy and role isolation).
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed.
 
 ## Remaining / Blockers
 
-- Day 2 Phase 6 complete. Next step: Phase 7 (Upload reservation boundary - `app/api/uploads/route.ts`, `lib/server/upload-service.ts`, `lib/server/storage.ts`, tests).
+- Day 2 Phase 7 complete. Next step: Phase 8 (Cleanup operation - `lib/server/cleanup-service.ts`, `app/api/cron/cleanup/route.ts`, tests).
 - Markdown, password factors, two-channel unlock, attachments, Privacy Receipt, and final demo polish remain later-day work.
 
 ## Recent Commits

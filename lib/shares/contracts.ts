@@ -50,9 +50,15 @@ export interface CreateShareInput {
   readonly passwordRequired: boolean;
   readonly unlockRequired: boolean;
   readonly idempotencyKeyHash: string;
-  readonly uploadReservationCapability: string | null;
   readonly fileEnvelope: (Envelope & { readonly objectType: "file"; readonly ciphertext?: never }) | null;
   readonly fileCiphertextSize: number | null;
+}
+
+export interface UploadReservationInput {
+  readonly publicId: string;
+  readonly idempotencyKeyHash: string;
+  readonly fileEnvelope: Envelope & { readonly objectType: "file"; readonly ciphertext?: never };
+  readonly expectedCiphertextSize: number;
 }
 
 interface SharePolicyInput {
@@ -204,7 +210,7 @@ export function parseFileEnvelope(value: unknown): CreateShareInput["fileEnvelop
 export function parseCreateShareInput(value: unknown, nowMillis: number = Date.now()): CreateShareInput | null {
   if (!isRecord(value) || !hasOnlyKeys(value,
     ["contentEnvelope", "deleteTokenHash", "idempotencyKeyHash", "passwordRequired", "policy", "publicId", "unlockRequired"],
-    ["fileCiphertextSize", "fileEnvelope", "uploadReservationCapability"],
+    ["fileCiphertextSize", "fileEnvelope"],
   )) return null;
   if (!isRecord(value.policy) || !hasExactKeys(value.policy, ["availableAt", "expiresAt", "maxReveals"])) return null;
   if (!isBase64Url(value.publicId, PUBLIC_ID_BYTES)) return null;
@@ -223,15 +229,12 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
   const expiryMillis = Date.parse(expiresAt);
   if (expiryMillis <= nowMillis || expiryMillis > nowMillis + MAX_EXPIRY_DAYS * 86_400_000) return null;
   if (availableAt !== null && Date.parse(availableAt) >= expiryMillis) return null;
-  const uploadReservationCapability = value.uploadReservationCapability === undefined || value.uploadReservationCapability === null ? null : value.uploadReservationCapability;
   const fileEnvelope = value.fileEnvelope === undefined || value.fileEnvelope === null ? null : parseFileEnvelope(value.fileEnvelope);
   const fileCiphertextSize = value.fileCiphertextSize === undefined || value.fileCiphertextSize === null ? null : value.fileCiphertextSize;
   const normalizedFileCiphertextSize = fileCiphertextSize === null || !isNonNegativeInteger(fileCiphertextSize) ? null : fileCiphertextSize;
-  if (uploadReservationCapability !== null && !isDigest(uploadReservationCapability)) return null;
   if (value.fileEnvelope !== undefined && value.fileEnvelope !== null && !fileEnvelope) return null;
   if (fileEnvelope === null && fileCiphertextSize !== null) return null;
   if (fileEnvelope !== null && (normalizedFileCiphertextSize === null || normalizedFileCiphertextSize < 16 || normalizedFileCiphertextSize > MAX_FILE_CIPHERTEXT_SIZE)) return null;
-  if ((fileEnvelope !== null) !== (uploadReservationCapability !== null)) return null;
   if (fileEnvelope !== null && fileEnvelope.factorMask !== contentEnvelope.factorMask) return null;
 
   return {
@@ -244,9 +247,25 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
     passwordRequired: value.passwordRequired,
     unlockRequired: value.unlockRequired,
     idempotencyKeyHash: value.idempotencyKeyHash,
-    uploadReservationCapability,
     fileEnvelope,
     fileCiphertextSize: normalizedFileCiphertextSize,
+  };
+}
+
+export function parseUploadReservationInput(value: unknown): UploadReservationInput | null {
+  if (!isRecord(value) || !hasExactKeys(value, ["expectedCiphertextSize", "fileEnvelope", "idempotencyKeyHash", "publicId"])) return null;
+  if (!isBase64Url(value.publicId, PUBLIC_ID_BYTES)) return null;
+  if (!isDigest(value.idempotencyKeyHash)) return null;
+  const fileEnvelope = parseFileEnvelope(value.fileEnvelope);
+  if (!fileEnvelope) return null;
+  if (typeof value.expectedCiphertextSize !== "number" || !isNonNegativeInteger(value.expectedCiphertextSize)) return null;
+  if (value.expectedCiphertextSize < 16 || value.expectedCiphertextSize > MAX_FILE_CIPHERTEXT_SIZE) return null;
+
+  return {
+    publicId: value.publicId,
+    idempotencyKeyHash: value.idempotencyKeyHash,
+    fileEnvelope,
+    expectedCiphertextSize: value.expectedCiphertextSize,
   };
 }
 

@@ -31,7 +31,6 @@ const createInput: CreateShareInput = {
   passwordRequired: false,
   unlockRequired: false,
   idempotencyKeyHash: digest,
-  uploadReservationCapability: "raw-upload-capability",
   fileEnvelope: null,
   fileCiphertextSize: null,
 };

@@ -11,7 +11,9 @@ export type ApiErrorCode =
   | "unavailable"
   | "rate_limited"
   | "server_error"
-  | "idempotency_conflict";
+  | "idempotency_conflict"
+  | "reservation_conflict"
+  | "reservation_attached";
 
 export function jsonResponse(body: unknown, status = 200): NextResponse {
   return NextResponse.json(body, { status, headers: JSON_HEADERS });

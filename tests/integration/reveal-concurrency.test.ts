@@ -59,7 +59,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      uploadReservationCapability: null,
       fileEnvelope: null,
       fileCiphertextSize: null,
     });
@@ -117,7 +116,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      uploadReservationCapability: null,
       fileEnvelope: null,
       fileCiphertextSize: null,
     });
@@ -173,7 +171,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      uploadReservationCapability: null,
       fileEnvelope: null,
       fileCiphertextSize: null,
     });
@@ -210,7 +207,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      uploadReservationCapability: null,
       fileEnvelope: null,
       fileCiphertextSize: null,
     });
