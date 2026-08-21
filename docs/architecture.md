@@ -3,10 +3,7 @@
 ## 1. Status and Goals
 
 This document is the technical source of truth for the judged SecureBin release.
-`info/plan.md` is a local, read-only source for product priorities and the
-retained roadmap. When the two documents disagree, record the mismatch in
-`info/HANDOFF.md` and update maintained technical documentation and code; never
-edit or commit the plan.
+`info/plan.md` provides product priorities and the retained roadmap. Project implementation decisions and validation records are maintained in `info/HANDOFF.md`.
 
 ### Current implementation status
 

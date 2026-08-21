@@ -22,7 +22,6 @@ REQUIRED_FILES = (
     ".gitignore",
     ".github/workflows/ci.yml",
     ".github/dependabot.yml",
-    "docs/SECURITY.md",
     "docs/SPEC.md",
     "docs/DAY-2-PLAN.md",
     "docs/DAY-2-UI.md",

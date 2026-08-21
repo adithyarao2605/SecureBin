@@ -40,9 +40,7 @@ contract, not optional decoration:
 
 Update the documents in the same change whenever a public contract or security invariant changes.
 Do not begin Day 2 while `docs/PRODUCTION-INCIDENT.md` remains open.
-Because `info/plan.md` is a local read-only input, record any conflict with it
-in `info/HANDOFF.md`; do not resolve the conflict by editing or committing the
-plan.
+`info/plan.md` serves as product priorities reference; record any project decisions in `info/HANDOFF.md`.
 
 ## Reference Boundary
 

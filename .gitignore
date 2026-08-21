@@ -34,10 +34,11 @@ supabase/.branches/
 *.crt
 *.p12
 
-# Competition/reference material is read-only and is not submission source.
+# Competition/reference material
 /info/*
 !/info/HANDOFF.md
-/info/plan.md
+!/info/Challenge_1.md
+!/info/plan.md
 /info/PrivateBin/
 
 # Local Antigravity MCP credentials

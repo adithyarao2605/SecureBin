@@ -70,7 +70,6 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
   contract for Day 2.
 - [`docs/DAY-3-PLAN.md`](docs/DAY-3-PLAN.md) — detailed safe-content and encrypted
   attachment sequence.
-- [`docs/SECURITY.md`](docs/SECURITY.md) — vulnerability reporting and security rules.
 - [`info/plan.md`](info/plan.md) — product priorities, delivery order, and
   future roadmap (read-only planning source).
 
@@ -173,11 +172,11 @@ available.
 | Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Text slice covered |
 | Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Current `main` gates pass; production create incident remains open |
-| Documentation | This README, threat model, security policy, runbook | Present |
+| Documentation | This README, threat model, architecture, runbook | Present |
 
 ## Security and limitations
 
-Read [`docs/SECURITY.md`](docs/SECURITY.md) before handling real data. SecureBin is not
+Read [`docs/threat-model.md`](docs/threat-model.md) before handling sensitive data. SecureBin is not
 DRM and cannot protect plaintext after it is rendered or copied. A malicious
 application deployment can capture browser plaintext and keys. Infrastructure
 can still observe ciphertext size, timestamps, network metadata, and access

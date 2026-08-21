@@ -96,7 +96,7 @@ Version 2 content framing adds 11 plaintext bytes. Preserve the 512-KiB text lim
 
 ## 4. Architecture and vectors first
 
-Update `docs/architecture.md`, `docs/threat-model.md`, and `docs/SECURITY.md` with canonical framing/legacy detection, HKDF/AAD/nonce rules, upload-create-reveal-cleanup sequence, visible/hidden metadata, renderer boundary, retries, and signed URL lifetimes.
+Update `docs/architecture.md` and `docs/threat-model.md` with canonical framing/legacy detection, HKDF/AAD/nonce rules, upload-create-reveal-cleanup sequence, visible/hidden metadata, renderer boundary, retries, and signed URL lifetimes.
 
 Add deterministic test-only content and file golden vectors. Never use vector nonce generation in production.
 
@@ -307,7 +307,7 @@ corepack pnpm validate
 git diff --check
 ```
 
-Update architecture, threat model, security, README, deployment, SPEC links, and `info/HANDOFF.md`. Record dependency rationale, commits, migrations, evidence, owner actions, and deferred Day 4. Never edit `info/plan.md`.
+Update architecture, threat model, README, deployment, SPEC links, and `info/HANDOFF.md`. Record dependency rationale, commits, migrations, evidence, owner actions, and deferred Day 4. Never edit `info/plan.md`.
 
 ## 15. Stop conditions
 
