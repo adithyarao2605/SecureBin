@@ -96,8 +96,15 @@ export function createPostRevealHandler(dependencies: ShareRouteDependencies): (
     if (!input) return errorResponse("invalid_request", 400);
     try {
       const result = await dependencies.service.reveal(publicId, input.requestToken);
-      if (result.status !== "authorized" || !result.contentEnvelope || !result.retryExpiresAt) return jsonResponse({ status: "unavailable" }, 404);
-      return jsonResponse({ status: "authorized", contentEnvelope: result.contentEnvelope, retryExpiresAt: result.retryExpiresAt });
+      if (result.status !== "authorized" || !result.contentEnvelope || !result.retryExpiresAt) {
+        return jsonResponse({ status: "unavailable" }, 404);
+      }
+      return jsonResponse({
+        status: "authorized",
+        contentEnvelope: result.contentEnvelope,
+        file: result.file ?? null,
+        retryExpiresAt: result.retryExpiresAt,
+      });
     } catch (error) {
       return isDependencyFailure(error) ? errorResponse("server_error", 503) : errorResponse("server_error", 500);
     }

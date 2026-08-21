@@ -293,6 +293,48 @@ describe("share route handlers", () => {
     expect(await response.json()).toEqual({ status: "unavailable" });
   });
 
+  it("returns authorized ciphertext and file download URL when file is attached", async () => {
+    const fileMetadata = {
+      envelope: {
+        version: 2 as const,
+        objectType: "file" as const,
+        algorithm: "AES-256-GCM" as const,
+        nonce: "AQEBAQEBAQEBAQEB",
+        hkdfSalt: "AQEBAQEBAQEBAQEBAQEBAQ",
+        passwordSalt: null,
+        kdf: "none" as const,
+        kdfParameters: {},
+        factorMask: "link" as const,
+      },
+      ciphertextSize: 2048,
+      downloadUrl: "http://localhost:54321/storage/v1/object/sign/securebin-files/objects/test.bin?token=abc",
+    };
+
+    const deps = dependencies({
+      reveal: vi.fn(async () => ({
+        status: "authorized" as const,
+        contentEnvelope: envelope,
+        file: fileMetadata,
+        retryExpiresAt: "2099-01-01T00:05:00.000Z",
+      })),
+    });
+
+    const handler = createPostRevealHandler(deps);
+    const response = await handler(new Request("http://localhost/api/shares", {
+      method: "POST",
+      body: JSON.stringify({ requestToken: digest }),
+    }), { params: Promise.resolve({ publicId }) });
+
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json).toEqual({
+      status: "authorized",
+      contentEnvelope: envelope,
+      file: fileMetadata,
+      retryExpiresAt: "2099-01-01T00:05:00.000Z",
+    });
+  });
+
   it("handles share revocation with valid delete capability", async () => {
     const deps = dependencies();
     const handler = createDeleteShareHandler(deps);

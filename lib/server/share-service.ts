@@ -3,13 +3,16 @@ import { Buffer } from "node:buffer";
 import {
   parseIsoUtc,
   parseRpcEnvelope,
+  parseRpcFileEnvelope,
   parseStatus,
   type CreateShareInput,
+  type RevealFileMetadata,
   type RevealResult,
   type ShareStatus,
 } from "../shares/contracts";
 import { sha256Base64Url } from "./hashing";
 import { createRpcClient, type RpcClient } from "./supabase-rpc";
+import { createSecureStorage, type SecureStorage } from "./storage";
 
 export interface CreatedShare {
   readonly publicId: string;
@@ -54,7 +57,10 @@ function dependencyError(): ShareServiceError {
   return new ShareServiceError("dependency");
 }
 
-export function createShareService(rpc: RpcClient = createRpcClient()): ShareService {
+export function createShareService(
+  rpc: RpcClient = createRpcClient(),
+  storage: SecureStorage = createSecureStorage()
+): ShareService {
   return {
     async consumeRateLimit(discriminatorHash, action, limit) {
       try {
@@ -138,7 +144,35 @@ export function createShareService(rpc: RpcClient = createRpcClient()): ShareSer
         const contentEnvelope = parseRpcEnvelope(row.content_envelope);
         const retryExpiresAt = typeof row.retry_expires_at === "string" ? parseIsoUtc(row.retry_expires_at) : null;
         if (!contentEnvelope || !retryExpiresAt) throw new ShareServiceError("dependency");
-        return { status: "authorized", contentEnvelope, retryExpiresAt };
+
+        let file: RevealFileMetadata | null = null;
+        if (
+          typeof row.file_object_path === "string" &&
+          row.file_object_path.length > 0 &&
+          row.file_envelope &&
+          typeof row.file_ciphertext_size === "number"
+        ) {
+          const fileEnvelope = parseRpcFileEnvelope(row.file_envelope);
+          if (!fileEnvelope) throw new ShareServiceError("dependency");
+
+          try {
+            const downloadUrl = await storage.createSignedDownload(row.file_object_path, 60);
+            file = {
+              envelope: fileEnvelope,
+              ciphertextSize: row.file_ciphertext_size,
+              downloadUrl,
+            };
+          } catch {
+            throw new ShareServiceError("dependency");
+          }
+        }
+
+        return {
+          status: "authorized",
+          contentEnvelope,
+          file,
+          retryExpiresAt,
+        };
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
         throw dependencyError();
