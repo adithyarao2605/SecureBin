@@ -14,7 +14,7 @@ export const MAX_FILE_CIPHERTEXT_SIZE = 10_485_776;
 export const MAX_EXPIRY_DAYS = 30;
 
 const ISO_UTC_PATTERN =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]00(?::?00)?)$/;
 
 export type FactorMask =
   | "link"
@@ -139,10 +139,10 @@ function decodeBase64Url(value: string): Uint8Array | null {
   }
 }
 
-function parseIsoUtc(value: unknown): string | null {
+export function parseIsoUtc(value: unknown): string | null {
   if (typeof value !== "string" || !ISO_UTC_PATTERN.test(value)) return null;
   const parsed = Date.parse(value);
-  return Number.isFinite(parsed) ? value : null;
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
 }
 
 function parseFactorMask(value: unknown): value is FactorMask {

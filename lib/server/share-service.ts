@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 
 import {
+  parseIsoUtc,
   parseRpcEnvelope,
   parseStatus,
   type CreateShareInput,
@@ -124,12 +125,13 @@ export function createShareService(rpc: RpcClient = createRpcClient()): ShareSer
           return {
             status: row.status,
             contentEnvelope: null,
-            retryExpiresAt: typeof row.retry_expires_at === "string" ? row.retry_expires_at : null,
+            retryExpiresAt: typeof row.retry_expires_at === "string" ? parseIsoUtc(row.retry_expires_at) : null,
           };
         }
         const contentEnvelope = parseRpcEnvelope(row.content_envelope);
-        if (!contentEnvelope || typeof row.retry_expires_at !== "string") throw new ShareServiceError("dependency");
-        return { status: "authorized", contentEnvelope, retryExpiresAt: row.retry_expires_at };
+        const retryExpiresAt = typeof row.retry_expires_at === "string" ? parseIsoUtc(row.retry_expires_at) : null;
+        if (!contentEnvelope || !retryExpiresAt) throw new ShareServiceError("dependency");
+        return { status: "authorized", contentEnvelope, retryExpiresAt };
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
         throw dependencyError();

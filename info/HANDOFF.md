@@ -25,6 +25,7 @@ Updated: 2026-08-21 (Asia/Kolkata)
 - Added `docs/PRODUCTION-INCIDENT.md` and synchronized every maintained repository document with the open production blocker, safe friend access, evidence-led diagnostic order, redaction boundary, decision table, and closure criteria. A Luna-high reconnaissance pass informed the handoff; the user explicitly cancelled the final audit and requested immediate push. No tests were run in this final documentation run at the user’s request.
 
 - Diagnosed and fixed client-side schema validation in `app/s/[publicId]/viewer.tsx`: `parseStatus` was missing `availableAt` from its expected keys check, and `parseReveal` was missing `status` and `retryExpiresAt`. This caused the viewer on live deployments to throw a validation error when loading valid share status or opening valid reveals. Updated Playwright E2E and accessibility test fixtures to match the exact server API contract.
+- Diagnosed and fixed server-side timestamp parsing in `lib/shares/contracts.ts` and `lib/server/share-service.ts`: `ISO_UTC_PATTERN` required a strict trailing `Z` with at most 3 decimal digits, rejecting valid PostgREST `timestamptz` responses with offset formats (such as `+00:00`) or microsecond timestamps. Broadened `ISO_UTC_PATTERN` and normalized all parsed timestamps to ISO UTC strings in `getStatus` and `reveal`.
 - Validation passed across lint, strict typecheck, 19 unit tests, production build, 2 integration tests, 3 Chromium E2E tests, 2 axe accessibility tests, and reproducibility check.
 
 ## Validation
