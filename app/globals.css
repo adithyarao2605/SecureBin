@@ -173,6 +173,30 @@ button {
   color: var(--ink);
 }
 
+.theme-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  border: 1px solid var(--line);
+  background: var(--surface-subtle);
+  color: var(--mineral);
+  transition: all 180ms ease;
+}
+
+.theme-icon-btn:hover {
+  background: var(--surface-bg);
+  color: var(--mineral-hover);
+  border-color: var(--mineral);
+}
+
+.theme-icon-btn:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 .theme-control {
   display: flex;
   align-items: center;
@@ -516,7 +540,8 @@ button {
   cursor: pointer;
 }
 
-.policy-scheduled-inputs {
+.policy-scheduled-inputs,
+.policy-custom-expiry-inputs {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
@@ -537,6 +562,7 @@ button {
 
 .policy-date-input,
 .policy-time-input,
+.policy-number-input,
 .policy-select {
   border: 1px solid var(--line);
   border-radius: 8px;

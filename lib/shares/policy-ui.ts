@@ -10,13 +10,16 @@ export type ProoflinePhase =
   | "opened"
   | "unavailable";
 
-export type ExpiryPreset = "24h" | "7d" | "30d";
+export type ExpiryPreset = "24h" | "7d" | "30d" | "custom";
+export type ExpiryUnit = "hours" | "days";
 
 export interface PolicyDraft {
   readonly availability: "now" | "scheduled";
   readonly availableLocalDate: string;
   readonly availableLocalTime: string;
   readonly expiryPreset: ExpiryPreset;
+  readonly customExpiryValue?: number;
+  readonly customExpiryUnit?: ExpiryUnit;
   readonly maxReveals: MaxReveals;
 }
 
@@ -33,14 +36,25 @@ export function defaultPolicyDraft(): PolicyDraft {
     availableLocalDate: `${year}-${month}-${day}`,
     availableLocalTime: `${hours}:${minutes}`,
     expiryPreset: "24h",
+    customExpiryValue: 24,
+    customExpiryUnit: "hours",
     maxReveals: null,
   };
 }
 
-export function computeExpiryDate(preset: ExpiryPreset, nowMillis: number = Date.now()): string {
+export function computeExpiryDate(
+  preset: ExpiryPreset,
+  customValue = 24,
+  customUnit: ExpiryUnit = "hours",
+  nowMillis: number = Date.now()
+): string {
   let offsetMillis = 24 * 60 * 60 * 1000;
   if (preset === "7d") offsetMillis = 7 * 24 * 60 * 60 * 1000;
-  if (preset === "30d") offsetMillis = 30 * 24 * 60 * 60 * 1000;
+  else if (preset === "30d") offsetMillis = 30 * 24 * 60 * 60 * 1000;
+  else if (preset === "custom") {
+    const mult = customUnit === "days" ? 24 * 60 * 60 * 1000 : 60 * 60 * 1000;
+    offsetMillis = Math.max(60 * 60 * 1000, Math.min(30 * 24 * 60 * 60 * 1000, customValue * mult));
+  }
 
   return new Date(nowMillis + offsetMillis).toISOString();
 }
@@ -88,7 +102,7 @@ export function formatLocalizedDateTime(isoUtc: string | null): string {
   }
 }
 
-export function formatExpiryLabel(preset: ExpiryPreset): string {
+export function formatExpiryLabel(preset: ExpiryPreset, customValue = 24, customUnit: ExpiryUnit = "hours"): string {
   switch (preset) {
     case "24h":
       return "24 hours";
@@ -96,6 +110,8 @@ export function formatExpiryLabel(preset: ExpiryPreset): string {
       return "7 days";
     case "30d":
       return "30 days";
+    case "custom":
+      return `${customValue} ${customUnit}`;
   }
 }
 
@@ -142,7 +158,22 @@ export function validatePolicyDraft(
     }
   }
 
-  const expiresAt = computeExpiryDate(draft.expiryPreset, nowMillis);
+  let expiresAt: string;
+  if (draft.expiryPreset === "custom") {
+    const val = draft.customExpiryValue ?? 24;
+    const unit = draft.customExpiryUnit ?? "hours";
+    if (!Number.isInteger(val) || val <= 0) {
+      return { valid: false, error: "Custom expiration duration must be a positive integer." };
+    }
+    const totalHours = unit === "days" ? val * 24 : val;
+    if (totalHours > 720) {
+      return { valid: false, error: "Custom expiration cannot exceed 30 days (720 hours)." };
+    }
+    expiresAt = computeExpiryDate("custom", val, unit, nowMillis);
+  } else {
+    expiresAt = computeExpiryDate(draft.expiryPreset, 24, "hours", nowMillis);
+  }
+
   if (availableAt && Date.parse(availableAt) >= Date.parse(expiresAt)) {
     return {
       valid: false,

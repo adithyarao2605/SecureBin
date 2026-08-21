@@ -292,7 +292,7 @@ Follow [`DAY-2-UI.md`](DAY-2-UI.md) and the approved design system in Stitch MCP
 ```text
 Available now -> null
 Scheduled local time -> validated ISO UTC
-24h / 7d / 30d -> expiresAt ISO UTC
+24h / 7d / 30d / Custom (1-720h) -> expiresAt ISO UTC
 Burn / 3 / 5 / 10 / Unlimited -> 1 / 3 / 5 / 10 / null
 ```
 

@@ -2,66 +2,94 @@
 
 import { useEffect, useState } from "react";
 
-type Theme = "light" | "dark" | "system";
-
-const themes: readonly Theme[] = ["light", "dark", "system"];
-
-function applyTheme(theme: Theme) {
-  const root = document.documentElement;
-  root.dataset.theme = theme;
-  if (theme === "dark") {
-    root.classList.add("dark");
-  } else if (theme === "light") {
-    root.classList.remove("dark");
-  } else {
-    const isDark = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    root.classList.toggle("dark", isDark);
-  }
-}
-
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("system");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const stored = window.localStorage.getItem("securebin-theme");
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      setTheme(stored);
-      applyTheme(stored);
-    } else {
-      applyTheme("system");
-    }
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      const current = (window.localStorage.getItem("securebin-theme") as Theme) || "system";
-      if (current === "system") {
-        applyTheme("system");
-      }
-    };
-    media.addEventListener("change", handleChange);
-    return () => media.removeEventListener("change", handleChange);
+    const initial = stored === "light" ? "light" : "dark";
+    setTheme(initial);
+    applyThemeToDom(initial);
   }, []);
 
-  function chooseTheme(nextTheme: Theme) {
-    setTheme(nextTheme);
-    window.localStorage.setItem("securebin-theme", nextTheme);
-    applyTheme(nextTheme);
+  function applyThemeToDom(next: "dark" | "light") {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    root.dataset.theme = next;
+    if (next === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    window.localStorage.setItem("securebin-theme", next);
+    applyThemeToDom(next);
+  }
+
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        className="theme-icon-btn"
+        aria-label="Toggle color theme"
+        disabled
+      >
+        <span className="sr-only">Toggle theme</span>
+      </button>
+    );
   }
 
   return (
-    <div className="theme-control" role="group" aria-label="Color theme">
-      {themes.map((option) => (
-        <button
-          className="theme-option"
-          data-active={theme === option}
-          key={option}
-          onClick={() => chooseTheme(option)}
-          type="button"
-          aria-pressed={theme === option}
+    <button
+      type="button"
+      className="theme-icon-btn"
+      onClick={toggleTheme}
+      aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+    >
+      {theme === "dark" ? (
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
         >
-          {option}
-        </button>
-      ))}
-    </div>
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+      ) : (
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      )}
+    </button>
   );
 }

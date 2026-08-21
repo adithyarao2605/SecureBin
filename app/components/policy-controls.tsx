@@ -85,7 +85,54 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
           <option value="24h">24 hours</option>
           <option value="7d">7 days</option>
           <option value="30d">30 days</option>
+          <option value="custom">Custom duration</option>
         </select>
+
+        {draft.expiryPreset === "custom" && (
+          <div className="policy-custom-expiry-inputs">
+            <div className="policy-input-group">
+              <label htmlFor="custom-expiry-value" className="policy-input-label">
+                Duration
+              </label>
+              <input
+                id="custom-expiry-value"
+                type="number"
+                min={1}
+                max={draft.customExpiryUnit === "days" ? 30 : 720}
+                className="policy-number-input"
+                value={draft.customExpiryValue ?? 24}
+                disabled={disabled}
+                onChange={(e) =>
+                  onChange({
+                    ...draft,
+                    customExpiryValue: Number.parseInt(e.target.value, 10) || 1,
+                  })
+                }
+              />
+            </div>
+            <div className="policy-input-group">
+              <label htmlFor="custom-expiry-unit" className="policy-input-label">
+                Unit
+              </label>
+              <select
+                id="custom-expiry-unit"
+                className="policy-select"
+                value={draft.customExpiryUnit ?? "hours"}
+                disabled={disabled}
+                onChange={(e) =>
+                  onChange({
+                    ...draft,
+                    customExpiryUnit: e.target.value as "hours" | "days",
+                  })
+                }
+              >
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+              </select>
+            </div>
+            <p className="policy-hint">Maximum 30 days (720 hours).</p>
+          </div>
+        )}
       </div>
 
       {/* Reveal Limits Fieldset */}

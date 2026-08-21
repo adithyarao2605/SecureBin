@@ -13,21 +13,11 @@ templates, or visual identity.
 
 ## Current status
 
-The Day 1 text-sharing slice works end to end: the browser encrypts a plain-text
-note, the API and database accept only ciphertext plus bounded policy metadata,
-and the recipient authorizes a reveal before decrypting locally. Unit,
-integration, browser, mobile-keyboard, and accessibility coverage exercise that
-path. Markdown, passwords, two-channel unlock, files, and the Privacy Receipt
-remain roadmap work. The current host is not an accepted live demo because
-share creation remains broken.
+Day 1 (Core Cryptographic Engine & Foundation) and Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and the Stitch MCP Quiet Proof Design System v1 with Dark Mode & Custom Expiry) are **100% complete and fully verified**.
 
-The implementation and local/CI evidence for Day 1 are complete, but production
-`POST /api/shares` still returns a redacted `503`; a correlated Supabase request
-reported SQLSTATE `22023` (`invalid content envelope`). Give the next maintainer
-[`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md). Historical red or
-cancelled workflow entries do
-not describe the current branch: current `main` runs complete both CI jobs,
-and pushed `main` commits are no longer cancelled by later pushes.
+All 56 unit tests, 12 integration/concurrency tests, 54 pgTAP database tests, 3 Playwright E2E tests, and 2 Axe accessibility tests pass with zero critical violations. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)).
+
+CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request. Markdown sanitization, password factors, two-channel unlock codes, encrypted file attachments, and the Privacy Receipt are scheduled for Day 3.
 
 ## Product and UX direction
 

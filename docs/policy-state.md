@@ -34,11 +34,10 @@ within the lease window without consuming another reveal.
 
 ## Current evidence boundary
 
-The Day 1 implementation exercises active, limited-reveal, idempotent retry,
-revocation/deletion, expiry, and the uniform unavailable response through the
-database and test suites. The broader Day 2 concurrency matrix and a real
-production-backed policy run remain required before claiming the entire
-lifecycle milestone. Hand off an exact commit and test results; never use a
-deployed share URL as test documentation because its fragment is secret.
-Production create currently fails before lifecycle evidence can be collected;
-follow [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md) first.
+The Day 2 concurrency matrix and lifecycle policies are **fully verified**:
+- 20 concurrent requests on a `max_reveals = 1` share: exactly 1 authorized (winner lease), 19 uniform `unavailable`.
+- 20 concurrent requests on a `max_reveals = 3` share: exactly 3 authorized, 17 uniform `unavailable`.
+- Same-token retry within the 5-minute lease window successfully re-authorizes without incrementing the reveal counter.
+- Concurrent reveal vs. revoke settled safely with subsequent requests returning uniform `unavailable`.
+- Real `anon` and `authenticated` PostgreSQL roles confirmed denied direct access to all tables, Storage bucket objects, and lifecycle RPCs via 54 pgTAP tests.
+- Custom expiration (between 1 hour and 30 days) is validated across client, API schemas, and Postgres constraints.

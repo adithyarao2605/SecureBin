@@ -117,7 +117,9 @@ type PolicyDraft = {
   availability: "now" | "scheduled";
   availableLocalDate: string;
   availableLocalTime: string;
-  expiryPreset: "24h" | "7d" | "30d";
+  expiryPreset: "24h" | "7d" | "30d" | "custom";
+  customExpiryValue?: number;
+  customExpiryUnit?: "hours" | "days";
   maxReveals: 1 | 3 | 5 | 10 | null;
 };
 ```
