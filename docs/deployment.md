@@ -177,12 +177,14 @@ the provider stores, never in a tracked file.
    NEXT_PUBLIC_APP_URL=https://<your-production-host>
    NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=<browser-safe anon or publishable key>
-   SUPABASE_SERVICE_ROLE_KEY=<server-only service-role key>
+   SUPABASE_SERVICE_ROLE_KEY=<server-only sb_secret key or legacy service-role JWT>
    RATE_LIMIT_HMAC_KEY=<independent random value>
    CRON_SECRET=<independent random value reserved for the future cleanup route>
    ```
 
-   Mark the service-role, rate-limit, and cron values as sensitive. Never use
+   SecureBin accepts Supabase's recommended `sb_secret_...` key as well as the
+   legacy service-role JWT under this variable name. Mark the service-role,
+   rate-limit, and cron values as sensitive. Never use
    the service-role value in a `NEXT_PUBLIC_*` variable.
 6. Deploy `main`. If the final Vercel hostname differs from the value supplied
    for `NEXT_PUBLIC_APP_URL`, correct it and redeploy.

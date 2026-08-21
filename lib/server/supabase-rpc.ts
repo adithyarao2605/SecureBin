@@ -22,13 +22,19 @@ export function createRpcClient(config: ServerConfig = readServerConfig()): RpcC
     async call(functionName: string, args: Record<string, unknown>): Promise<unknown> {
       let response: Response;
       try {
+        const headers: Record<string, string> = {
+          apikey: config.serviceRoleKey,
+          "Content-Type": "application/json",
+        };
+        // New sb_secret_* API keys are opaque, not JWTs. Supabase authenticates
+        // them through `apikey`; only legacy service_role JWTs belong in the
+        // Bearer header.
+        if (!config.serviceRoleKey.startsWith("sb_secret_")) {
+          headers.Authorization = `Bearer ${config.serviceRoleKey}`;
+        }
         response = await fetch(`${endpoint}${functionName}`, {
           method: "POST",
-          headers: {
-            apikey: config.serviceRoleKey,
-            Authorization: `Bearer ${config.serviceRoleKey}`,
-            "Content-Type": "application/json",
-          },
+          headers,
           body: JSON.stringify(args),
           cache: "no-store",
         });
