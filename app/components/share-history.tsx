@@ -10,7 +10,12 @@ import {
 } from "../../lib/shares/share-history";
 import { formatLocalizedDateTime } from "../../lib/shares/policy-ui";
 
-export function ShareHistoryDesk({ refreshSignal }: { refreshSignal?: number }) {
+export interface ShareHistoryDeskProps {
+  readonly refreshSignal?: number;
+  readonly onSwitchToCreate?: () => void;
+}
+
+export function ShareHistoryDesk({ refreshSignal, onSwitchToCreate }: ShareHistoryDeskProps) {
   const [history, setHistory] = useState<ShareHistoryItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -102,7 +107,28 @@ export function ShareHistoryDesk({ refreshSignal }: { refreshSignal?: number }) 
   }
 
   if (history.length === 0) {
-    return null;
+    return (
+      <div className="surface-card history-empty-card" role="region" aria-label="No shares in history">
+        <div className="history-empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 className="surface-heading" id="history-heading">No shares created yet</h2>
+        <p className="history-empty-text">
+          Shares you seal and create on this browser will appear here so you can check live reveal limits, copy links, or revoke them anytime.
+        </p>
+        {onSwitchToCreate && (
+          <button
+            type="button"
+            className="action-button primary-button"
+            onClick={onSwitchToCreate}
+          >
+            Create a share
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (

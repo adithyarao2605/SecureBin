@@ -29,6 +29,29 @@ test("the user can toggle between dark and light theme", async ({ page }) => {
   await expect(page.locator("html")).toHaveClass(/dark/);
 });
 
+test("the user can navigate between application tabs", async ({ page }) => {
+  await page.goto("/");
+
+  // Starts on New share
+  await expect(page.getByRole("tab", { name: "New share" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Create a private share" })).toBeVisible();
+
+  // Switch to How it works tab
+  await page.getByRole("tab", { name: "How it works" }).click();
+  await expect(page.getByRole("tab", { name: "How it works" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "A share should reveal as little as possible." })).toBeVisible();
+
+  // Switch to My shares tab (empty state)
+  await page.getByRole("tab", { name: "My shares" }).click();
+  await expect(page.getByRole("tab", { name: "My shares" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "No shares created yet" })).toBeVisible();
+
+  // Clicking "Create a share" switches back to New share tab
+  await page.getByRole("button", { name: "Create a share" }).click();
+  await expect(page.getByRole("tab", { name: "New share" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Create a private share" })).toBeVisible();
+});
+
 test("the user can select custom expiration duration", async ({ page }) => {
   await page.goto("/");
 
@@ -80,8 +103,8 @@ test("created share appears in the local history desk with live actions", async 
   await page.getByRole("button", { name: "Create share" }).click();
   await expect(page.getByRole("textbox", { name: "Share link" })).toBeVisible();
 
-  // Return to composer to view history desk
-  await page.getByRole("button", { name: "Create another" }).click();
+  // Switch to My shares tab to view history desk
+  await page.getByRole("tab", { name: "My shares" }).click();
   await expect(page.getByRole("heading", { name: "Shares created on this device" })).toBeVisible();
   await expect(page.getByText("● Active")).toBeVisible();
   await expect(page.getByRole("button", { name: "Check status" })).toBeVisible();

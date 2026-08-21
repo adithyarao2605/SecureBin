@@ -47,21 +47,20 @@ Updated: 2026-08-21 (Asia/Kolkata)
   * Updated `app/s/[publicId]/viewer.tsx` with complete 10-state lifecycle state machine and client-side retry token preservation.
   * Updated `app/globals.css` with Quiet Proof color palette, typography tokens, light/dark themes, and responsive layout.
   * Enhanced `app/components/theme-toggle.tsx` with dedicated Light/Dark/Auto SVG segmented toggle and system media query listener.
-  * Resolved production CSP nonce injection in `app/layout.tsx` and excluded `_next/static` from custom `next.config.mjs` headers to enable clean React hydration on production deployments.
-  * Added inline zero-flash theme initialization script and Stitch MCP design system single-button dark mode toggle with default dark theme.
+  * Added top-level tabbed navigation (`app/page.tsx`, `app/globals.css`) organizing the interface into accessible panels: **New share**, **My shares** (with dynamic count badge and empty state switch), and **How it works** (with refined principle cards and boundary architecture).
   * Added Browser-Local Share History Desk (`lib/shares/share-history.ts`, `app/components/share-history.tsx`, `tests/unit/share-history.test.ts`) enabling creators to view shares created on this device, check live remaining reveals, copy links, or revoke access directly from history while preserving zero-knowledge principles.
   * Elevated the dark mode palette to an obsidian-teal slate theme (`#0d171b` canvas, `#132228` cards, `#4ecdc4` mineral highlights) with smooth contrast transitions.
   * Enhanced `.github/workflows/ci.yml` with Supabase CLI setup, local container start, pgTAP test execution, integration tests, E2E tests, a11y tests, and automated Playwright artifact archiving.
   * Updated E2E and Axe accessibility test suites (`tests/e2e/home.spec.ts`, `tests/e2e/secure-share.spec.ts`, `tests/a11y/viewer.spec.ts`).
   * Synchronized all active documentation (`README.md`, `docs/deployment.md`, `docs/DAY-2-PLAN.md`, `docs/DAY-2-UI.md`, `docs/policy-state.md`, `info/HANDOFF.md`).
 - Cleaned up dangling Docker containers; verified local Supabase containers are healthy.
-- Full validation passed across 61 unit tests, 12 integration tests, 6 Playwright E2E tests, 2 Playwright Axe accessibility tests, 54 pgTAP tests, lint, strict typecheck, production build, and reproducibility verification.
+- Full validation passed across 61 unit tests, 12 integration tests, 7 Playwright E2E tests, 2 Playwright Axe accessibility tests, 54 pgTAP tests, lint, strict typecheck, production build, and reproducibility verification.
 
 ## Validation
 
 - `pnpm validate`: passed (lint, strict typecheck, 61 unit tests, production build).
 - `pnpm test:integration`: passed (12 integration tests across share service, concurrency, upload service, and cleanup service).
-- `pnpm test:e2e`: passed (6/6 Playwright browser tests across dark theme, theme toggle, custom expiry, history desk, mobile narrow viewport, and browser decryption).
+- `pnpm test:e2e`: passed (7/7 Playwright browser tests across dark theme, theme toggle, tabbed navigation, custom expiry, history desk, mobile narrow viewport, and browser decryption).
 - `pnpm test:a11y`: passed (2/2 Playwright Axe accessibility tests, 0 critical violations).
 - `pnpm supabase:test`: passed (54 pgTAP tests: 25 foundation + 29 policy and role isolation).
 - `.venv/bin/python scripts/verify-reproducibility.py`: passed.

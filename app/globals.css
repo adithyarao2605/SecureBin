@@ -137,6 +137,14 @@ button {
   letter-spacing: -0.02em;
 }
 
+.brand-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
 .brand-status {
   border-left: 1px solid var(--line);
   padding-left: 0.75rem;
@@ -147,12 +155,99 @@ button {
   text-transform: uppercase;
 }
 
-@media (max-width: 640px) {
+.header-tabs-nav {
+  display: flex;
+  align-items: center;
+}
+
+.tab-pill-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  padding: 4px;
+  border-radius: 9999px;
+}
+
+.tab-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: var(--muted-ink);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.tab-pill-btn:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tab-pill-btn.active {
+  background: var(--surface-bg);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--line);
+}
+
+.tab-icon {
+  flex-shrink: 0;
+}
+
+.tab-count-badge {
+  background: var(--mineral);
+  color: #0a1114;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 9999px;
+  line-height: 1;
+}
+
+.tab-panel {
+  width: 100%;
+  animation: fadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
   .brand-status {
     display: none;
   }
   .site-header {
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+  }
+  .header-tabs-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+  .tab-pill-btn span:not(.tab-count-badge) {
+    font-size: 0.8rem;
+  }
+  .tab-pill-btn {
+    padding: 0.35rem 0.65rem;
   }
 }
 
@@ -160,17 +255,6 @@ button {
   display: flex;
   align-items: center;
   gap: 1.25rem;
-}
-
-.quiet-link {
-  color: var(--muted-ink);
-  text-decoration: none;
-  font-size: 0.95rem;
-  transition: color 150ms ease;
-}
-
-.quiet-link:hover {
-  color: var(--ink);
 }
 
 .theme-icon-btn {
@@ -771,9 +855,33 @@ button {
 .how-section {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  border-top: 1px solid var(--line);
-  padding-top: 2.5rem;
+  gap: 2rem;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 1rem 0 2rem;
+}
+
+.how-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.how-main-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.how-subtext {
+  margin: 0.25rem 0 0;
+  color: var(--muted-ink);
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 680px;
 }
 
 .eyebrow {
@@ -785,7 +893,7 @@ button {
   color: var(--mineral);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 }
 
 .eyebrow-dot {
@@ -797,7 +905,7 @@ button {
 
 .principles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.5rem;
 }
 
@@ -805,17 +913,56 @@ button {
   background: var(--surface-bg);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.85rem;
+  transition: all 200ms ease;
+}
+
+.principle-card:hover {
+  border-color: var(--mineral);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.principle-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .principle-number {
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: var(--mineral);
+}
+
+.principle-tag {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-ink);
+  background: var(--surface-subtle);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
+
+.principle-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.principle-card p {
+  margin: 0;
+  color: var(--muted-ink);
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 .site-footer {
@@ -831,12 +978,43 @@ button {
 
 /* Share History Desk */
 .history-section {
-  margin-top: 3.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.history-empty-card {
+  max-width: 560px;
+  margin: 2rem auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 3rem 2rem;
+}
+
+.history-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mineral);
+}
+
+.history-empty-text {
+  margin: 0;
+  color: var(--muted-ink);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 440px;
 }
 
 .history-header {
@@ -850,7 +1028,7 @@ button {
 .history-heading {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -858,7 +1036,7 @@ button {
 .history-sub {
   margin: 0.35rem 0 0;
   color: var(--muted-ink);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .history-clear-btn {
@@ -866,7 +1044,7 @@ button {
   border: 1px solid var(--line);
   color: var(--muted-ink);
   font-size: 0.8rem;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.85rem;
   border-radius: 8px;
   transition: all 150ms ease;
 }
