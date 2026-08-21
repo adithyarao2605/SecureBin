@@ -1,6 +1,6 @@
 # Day 2 implementation plan: lifecycle correctness
 
-Status: **approved for implementation after the prerequisites below pass**
+Status: **DONE**
 
 Audience: low-context implementation agents; follow the order and do not invent contracts
 
