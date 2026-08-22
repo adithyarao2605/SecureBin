@@ -71,10 +71,8 @@ Day 4 is planned in `docs/DAY-4-PLAN.md` and ready to implement: PBKDF2 password
 
 ## Recent Commits
 
-- `13d8cd9` fix(db): accept canonical base64url longer than 76 chars; wire audit logging
-- `11b26ad` docs: sync stale incident/scope claims; document CSP storage origin and finalize contract
-- `1108210` test(db): forward migration for single finalize signature; env-only test config
-- `1da368a` fix(server): redact upstream RPC details from persisted logs
-- `ced000e` fix(ui): byte-accurate content limit, history revoke sync, safety cleanups
-- `3916bab` fix(contracts): reject unparseable scheduled availability
-- `3aaddfe` fix(csp): allow configured Supabase storage origin in connect-src
+- `d245b32` fix(db): drop stale Day-3 size constraints; review fixes; Day 5-7 plans
+- `93faf76` docs(ci): finish key-material purge, DAY-2-UI numbering, record day-6 UI decision
+- `0d4cb15` fix(ci): read service key from repository secret; drop unused anon key
+- `3ded54a` docs: day 4 plan, secret-hygiene scrub notes, SHA remap, DAY-2/3 errata
+- `18d2888` fix(db): accept canonical base64url longer than 76 chars; wire audit logging
