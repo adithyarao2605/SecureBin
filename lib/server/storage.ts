@@ -8,6 +8,18 @@ export interface SecureStorage {
   remove(path: string): Promise<"deleted" | "missing">;
 }
 
+function normalizeStorageUrl(rawUrl: string, supabaseUrl: string): string {
+  if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
+    return rawUrl;
+  }
+  const cleanBase = supabaseUrl.replace(/\/$/, "");
+  if (rawUrl.startsWith("/storage/v1")) {
+    return `${cleanBase}${rawUrl}`;
+  }
+  const cleanPath = rawUrl.replace(/^\//, "");
+  return `${cleanBase}/storage/v1/${cleanPath}`;
+}
+
 export function createSecureStorage(
   config: Pick<ServerConfig, "supabaseUrl" | "serviceRoleKey"> & Partial<ServerConfig> = readServerConfig()
 ): SecureStorage {
@@ -29,7 +41,7 @@ export function createSecureStorage(
         throw new Error("Failed to generate signed upload URL");
       }
       return {
-        url: data.signedUrl,
+        url: normalizeStorageUrl(data.signedUrl, config.supabaseUrl),
         token: data.token,
       };
     },
@@ -41,7 +53,7 @@ export function createSecureStorage(
       if (error || !data) {
         throw new Error("Failed to generate signed download URL");
       }
-      return data.signedUrl;
+      return normalizeStorageUrl(data.signedUrl, config.supabaseUrl);
     },
 
     async inspectSize(path: string) {

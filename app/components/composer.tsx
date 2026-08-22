@@ -207,11 +207,14 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         });
 
         if (!uploadRes.ok) {
+          const errText = await uploadRes.text().catch(() => "");
+          console.error("[SecureBin] Upload reservation failed:", uploadRes.status, errText);
           throw new Error("upload_reservation_failed");
         }
 
         const uploadData = (await uploadRes.json()) as { uploadUrl?: string };
         if (!uploadData.uploadUrl) {
+          console.error("[SecureBin] Missing uploadUrl in reservation response");
           throw new Error("missing_upload_url");
         }
 
@@ -222,6 +225,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         });
 
         if (!putRes.ok) {
+          const putErr = await putRes.text().catch(() => "");
+          console.error("[SecureBin] Storage upload failed:", putRes.status, putErr);
           throw new Error("storage_upload_failed");
         }
 
@@ -237,6 +242,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       });
 
       if (!response.ok) {
+        const createErr = await response.text().catch(() => "");
+        console.error("[SecureBin] Create share RPC failed:", response.status, createErr);
         throw new Error("create_failed");
       }
 
@@ -265,7 +272,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       preparedRef.current = null;
       if (onPhaseChange) onPhaseChange("created");
       if (onShareCreated) onShareCreated();
-    } catch {
+    } catch (err) {
+      console.error("[SecureBin] Share creation halted:", err instanceof Error ? err.message : String(err));
       setErrorMessage("This share could not be created. Your draft is still only on this device.");
       if (onPhaseChange) onPhaseChange("draft");
     } finally {

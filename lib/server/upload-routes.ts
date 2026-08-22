@@ -55,6 +55,7 @@ export function createPostUploadHandler(
         expiresAt: result.expiresAt,
       }, 201);
     } catch (error) {
+      console.error("[SecureBin Server] create_upload_reservation failed:", error instanceof Error ? error.message : String(error));
       if (error instanceof UploadServiceError) {
         if (error.kind === "conflict") {
           return errorResponse("reservation_conflict", 409);

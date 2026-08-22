@@ -53,6 +53,7 @@ export function createPostShareHandler(dependencies: ShareRouteDependencies): (r
         },
       }, 201);
     } catch (error) {
+      console.error("[SecureBin Server] create_share failed:", error instanceof Error ? error.message : String(error));
       if (error instanceof ShareServiceError && error.kind === "conflict") {
         return errorResponse("idempotency_conflict", 409);
       }
