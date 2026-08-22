@@ -12,6 +12,14 @@ one-command self-hosting, portable encrypted `.securebin` parcels with offline
 decryption, a local-only sender manager, expanded Privacy Receipt, and — only
 if provably stable — ciphertext-size padding.
 
+**UI redesign if required:** if the Day 4 stabilization pass and real usage up
+to this point show the interface itself (layout system, visual hierarchy, or
+interaction model) is not good enough — not just individual defects — a scoped
+end-to-end UI redesign is explicitly in-scope for Day 6, within the quiet-proof
+direction of `docs/SPEC.md` and with all existing accessibility/e2e gates as
+the safety net. Redesign means replacing the shell/navigation/surface system;
+it does not mean changing copy contracts, protocol, or scope.
+
 Do not add accounts, realtime/presence, moderation, Kubernetes/Terraform, or
 any stretch feature before every required Day 4–6 item is green in production
 or local mode.

@@ -69,6 +69,28 @@ link+password+unlock     securebin/v1|v2/link+password+unlock/content, /file
 
 ## 4. Build slices (each independently green)
 
+0. **Pre-implementation UI stabilization (T1 scope §0.A–D / plan_v2
+   §2.1–2.3 — done FIRST, before any factor work):**
+   - Application shell uses the full viewport (`min-height: 100dvh`); the
+     composer grows vertically; wider desktop workspace without breaking
+     mobile; no floating-card feel; evidence rail + workspace read as one
+     application.
+   - View Share receives the same polish pass as Create: generous decrypted
+     content area, overflow rules for long text/code/filenames, consistent
+     visual language across every state (loading, scheduled, ready,
+     confirming, revealing, opened, wrong-factor, network-error,
+     incomplete-link, unavailable), an intentionally designed mobile
+     recipient view.
+   - Header/navigation renders consistently on initial load, hard refresh,
+     direct share URLs, and client navigation — no flash, overlap, or missing
+     styles; wrong-theme flash removed where practical; stable fallbacks for
+     lazy-loaded Markdown/code/QR/preview chunks; core flow survives an
+     optional-chunk failure.
+   - **If this pass shows the design cannot meet the quiet-proof bar, a scoped
+     UI redesign is explicitly in-scope here and again at Day 6.**
+   - Verification matrix recorded in HANDOFF: `/` and `/s/[publicId]` ×
+     cold load / hard refresh / client nav × light/dark × 320px / 390px /
+     laptop / 1440p, plus slow-network throttling.
 1. **Password factor (browser):** composer optional password field (confirm
    field, strength hint copy only — no meters), PBKDF2 derivation, factor-mask
    envelope production, golden vectors for all four masks.
@@ -97,6 +119,9 @@ link+password+unlock     securebin/v1|v2/link+password+unlock/content, /file
 
 ## 5. Evidence gate
 
+- UI stabilization matrix from slice 0 recorded green (all routes × refresh
+  modes × themes × viewports, slow-network pass, no hydration errors in
+  console).
 - Crypto vectors: all four factor masks seal/open round-trip; wrong password,
   wrong unlock, wrong link each fail closed without network calls; iteration
   count and salt length asserted in golden vectors.

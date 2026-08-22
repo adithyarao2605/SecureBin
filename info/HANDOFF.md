@@ -45,6 +45,11 @@ Environment note: Playwright ≥1.55.1 browser v1193 had to be installed manuall
   plan_v2 **Day 6** work, after the five-day SPEC release and the earlier
   plan_v2 slices. Do not fold general UI polish into Day 4/5 beyond what the
   SPEC already requires.
+- 2026-08-22 (owner): **UI redesign if required** is a legitimate, scoped
+  option — first inside the Day 4 pre-implementation stabilization slice
+  (T1 §0.A–D), and again at Day 6 if real usage shows the interface itself
+  is insufficient. Redesign stays within the quiet-proof direction and all
+  existing test/a11y gates.
 - 2026-08-22 (owner): zero key material policy — both the local CLI service
   constant and Supabase's public demo anon token were scrubbed from all git
   history (two filter-repo passes); CI reads the service key from the

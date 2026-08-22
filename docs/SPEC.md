@@ -241,6 +241,12 @@ handles the non-happy paths judges will try.
 
 **Build**
 
+- First, complete the pre-implementation UI stabilization from the T1 scope
+  (§0.A–D): full-viewport application shell, View Share polish parity with
+  Create, header/navigation rendering consistency across refreshes and direct
+  navigation, hydration/theme-flash fixes, and stable lazy-load fallbacks. If
+  this pass shows the design itself is insufficient, a scoped UI redesign is
+  in-scope (and again at Day 6), within the quiet-proof direction.
 - Add optional browser-native PBKDF2 password protection with bounded input
   and exact supported parameters. Add two-channel unlock with an independent
   readable code, separate-channel guidance, factor-mask domain separation,
