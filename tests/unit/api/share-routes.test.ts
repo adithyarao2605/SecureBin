@@ -126,6 +126,12 @@ describe("share policy and contract freezing", () => {
     expect(parseCreateShareInput(afterExpiry, fixedNow)).toBeNull();
   });
 
+  it("rejects an unparseable scheduled availability instead of silently clearing it", () => {
+    const expiry = new Date(fixedNow + 24 * 3600 * 1000).toISOString();
+    const malformedAvailable = validPayload({ policy: { availableAt: "not-a-date", expiresAt: expiry, maxReveals: null } });
+    expect(parseCreateShareInput(malformedAvailable, fixedNow)).toBeNull();
+  });
+
   it("parses database status rows for active, scheduled, unavailable, limited, and unlimited shares", () => {
     expect(parseStatus({
       status: "active",

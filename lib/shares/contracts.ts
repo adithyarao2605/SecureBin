@@ -244,7 +244,7 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
   if (!isMaxReveals(maxReveals)) return null;
   const availableAt = value.policy.availableAt === null ? null : parseIsoUtc(value.policy.availableAt);
   const expiresAt = parseIsoUtc(value.policy.expiresAt);
-  if (value.policy.availableAt !== null && availableAt === null || expiresAt === null) return null;
+  if ((value.policy.availableAt !== null && availableAt === null) || expiresAt === null) return null;
   const expiryMillis = Date.parse(expiresAt);
   if (expiryMillis <= nowMillis || expiryMillis > nowMillis + MAX_EXPIRY_DAYS * 86_400_000) return null;
   if (availableAt !== null && Date.parse(availableAt) >= expiryMillis) return null;
