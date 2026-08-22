@@ -39,7 +39,7 @@ function expectContentEnvelope(value: unknown) {
     "passwordSalt",
     "version",
   ]);
-  expect(value.version).toBe(1);
+  expect(value.version).toBe(2);
   expect(value.objectType).toBe("content");
   expect(value.algorithm).toBe("AES-256-GCM");
   expect(value.kdf).toBe("none");
