@@ -45,8 +45,9 @@ dependency installation and runs the same Python repository check.
 - The GitHub repository URL: `https://github.com/adithyarao2605/SecureBin`.
 - The exact reviewed commit SHA from `git rev-parse HEAD`.
 - This runbook and the current [`../info/HANDOFF.md`](../info/HANDOFF.md).
-- A statement of scope: Day 1 works locally/through CI; production deployment
-  and live backend verification are still owner actions.
+- A statement of scope: Days 1–3 are implemented, gated in CI, and verified
+  against the production deployment; Day 4 factors (passwords, two-channel
+  unlock, QR, Privacy Receipt) remain unimplemented.
 
 Do **not** send `.env`/`.env.local`, Supabase service-role credentials,
 `RATE_LIMIT_HMAC_KEY`, `CRON_SECRET`, real share URLs or URL fragments,
@@ -192,13 +193,14 @@ the provider stores, never in a tracked file.
 ### Rollback
 
 If deployment or the browser-backed flow fails, stop sharing the new URL.
-For the current `invalid content envelope` incident, use the dedicated incident
-handoff rather than rotating secrets or relaxing database validation.
-Promote the last known-good Vercel deployment or redeploy its exact commit;
-do not roll back a database migration blindly. Because only the initial
-migration exists today, a database rollback requires an explicitly reviewed
-forward repair or a fresh project. Record the failed deployment, redacted
-symptom, commit, and recovery result in `info/HANDOFF.md`.
+The 2026-08-21 `invalid content envelope` create incident is closed; its
+diagnostic history lives in the dedicated incident handoff. For a fresh
+regression, promote the last known-good Vercel deployment or redeploy its
+exact commit; do not roll back a database migration blindly. Migrations are
+forward-only: a database recovery requires an explicitly reviewed forward
+repair or a fresh project with all migrations replayed in order. Record the
+failed deployment, redacted symptom, commit, and recovery result in
+`info/HANDOFF.md`.
 
 ### Production checks
 
@@ -230,9 +232,9 @@ Return these non-secret facts to the repository maintainer:
 2. Apply migrations from a clean database and run RLS/integration tests.
 3. Configure the exact environment variables in the Vercel project; preview and
    production values must be separate.
-4. After the authenticated cleanup HTTP route is implemented, configure its
-   hourly trigger. Do not point a scheduler at an unimplemented or unprotected
-   route.
+4. Keep the hourly cleanup trigger pointed at `POST /api/internal/cleanup`
+   with the `CRON_SECRET` bearer header; verify it returns 200 and the counts
+   stay at zero once backlog is drained.
 5. Verify security headers, `no-store`, private object access, and the health
    endpoint on the deployed commit.
 6. Run `APP_URL=https://<verified-host> scripts/demo-smoke.sh` from a clean

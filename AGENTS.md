@@ -34,12 +34,12 @@ contract, not optional decoration:
 
 - `info/plan.md` defines product priorities, delivery order, and the future roadmap.
 - `docs/architecture.md` defines protocol, trust boundaries, schemas, APIs, and lifecycle semantics.
-- `docs/PRODUCTION-INCIDENT.md` defines the current live blocker and safe friend investigation order.
+- `docs/PRODUCTION-INCIDENT.md` records the resolved 2026-08-21 production create incident and its investigation order; it is history, not an open blocker.
 - Supabase migrations define the deployed database contract.
 - `package.json` scripts define executable validation commands.
 
 Update the documents in the same change whenever a public contract or security invariant changes.
-Do not begin Day 2 while `docs/PRODUCTION-INCIDENT.md` remains open.
+Day 4 (passwords, two-channel unlock, QR, Privacy Receipt) is the active milestone; `info/plan_v2.md` Days 5–7 stay gated until Day 5 of the five-day SPEC plan is done.
 `info/plan.md` serves as product priorities reference; record any project decisions in `info/HANDOFF.md`.
 
 ## Reference Boundary

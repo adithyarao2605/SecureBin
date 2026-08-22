@@ -7,12 +7,14 @@ evidence that an unimplemented component has shipped.
 
 ## Current implementation coverage
 
-The solid Day 1 path—browser-encrypted text, strict share APIs, Postgres-backed
-create/status/reveal/delete, and local decryption—is implemented and tested.
-The attachment/Storage and scheduled cleanup nodes remain planned architecture
-until their routes and production operations exist. The current host is not
-accepted as evidence because create remains blocked; see
-[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md).
+The Day 1–3 surface is implemented and tested: browser-encrypted text plus
+Markdown/code modes with SBCT v2 framing, single-file encrypted attachments
+through private Storage (reservation, signed upload, size verification, signed
+60-second reveal download, safe local preview), scheduled cleanup of expired
+shares, abandoned reservations, and rotated upload paths. The production host
+has the forward migrations applied and live create/status/reveal were verified;
+see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md) for the closed incident
+record.
 
 ## System context and data boundary
 

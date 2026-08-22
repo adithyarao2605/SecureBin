@@ -39,6 +39,8 @@ jobs:
       COREPACK_DEFAULT_TO_LATEST: "0"
       NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "*REMOVED*<public-demo-anon-token>"
+      # Well-known service key printed by `supabase start` for every LOCAL
+      # stack; valid only against the ephemeral 127.0.0.1:54321 instance.
       SUPABASE_SERVICE_ROLE_KEY: "*REMOVED*<local-CLI-constant>"
       RATE_LIMIT_HMAC_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
       CRON_SECRET: "test-cron-secret-1234567890123456"

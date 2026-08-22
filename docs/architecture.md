@@ -237,6 +237,8 @@ Accept the future share public ID, idempotency digest, metadata-only file envelo
 
 The replacement RPC is `create_upload_reservation(text, bytea, jsonb, bigint)` for public ID, idempotency digest, exact metadata-only file envelope, and size. The table uniquely binds `(reserved_public_id, idempotency_key_hash)`. An identical live retry reuses the path and receives a fresh signed operation; changed envelope/size returns `409 reservation_conflict`; an expired unattached tuple is reinitialized with a fresh path while its old path is queued for cleanup; attached tuples cannot be uploaded again. File envelopes reject `ciphertext` and unknown fields. Cleanup removes abandoned reservation paths and queued rotation paths through Storage first, then finalizes only successful or already-missing objects.
 
+Cleanup uses exactly two service-role RPCs: `list_cleanup_candidates()` returns validated candidates (`share`, `upload`, `upload_rotation`), and `finalize_expired_securebin(uuid[], uuid[], uuid[])` is the single finalizer signature — the earlier two-array overload was dropped by forward migration `20260824000000` because ambiguous PostgREST overload resolution broke named-argument calls. All three parameters are accepted explicitly; absent groups are passed as SQL `NULL`.
+
 ### `POST /api/shares`
 
 Accept the client public ID, content envelope, lifecycle policy, deletion-token digest, idempotency-key digest, prompting flags, and optional metadata-only file envelope/size. Find and lock the unexpired unattached reservation matching public ID, idempotency digest, file envelope, and size; verify and attach transactionally. Return the public ID and normalized policy. Never accept an upload-reservation capability, plaintext content, or file metadata.
@@ -262,7 +264,7 @@ Accept a random reveal request token. An atomic RPC locks the share row and:
 3. Increments the counter and inserts a five-minute lease in the same transaction.
 4. Returns the content envelope and optional private object path to the server route.
 
-The route returns ciphertext and, when applicable, a 60-second signed file URL. If signed URL generation or response delivery fails, retrying with the same token regenerates the response without another increment.
+The route returns ciphertext and, when applicable, a 60-second signed file URL. If signed URL generation or response delivery fails, retrying with the same token regenerates the response without another increment. Known limitation: the reveal lease is consumed by the RPC before the server generates the signed URL, so a recipient who abandons the attempt and returns after the 5-minute lease window has expired consumes a second authorization on the next attempt.
 
 ### `DELETE /api/shares/:publicId`
 
@@ -355,6 +357,7 @@ The public API deliberately collapses expired, exhausted, revoked, and missing r
 - Revoke Blob URLs when views unmount.
 - Use self-hosted fonts and assets. Secret routes load no third-party scripts, pixels, embeds, or remote media.
 - Apply nonce-based CSP, HSTS, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff`, restrictive Permissions Policy, frame denial, and `no-store`.
+- The CSP `connect-src` list is `'self'` plus exactly one configured origin: the Supabase project URL (`NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL`), because the browser uploads ciphertext to and downloads attachments from Storage via short-lived signed URLs. No other cross-origin connection is permitted; an unset or malformed URL leaves `connect-src 'self'`.
 
 ## 11. Reliability and Operations
 

@@ -171,7 +171,7 @@ available.
 | Innovation | Browser-only encryption and atomic reveal authorization | Text slice implemented; advanced factors pending |
 | Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Text slice covered |
-| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Current `main` gates pass; production create incident remains open |
+| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Current `main` gates pass; production create/reveal verified live (incident closed) |
 | Documentation | This README, threat model, architecture, runbook | Present |
 
 ## Security and limitations

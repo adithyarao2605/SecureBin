@@ -4,15 +4,17 @@ This document turns the protocol in [`architecture.md`](architecture.md)
 into an operational security boundary. It describes what the judged release
 protects, what it intentionally exposes, and what it cannot protect.
 
-The implemented evidence currently covers the Day 1 encrypted plain-text
-slice. Later factors, files, richer renderers, cleanup scheduling, and a live
-production host remain unverified scope even where this threat model defines
-their required controls.
+The implemented evidence covers the Day 1–3 surface: encrypted plain-text,
+Markdown, and code content with v2 SBCT framing; single-file encrypted
+attachments through private Storage; safe local rendering boundaries; and
+scheduled cleanup. Day 4 factors (passwords, two-channel unlock) and QR or
+Privacy Receipt outputs remain unimplemented scope even where this threat
+model defines their required controls.
 
-The active failure is tracked in
-[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Temporary diagnostics may
-record envelope shape and lengths only—never values, ciphertext, plaintext,
-capabilities, or credentials.
+The 2026-08-21 production create incident is resolved and closed; the record
+lives in [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Temporary
+diagnostics may record envelope shape and lengths only—never values,
+ciphertext, plaintext, capabilities, or credentials.
 
 ## Security objectives
 

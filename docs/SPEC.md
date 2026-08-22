@@ -22,7 +22,7 @@ clearly marked as future work.
 
 ## Progress snapshot
 
-Days 1, 2, and 3 are implemented and fully green across local and GitHub Actions CI gates: reproducible tooling, multi-mode browser encryption (plain note, sanitized Markdown, and syntax-highlighted code with binary `SBCT` framing), independent encrypted file attachments up to 10 MiB, storage URL normalization, atomic database lifecycle policy, upload reservations and rotation queue, clean local history desk, production build, 101 unit tests, 4 live concurrency/integration tests, 54 pgTAP database tests, 8 Playwright E2E tests, and 2 Axe accessibility tests.
+Days 1, 2, and 3 are implemented and fully green across local and GitHub Actions CI gates: reproducible tooling, multi-mode browser encryption (plain note, sanitized Markdown, and syntax-highlighted code with binary `SBCT` framing), independent encrypted file attachments up to 10 MiB, storage URL normalization, atomic database lifecycle policy, upload reservations and rotation queue, clean local history desk, production build, 106 unit tests, live concurrency/integration tests, 82 pgTAP database tests, 8 Playwright E2E tests, and 2 Axe accessibility tests.
 
 The production incident is closed, and remote Supabase has been migrated with all forward schema changes (`20260823000000_day3_safe_content_and_attachments.sql`).
 
@@ -318,6 +318,13 @@ storage adapters, SDKs/extensions, interoperability import, Argon2id, padding,
 key transparency, sender signatures, and richer traffic-analysis defenses are
 future roadmap work. They must not destabilize the five-day judged release and
 must never be represented as implemented in the demo or submission evidence.
+
+`info/plan_v2.md` extends the product after this release with its own Days 4–7
+(discussions, reveal window, parcels, self-hosting). That plan is a read-only
+roadmap source: none of its scope may start before Day 5 of this five-day plan
+is complete, and where it conflicts with this SPEC (custom reveal counts,
+"Never" expiry, multi-file attachments, code auto-detection), this SPEC's
+preset-only contract wins until the five-day release is done.
 
 ## Per-day handoff checklist
 

@@ -12,8 +12,8 @@ evidence for the production create and viewer issues at
 2. **Viewer Response Schema:** Commit `0c93b5c` fixed client-side exact key validation in `app/s/[publicId]/viewer.tsx` to expect the full 7-key status payload (`availableAt` included) and 3-key reveal payload (`status`, `contentEnvelope`, `retryExpiresAt`).
 3. **PostgREST Timestamp Parsing:** Commit `fd7e0db` broadened `ISO_UTC_PATTERN` in `lib/shares/contracts.ts` and normalized `timestamptz` strings from PostgREST (`+00:00` offset format) to ISO UTC strings in `getStatus` and `reveal`.
 4. **Day 3 Schema & Envelope Migration:** Applied `20260823000000_day3_safe_content_and_attachments.sql` to remote Supabase to accept version 2 framed content and file envelopes up to 10 MiB ciphertext size.
-5. **Storage URL Normalization & Safe Error Logging:** Commit `d1b1502` normalized Supabase Storage signed upload/download URLs to fully qualified absolute paths and added structured error logs on server route catch blocks.
-6. **Hermetic Test Isolation:** Commit `d55cd6b` and `3158819` reverted test env overrides in `tests/setup.ts`, injected `fakeStorage` into unit/integration RPC mapping tests, and updated E2E envelope version expectations for Day 3.
+5. **Storage URL Normalization & Safe Error Logging:** Commit `af90c97` normalized Supabase Storage signed upload/download URLs to fully qualified absolute paths and added structured error logs on server route catch blocks.
+6. **Hermetic Test Isolation:** Commits `4b8e396` and `45c3e66` reverted test env overrides in `tests/setup.ts`, injected `fakeStorage` into unit/integration RPC mapping tests, and updated E2E envelope version expectations for Day 3.
 
 Live testing confirmed `GET /api/health` (200), `POST /api/uploads` (201), `PUT <storageUrl>` (200), `POST /api/shares` (201), `GET /api/shares/[id]/status` (200), and `POST /api/shares/[id]/reveal` (200) all operate cleanly.
 
@@ -23,7 +23,8 @@ Live testing confirmed `GET /api/health` (200), `POST /api/uploads` (201), `PUT 
 - The browser performs local encryption and sends `POST /api/shares`.
 - The public API returns the intentionally redacted `503` response.
 - The composer preserves the draft and reports that the share was not created.
-- No production create/reveal result has been accepted as release evidence.
+- At the time, no production create/reveal result had been accepted as release
+  evidence.
 
 ## Confirmed evidence
 
@@ -276,8 +277,10 @@ Production deployment:
 - repository validation and the relevant regression test pass;
 - rollback target is recorded.
 
-Until then, Day 1 remains locally/CI complete but production-blocked, and Day 2
-implementation must not begin.
+Closure record: live production create, status, and reveal were verified
+against the deployed commit after the Day 3 migrations were applied; the
+incident is closed and feature work resumed (Day 2 and Day 3 are complete).
+This document remains as the diagnostic history.
 
 ## Official references
 

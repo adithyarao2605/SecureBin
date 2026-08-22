@@ -4,113 +4,51 @@ Updated: 2026-08-22 (Asia/Kolkata)
 
 ## Completed
 
-- **UI Copy & Quiet Proof Polish Audit**:
-  * Inspected all 10 screens in Stitch MCP project (`SecureBin Quiet Proof Design System v1`).
-  * Removed AI marketing tropes ("military-grade encryption", "self-destruct", "sensitive data", "Destroy Now").
-  * Standardized proofline node nomenclature (`Browser` → `Sealed parcel` → `Recipient`) across all viewports.
-  * Standardized policy controls, clean trust line descriptions (`Your browser encrypts this before it leaves the page.`), and action button labels (`Copy link`, `Create share`, `Reveal once`).
-  * Synced newly generated clean UI screens into owned Stitch project `projects/5041201174043254098` ("SecureBin Quiet Proof V2").
-  * Validated that local codebase components (`composer.tsx`, `proofline.tsx`, `evidence-rail.tsx`, `policy-controls.tsx`, `viewer.tsx`) strictly conform to the approved copy contract.
+- **2026-08-22 audit-and-stabilization pass** (this run):
+  * Full-codebase bug hunt plus a second secrets audit; findings fixed and verified.
+  * **CSP fix (critical):** `middleware.ts` now adds the configured Supabase project origin to `connect-src`; previously `'self'` alone blocked the browser's signed-upload PUT and reveal download fetch, so attachments could never upload or preview in any CSP-enforcing browser. Covered by `tests/unit/csp.test.ts` (set / fallback / malformed / unset cases).
+  * **Contracts fix:** parenthesized the `availableAt` guard in `parseCreateShareInput` (`lib/shares/contracts.ts`); an unparseable scheduled time was silently coerced to `null`, turning scheduled shares immediately available. Regression test added.
+  * **Composer:** draft limit now enforced in UTF-8 bytes with a clear error before any crypto work; byte-accurate counter replaces the UTF-16 char counter/maxLength.
+  * **Revoke flow:** history entry is marked revoked on success.
+  * **Log redaction:** `upload-routes.ts` prints only coarse `status`/`code`; `RpcRequestError.message` intentionally carries upstream detail for incident diagnosis but must never reach persisted logs.
+  * **DB contract:** forward migration `20260824000000_finalize_single_signature.sql` drops the ambiguous two-array `finalize_expired_securebin` overload in deployed projects (the applied `20260821010000` file was left untouched). pgTAP updated.
+  * **Test config:** integration tests read every credential from the environment via native `process.loadEnvFile()` and fail fast when missing; no hardcoded keys anywhere.
+  * **Safety cleanups:** leading-`<` attachment text goes to download-only preview; removed accidental JS label in history parsing; dead typeof re-checks removed from envelope validation.
 
-- **Day 3: Safe Content and Encrypted Attachments Fully Implemented and Validated**:
-  * **Independent Cryptography (Step 1 & 2)**:
-    - Implemented binary `SBCT` framing for v2 structured content payloads (`0x53, 0x42, 0x43, 0x54`, version `0x01`, modes `note` / `markdown` / `code`, 8 languages `javascript` / `typescript` / `json` / `python` / `bash` / `sql` / `css` / `html` / `plaintext`).
-    - Implemented binary file framing (`uint32` filename length, `uint16` MIME length, filename UTF-8, MIME UTF-8, data) and independent key derivation using `securebin/v2/link/file` (`sealFile` and `openFile`).
-    - Verified strict domain separation: content key cannot decrypt file ciphertext, and file key cannot decrypt content ciphertext.
-    - Verified unique random nonces per payload even when sharing the same salt.
-    - Locked size limits: plaintext file max 10 MiB (`10_485_760`), max filename 512 bytes, max MIME 128 bytes, header 6 bytes, tag 16 bytes, max file ciphertext `10_486_422` bytes, max content bytes `524_288`, max v2 content ciphertext `524_315` bytes.
-  * **Safe Markdown & Code Rendering (Step 3)**:
-    - Integrated browser-only `react-markdown@10.1.0` and `remark-gfm@4.0.1` with `skipHtml={true}`, conservative `allowedElements` allowlist, image stripping component override to prevent tracking/remote requests, and tightened URL protocol filtering (`https:`, `http:`, `mailto:` only).
-    - Integrated browser-only `lowlight@3.3.0` registered with only the 8 fixed languages (no auto-detection). Converted HAST directly to React with allowlisted `hljs-*` classes and fallback to plain text on any unexpected AST property or markup.
-    - Created accessible `<CodeView>` with copy button and `<MarkdownView>`.
-  * **Storage & Upload Boundary Audit (Step 4)**:
-    - Audited `POST /api/uploads` and `lib/shares/contracts.ts` against locked `10_486_422` file ciphertext limit and v2 file envelope schema.
-    - Enforced zero-knowledge invariants: server never receives plaintext filenames, MIME types, or plaintext bodies.
-  * **Encrypted Upload Flow in Composer (Step 5)**:
-    - Updated `app/components/composer.tsx` with mode tabs (**Plain note**, **Markdown**, **Code** with language selector) and single-file encrypted attachment selector.
-    - Implemented staged creation: local validation -> single `ShareCryptoContext` generation -> binary framing -> file sealing -> upload reservation -> PUT ciphertext to signed storage URL -> create share RPC -> fragment URL construction.
-    - In-flight error preservation (`preparedRef.current`) preserves idempotency context and prevents nonce reuse or orphaned uploads.
-  * **Database Attachment Contracts (Step 6)**:
-    - Created forward migration `supabase/migrations/20260823000000_day3_safe_content_and_attachments.sql`.
-    - Updated `securebin_valid_envelope` to support v1 content, v2 content, and v2 file (strictly rejecting v1 file).
-    - Updated `create_upload_reservation` with `10_486_422` size bounds and v2 file validation.
-    - Updated `create_share` with v2 content limit (`524_315`), v2 file envelope validation, and actual storage object size verification.
-    - Added pgTAP test suite `supabase/tests/04_day3_attachments.sql`.
-  * **Authorized Reveal of Encrypted Downloads (Step 7)**:
-    - Updated `lib/server/share-service.ts` and `lib/server/share-routes.ts` to generate 60-second signed download URLs on reveal for shares with attached files.
-    - Maintained zero-knowledge guarantee: storage paths and credentials are never exposed directly to clients; only temporary signed download URLs are returned.
-  * **Safe Local Attachment Previews (Step 8)**:
-    - Created `lib/render/file-safety.ts` with magic byte detection for PNG, JPEG, GIF, WebP, fatal UTF-8 text validation, executable/HTML header rejection, and filename sanitization.
-    - Created `app/components/file-preview.tsx` managing browser Blob URL lifecycle with automatic `URL.revokeObjectURL` cleanup on unmount.
-    - Updated `app/s/[publicId]/viewer.tsx` to handle reveal with attached file download, decryption, and multi-mode rendering.
-  * **Orphaned File Cleanup (Step 9)**:
-    - Verified and extended `lib/server/cleanup-service.ts` to sweep storage objects for expired/exhausted shares, unattached upload reservations, and rotated uploads.
-  * **Full Verification and Validation (Step 10)**:
-    - Full test suite passed across 101 unit tests (including crypto golden vectors, framing, sanitization, XSS vectors, upload boundary, and retry mechanics).
-    - Production build (`next build`), strict typecheck (`tsc --noEmit`), lint (`eslint`), and reproducibility check (`verify-reproducibility.py`) all passed with zero errors.
-
-## Recent Hardening & Production Rollout
-
-- **Production Storage URL Normalization & Diagnostic Logging (`af90c97`)**:
-  * Fixed relative signed upload URLs returned by `@supabase/storage-js` by implementing `normalizeStorageUrl` in `lib/server/storage.ts`. Guarantees all signed upload and download URLs are fully qualified absolute URLs pointing directly to hosted Supabase Storage.
-  * Added structured error logging across `app/components/composer.tsx`, `lib/server/upload-routes.ts`, and `lib/server/share-routes.ts` for safe observability in browser consoles and Vercel logs.
-
-- **Accessibility Gate Pass (`a99b254`)**:
-  * Added explicit `<label htmlFor="file-attachment-input" className="sr-only">` and `aria-label="Attach file (max 10 MB)"` to the file input in `app/components/composer.tsx`, eliminating axe `id: "label"` critical violation.
-
-- **E2E Test Assertion Alignment (`45c3e66`)**:
-  * Updated `tests/e2e/secure-share.spec.ts` to expect Day 3 `version: 2` content envelopes with `SBCT` binary framing.
-
-- **Hermetic Test Isolation & CI URL Protection (`4b8e396`)**:
-  * Reverted dummy fallback in `tests/setup.ts` to prevent overriding CI's `NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321`.
-  * Injected hermetic `fakeStorage` into `tests/integration/share-service.test.ts` so unit/RPC tests run purely in memory without external dependencies.
-
-- **Remote Database Migration Rollout**:
-  * Executed `20260823000000_day3_safe_content_and_attachments.sql` on remote production Supabase (`db-muxxcejnohhrcgdmdnmh`).
-  * Updated `securebin_valid_envelope` to validate v1 and v2 envelopes, expanded ciphertext limits to 10 MiB (`10_486_422`), and updated `create_share` / `create_upload_reservation` RPCs.
+- Earlier state (verified this run): Day 1–3 complete — multi-mode SBCT v2 content, single-file encrypted attachments, storage reservation/rotation/cleanup, atomic lifecycle RPCs, quiet-proof UI. Production incident closed; remote Supabase migrated through `20260823000000`.
 
 ## Validation Status
 
-- `pnpm validate` passed: ESLint (0 errors), strict TypeScript (`tsc --noEmit`), 101/101 unit tests, and production build (`next build`).
-- `pnpm test` passed: 15/15 test files, 101/101 unit tests.
-- `pnpm test:integration` passed: 4/4 integration tests.
-- `pnpm test:e2e` passed: 8/8 Playwright tests.
-- `pnpm test:a11y` passed: 2/2 Axe accessibility tests (0 critical violations).
-- `.venv/bin/python scripts/verify-reproducibility.py` passed: status `OK: reproducibility and documentation contract is valid`.
-- Production verification: `GET /api/health` (200), `POST /api/uploads` (201), `PUT <storageUrl>` (200), `POST /api/shares` (201), `GET /api/shares/[id]/status` (200), and `POST /api/shares/[id]/reveal` (200).
+All commands run locally against Docker-backed Supabase:
+
+- `pnpm validate`: passed (lint, strict typecheck, 106 unit tests, production build).
+- `pnpm supabase:reset` + `pnpm supabase:test`: passed, 82 pgTAP tests across 5 files.
+- `pnpm test:integration`: passed, 12/12.
+- `pnpm test:e2e`: passed, 8/8. `pnpm test:a11y`: passed, 2/2.
+- `.venv/bin/python scripts/verify-reproducibility.py`: passed.
+
+Environment note: Playwright ≥1.55.1 needs browser build v1193; its CDN download stalled at the extraction step on this machine, so the archive was extracted manually into `~/.cache/ms-playwright/chromium_headless_shell-1193` with an `INSTALLATION_COMPLETE` marker. Other machines are unaffected.
+
+## Secrets Audit Result
+
+- Only tracked secret-looking value is the well-known Supabase CLI local constant (`*REMOVED*<local-CLI-constant>…`) in `ci.yml`, valid solely against ephemeral `127.0.0.1:54321` stacks; now labeled as such inline. Hosted projects generate unique keys, so it cannot authenticate there.
+- `.env` is gitignored and was never committed; `.env.example` holds placeholders only; no real credentials exist anywhere in tracked files or git history.
+- Owner hygiene check (optional): confirm/rotate the service key in the Supabase dashboard if desired; rotation is free.
+
+## Known Limitations (documented, accepted)
+
+- Reveal lease is consumed before signed-download generation; a recipient returning after the 5-minute lease window spends a second authorization. Documented in `docs/architecture.md`.
+- Rate-limit discriminator falls back to client-forwarded headers off Vercel (platform header first). Documented in code.
+- No live Markdown authoring preview in the composer (feature request, not a defect) — deferred with plan_v2 scope.
 
 ## Next Steps for Session (Day 4 Scope)
 
-1. **Password Factors (PBKDF2 / Argon2id)**:
-   - Support optional client-side passphrase entry with 600,000 PBKDF2 iterations or Argon2id.
-   - Set `factorMask: "link+password"` and derive independent object keys (`securebin/v2/link+password/content` and `/file`).
-   - Store `password_required: true` metadata on `public.shares` without storing passwords or password hashes.
-
-2. **Two-Channel Unlock Codes**:
-   - Generate independent 16-byte Crockford Base32 unlock codes with check symbols.
-   - Set `factorMask: "link+unlock"` / `"link+password+unlock"` and derive independent object keys.
-   - Require both URL fragment secret and manually entered unlock code in viewer to decrypt.
-
-3. **Privacy Receipt & QR Generation**:
-   - Generate offline SVG/canvas QR code containing the full fragment share link.
-   - Render the Privacy Receipt breaking down protected ciphertext vs visible server metadata.
-
-4. **Edge Cases & Failure Hardening**:
-   - Malformed fragment recovery, wrong password/unlock retry limits, and offline indicators.
+Day 4 is the active milestone: PBKDF2 password factor, two-channel unlock codes with factor-mask domain separation, QR + share actions, Privacy Receipt, complete non-happy-path states, security-header review. `info/plan_v2.md` Days 4–7 remain gated until SPEC Day 5 completes (see `docs/SPEC.md#explicitly-deferred-beyond-this-five-day-release`).
 
 ## Recent Commits
 
-- `af90c97 fix(storage): normalize signed upload URLs and add safe error diagnostics`
-- `a99b254 fix(a11y): add accessible label to file attachment input`
-- `45c3e66 test(e2e): update content envelope version assertion for Day 3`
-- `4b8e396 test(integration): isolate share-service rpc test and revert env override`
-- `755fd93 test(integration): include file metadata in reveal test expectation`
-- `221546d test(db): include file envelope and size on direct share insert`
-- `5124908 feat(cleanup): remove orphaned encrypted files`
-- `7c7c774 feat(ui): add safe local attachment previews`
-- `4639c61 feat(attachments): reveal encrypted downloads safely`
-- `46c2895 fix(db): enforce encrypted attachment contracts`
-- `eceb804 feat(attachments): add encrypted upload flow`
-- `43c0be0 feat(content): render markdown and code safely`
-- `017c8a5 feat(crypto): add independent file encryption`
-
+- `e2f063b` test(db): forward migration for single finalize signature; env-only test config
+- `c81cc15` fix(server): redact upstream RPC details from persisted logs
+- `3c764f2` fix(ui): byte-accurate content limit, history revoke sync, safety cleanups
+- `875d1ee` fix(contracts): reject unparseable scheduled availability
+- `3b06492` fix(csp): allow configured Supabase storage origin in connect-src
