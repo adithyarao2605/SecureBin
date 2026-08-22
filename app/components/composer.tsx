@@ -16,6 +16,10 @@ import {
   type ContentPayload,
 } from "../../lib/crypto/payload";
 import { generateShareContext, type ShareCryptoContext } from "../../lib/crypto/share-context";
+import { prepareFactors, FactorError } from "../../lib/crypto/factors";
+import { ProtectionControls, EMPTY_PROTECTION, type ProtectionState } from "./protection-controls";
+import { PrivacyReceipt } from "./privacy-receipt";
+import { ShareActions } from "./share-actions";
 import {
   defaultPolicyDraft,
   validatePolicyDraft,
@@ -63,6 +67,21 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [revokedMessage, setRevokedMessage] = useState("");
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
+  const [protection, setProtection] = useState<ProtectionState>(EMPTY_PROTECTION);
+  const [protectionError, setProtectionError] = useState("");
+  const [unlockCodeShown, setUnlockCodeShown] = useState("");
+  const [receiptData, setReceiptData] = useState<{
+    publicId: string;
+    fingerprint: string;
+    mask: string;
+    hasFile: boolean;
+    expiresAt: string;
+    availableAt: string | null;
+    maxReveals: number | null;
+    algorithm: string;
+    kdf: string;
+    envelopeVersion: number;
+  } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const preparedRef = useRef<PreparedAttempt | null>(null);
@@ -107,6 +126,12 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
     resetPrepared();
   }
 
+  function handleProtectionChange(next: ProtectionState) {
+    setProtection(next);
+    setProtectionError("");
+    resetPrepared();
+  }
+
   function handlePolicyChange(updated: PolicyDraft) {
     setPolicyDraft(updated);
     resetPrepared();
@@ -129,6 +154,17 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       setErrorMessage(`Content is too large for one share (${formatBytes(draftBytes)} of text, limit ${formatBytes(MAX_CONTENT_BYTES)}). Shorten the note or attach the rest as a file.`);
       return;
     }
+
+    const wantsPassword = protection.password.length > 0;
+    if (wantsPassword && protection.password !== protection.confirmPassword) {
+      setErrorMessage("The passwords do not match.");
+      return;
+    }
+    const preparedFactors = prepareFactors({
+      password: wantsPassword ? protection.password : undefined,
+      enableUnlock: protection.enableUnlock,
+    });
+    const mask = preparedFactors.mask;
 
     const validated = validatePolicyDraft(policyDraft);
     if (!validated.valid) {
@@ -155,7 +191,14 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           contentPayload = { mode: "code", text: draft, language };
         }
 
-        const sealedContent = await sealContent(contentPayload, context);
+        const factorArgs = {
+          mask,
+          ...(preparedFactors.passwordSalt
+            ? { passwordSalt: preparedFactors.passwordSalt, password: protection.password }
+            : {}),
+          unlockCode: preparedFactors.unlockCode ?? undefined,
+        };
+        const sealedContent = await sealContent(contentPayload, context, factorArgs);
 
         let sealedFile: SealedFile | null = null;
         if (attachedFile) {
@@ -166,7 +209,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
             mimeType: attachedFile.type || "application/octet-stream",
             data: fileData,
           };
-          sealedFile = await sealFile(payload, context);
+          sealedFile = await sealFile(payload, context, factorArgs);
         }
 
         const [deleteTokenHash, idempotencyKeyHash] = await Promise.all([
@@ -184,8 +227,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           },
           deleteTokenHash,
           idempotencyKeyHash,
-          passwordRequired: false,
-          unlockRequired: false,
+          passwordRequired: mask.includes("password"),
+          unlockRequired: mask.includes("unlock"),
           fileEnvelope: sealedFile ? sealedFile.envelope : null,
           fileCiphertextSize: sealedFile ? sealedFile.ciphertextSize : null,
         };
@@ -263,6 +306,19 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       setShareUrl(fullUrl);
       setActivePublicId(returnedPublicId);
       setActiveDeleteCapability(prepared.context.deleteCapability);
+      setUnlockCodeShown(preparedFactors.unlockCode ?? "");
+      setReceiptData({
+        publicId: returnedPublicId,
+        fingerprint: await digestCapability(prepared.sealedContent.envelope.ciphertext ?? ""),
+        mask,
+        hasFile: Boolean(prepared.sealedFile),
+        availableAt: validated.availableAt,
+        expiresAt: validated.expiresAt,
+        maxReveals: validated.maxReveals,
+        algorithm: prepared.sealedContent.envelope.algorithm,
+        kdf: prepared.sealedContent.envelope.kdf,
+        envelopeVersion: prepared.sealedContent.envelope.version,
+      });
 
       saveShareToHistory({
         publicId: returnedPublicId,
@@ -277,6 +333,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       });
 
       preparedRef.current = null;
+      setProtection(EMPTY_PROTECTION);
       if (onPhaseChange) onPhaseChange("created");
       if (onShareCreated) onShareCreated();
     } catch (err) {
@@ -328,6 +385,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
   }
 
   function handleReset() {
+    setUnlockCodeShown("");
+    setReceiptData(null);
     setDraft("");
     setAttachedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -358,6 +417,20 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         <p className="share-hint">
           The key stays in the link fragment. Keep the full link.
         </p>
+
+        {unlockCodeShown && (
+          <div className="unlock-code-box" role="status">
+            <p className="unlock-heading">Second-channel unlock code</p>
+            <p className="unlock-code">{unlockCodeShown}</p>
+            <p className="policy-hint">
+              Deliver this code over a different channel. It is shown once and is not stored on the server.
+            </p>
+          </div>
+        )}
+
+        {receiptData && <PrivacyReceipt data={receiptData} />}
+
+        <ShareActions shareUrl={shareUrl} />
 
         <div className="share-actions-row">
           <button
@@ -551,6 +624,13 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           draft={policyDraft}
           disabled={isPending}
           onChange={handlePolicyChange}
+        />
+
+        <ProtectionControls
+          value={protection}
+          onChange={handleProtectionChange}
+          disabled={isPending}
+          error={protectionError}
         />
 
         {errorMessage && (

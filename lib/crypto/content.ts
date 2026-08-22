@@ -96,10 +96,12 @@ export async function contentIkm(
   });
 }
 
+export type SealedFactorArgs = ContentFactorOptions & { mask: FactorMask };
+
 export async function sealContent(
   input: string | ContentPayload,
   customContext?: ShareCryptoContext,
-  factors?: ContentFactorOptions & { mask: FactorMask; passwordSalt: string }
+  factors?: SealedFactorArgs
 ): Promise<SealedContent> {
   const payload: ContentPayload =
     typeof input === "string" ? { mode: "note", text: input } : input;
@@ -123,10 +125,8 @@ export async function sealContent(
       ? {
           factorMask: factors.mask,
           passwordSalt:
-            factors.mask === "link+password" || factors.mask === "link+password+unlock"
-              ? (factors.passwordSalt as string)
-              : null,
-          kdf: factors.mask.includes("password") ? "PBKDF2-HMAC-SHA-256" : "none",
+            factors.mask.includes("password") ? factors.passwordSalt ?? null : null,
+          kdf: factors.mask.includes("password") ? ("PBKDF2-HMAC-SHA-256" as const) : ("none" as const),
           kdfParameters: factors.mask.includes("password") ? { iterations: 600000 } : {},
         }
       : undefined
@@ -144,10 +144,8 @@ export async function sealContent(
     ? {
         factorMask: factors.mask,
         passwordSalt:
-          factors.mask === "link+password" || factors.mask === "link+password+unlock"
-            ? (factors.passwordSalt as string)
-            : null,
-        kdf: factors.mask.includes("password") ? "PBKDF2-HMAC-SHA-256" : "none",
+          factors.mask.includes("password") ? factors.passwordSalt ?? null : null,
+        kdf: factors.mask.includes("password") ? ("PBKDF2-HMAC-SHA-256" as const) : ("none" as const),
         kdfParameters: factors.mask.includes("password") ? { iterations: 600000 } : {},
       }
     : undefined);

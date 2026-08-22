@@ -26,8 +26,8 @@ type ActiveStatus = {
   expiresAt: string;
   maxReveals: MaxReveals;
   remainingReveals: number | null;
-  passwordRequired: false;
-  unlockRequired: false;
+  passwordRequired: boolean;
+  unlockRequired: boolean;
 };
 
 type ScheduledStatus = {
@@ -36,8 +36,8 @@ type ScheduledStatus = {
   expiresAt: string;
   maxReveals: MaxReveals;
   remainingReveals: number | null;
-  passwordRequired: false;
-  unlockRequired: false;
+  passwordRequired: boolean;
+  unlockRequired: boolean;
 };
 
 type ShareStatus = ActiveStatus | ScheduledStatus | { status: "unavailable" };
@@ -114,8 +114,8 @@ function parseStatus(value: unknown): ShareStatus {
     if (
       typeof value.availableAt !== "string" ||
       typeof value.expiresAt !== "string" ||
-      value.passwordRequired !== false ||
-      value.unlockRequired !== false
+      typeof value.passwordRequired !== "boolean" ||
+      typeof value.unlockRequired !== "boolean"
     ) {
       throw new ViewerPayloadError();
     }
@@ -125,8 +125,8 @@ function parseStatus(value: unknown): ShareStatus {
       availableAt: value.availableAt,
       expiresAt: value.expiresAt,
       ...counters,
-      passwordRequired: false,
-      unlockRequired: false,
+      passwordRequired: value.passwordRequired,
+      unlockRequired: value.unlockRequired,
     };
   }
 
@@ -146,8 +146,8 @@ function parseStatus(value: unknown): ShareStatus {
   if (
     (value.availableAt !== null && typeof value.availableAt !== "string") ||
     typeof value.expiresAt !== "string" ||
-    value.passwordRequired !== false ||
-    value.unlockRequired !== false
+    typeof value.passwordRequired !== "boolean" ||
+    typeof value.unlockRequired !== "boolean"
   ) {
     throw new ViewerPayloadError();
   }
@@ -157,8 +157,8 @@ function parseStatus(value: unknown): ShareStatus {
     availableAt: value.availableAt,
     expiresAt: value.expiresAt,
     ...counters,
-    passwordRequired: false,
-    unlockRequired: false,
+    passwordRequired: value.passwordRequired,
+    unlockRequired: value.unlockRequired,
   };
 }
 
@@ -212,10 +212,52 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [attachedFile, setAttachedFile] = useState<FilePayload | null>(null);
   const [requestToken, setRequestToken] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [unlockInput, setUnlockInput] = useState("");
+  const [factorsProvided, setFactorsProvided] = useState(false);
+  const [factorError, setFactorError] = useState("");
   const requestTokenRef = useRef<string | null>(null);
   const revealInFlightRef = useRef(false);
 
   function clearNotice() {
+    setNotice("");
+  }
+
+  function factorsNeeded(status: ShareStatus): boolean {
+    return (
+      status.status === "active" &&
+      ((status.passwordRequired && passwordInput.length === 0) ||
+        (status.unlockRequired && unlockInput.trim().length === 0))
+    );
+  }
+
+  function currentFactorOptions() {
+    if (!shareStatus || shareStatus.status !== "active") return undefined;
+    if (!shareStatus.passwordRequired && !shareStatus.unlockRequired) return undefined;
+    if (!factorsProvided) return undefined;
+    return {
+      mask: shareStatus.passwordRequired && shareStatus.unlockRequired
+        ? ("link+password+unlock" as const)
+        : shareStatus.passwordRequired
+        ? ("link+password" as const)
+        : ("link+unlock" as const),
+      password: shareStatus.passwordRequired ? passwordInput : undefined,
+      unlockCode: shareStatus.unlockRequired ? unlockInput.trim() : undefined,
+    };
+  }
+
+  function submitFactors() {
+    if (!shareStatus || shareStatus.status !== "active") return;
+    if (shareStatus.passwordRequired && passwordInput.length === 0) {
+      setFactorError("Enter the password.");
+      return;
+    }
+    if (shareStatus.unlockRequired && unlockInput.trim().length === 0) {
+      setFactorError("Enter the unlock code.");
+      return;
+    }
+    setFactorError("");
+    setFactorsProvided(true);
     setNotice("");
   }
 
@@ -299,6 +341,12 @@ export function Viewer({ publicId }: { publicId: string }) {
       return;
     }
 
+    if (shareStatus.passwordRequired || shareStatus.unlockRequired) {
+      if (!factorsProvided || factorsNeeded(shareStatus)) {
+        submitFactors();
+        return;
+      }
+    }
     if (state === "ready_limited") {
       setState("confirming");
       return;
@@ -329,7 +377,12 @@ export function Viewer({ publicId }: { publicId: string }) {
       }
 
       const revealPayload = parseReveal(await response.json());
-      const plaintext = await openContent(revealPayload.contentEnvelope, publicId, linkSecret);
+      const plaintext = await openContent(
+        revealPayload.contentEnvelope,
+        publicId,
+        linkSecret,
+        currentFactorOptions()
+      );
 
       let decryptedAttachment: FilePayload | null = null;
       if (revealPayload.file) {
@@ -348,7 +401,8 @@ export function Viewer({ publicId }: { publicId: string }) {
           revealPayload.file.envelope,
           downloadedBytes,
           publicId,
-          linkSecret
+          linkSecret,
+          currentFactorOptions()
         );
       }
 
@@ -356,10 +410,13 @@ export function Viewer({ publicId }: { publicId: string }) {
       setAttachedFile(decryptedAttachment);
       setState("opened");
       clearRequestToken();
+      setPasswordInput("");
+      setUnlockInput("");
     } catch {
       // Return to the ready panel immediately, surface what happened, then
       // quietly refresh authoritative counters (a consumed lease shows there).
       setState(shareStatus.maxReveals === null ? "ready_unlimited" : "ready_limited");
+      setFactorError("");
       setNotice(
         shareStatus.maxReveals === null
           ? "This reveal attempt failed. Check your connection and try again."
@@ -445,7 +502,51 @@ export function Viewer({ publicId }: { publicId: string }) {
           </div>
         )}
 
-        {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && (
+        {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && factorsNeeded(shareStatus) && (
+          <div className="viewer-action-box factor-box">
+            <p className="viewer-status-text">This share is protected. Enter the required details to continue.</p>
+            {shareStatus.passwordRequired && (
+              <div className="policy-input-group">
+                <label htmlFor="viewer-password" className="policy-input-label">
+                  Password
+                </label>
+                <input
+                  id="viewer-password"
+                  type="password"
+                  autoComplete="off"
+                  className="policy-number-input"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                />
+              </div>
+            )}
+            {shareStatus.unlockRequired && (
+              <div className="policy-input-group">
+                <label htmlFor="viewer-unlock" className="policy-input-label">
+                  Unlock code (sent over a separate channel)
+                </label>
+                <input
+                  id="viewer-unlock"
+                  className="policy-number-input"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={unlockInput}
+                  onChange={(e) => setUnlockInput(e.target.value)}
+                />
+              </div>
+            )}
+            {factorError && (
+              <p className="viewer-status-text" role="alert">
+                {factorError}
+              </p>
+            )}
+            <button type="button" className="action-button primary-button" onClick={submitFactors}>
+              Continue
+            </button>
+          </div>
+        )}
+
+        {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && !factorsNeeded(shareStatus) && (
           <div className="viewer-action-box">
             <div className="viewer-policy-meta">
               <span className="policy-badge">Expires {formatLocalizedDateTime(shareStatus.expiresAt)}</span>
@@ -461,7 +562,7 @@ export function Viewer({ publicId }: { publicId: string }) {
           </div>
         )}
 
-        {state === "ready_limited" && shareStatus && shareStatus.status === "active" && (
+        {state === "ready_limited" && shareStatus && shareStatus.status === "active" && !factorsNeeded(shareStatus) && (
           <div className="viewer-action-box">
             <div className="viewer-policy-meta">
               <span className="policy-badge">
@@ -490,7 +591,7 @@ export function Viewer({ publicId }: { publicId: string }) {
           </div>
         )}
 
-        {state === "confirming" && shareStatus && shareStatus.status === "active" && (
+        {state === "confirming" && shareStatus && shareStatus.status === "active" && !factorsNeeded(shareStatus) && (
           <div className="viewer-action-box confirm-box" role="alert">
             <p className="viewer-status-text confirm-text">
               Consuming this reveal cannot be undone. Do you want to open it now?

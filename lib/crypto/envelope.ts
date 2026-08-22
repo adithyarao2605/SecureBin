@@ -295,8 +295,8 @@ export function canonicalAad(
 
 export type EnvelopeKdfOptions = {
   readonly factorMask?: "link" | "link+password" | "link+unlock" | "link+password+unlock";
-  /** base64url 16-byte PBKDF2 salt; required when the mask includes a password. */
-  readonly passwordSalt?: string | null;
+  /** PBKDF2 salt (bytes or base64url); required when the mask includes a password. */
+  readonly passwordSalt?: Uint8Array | string | null;
   readonly kdf?: "none" | "PBKDF2-HMAC-SHA-256";
   readonly kdfParameters?: Readonly<Record<string, number>>;
 };
@@ -309,7 +309,9 @@ function kdfFields(options?: EnvelopeKdfOptions): {
 } {
   const factorMask: EnvelopeFactorMask = options?.factorMask ?? CONTENT_FACTOR_MASK;
   const hasPassword = factorMask.includes("password");
-  const passwordSalt = hasPassword ? options?.passwordSalt ?? null : null;
+  const rawSalt = options?.passwordSalt ?? null;
+  const passwordSalt =
+    hasPassword && rawSalt ? (typeof rawSalt === "string" ? rawSalt : bytesToBase64Url(rawSalt)) : null;
   return {
     factorMask,
     passwordSalt,

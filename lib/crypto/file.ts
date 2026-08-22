@@ -172,10 +172,12 @@ export interface FileFactorOptions {
   readonly unlockBytes?: Uint8Array;
 }
 
+export type SealedFileFactorArgs = FileFactorOptions & { mask: FactorMask };
+
 export async function sealFile(
   file: FilePayload,
   context: ShareCryptoContext,
-  factors?: FileFactorOptions & { mask: FactorMask; passwordSalt: string }
+  factors?: SealedFileFactorArgs
 ): Promise<SealedFile> {
   const framedBytes = encodeFileFrame(file.filename, file.mimeType, file.data);
   const nonce = randomBytes(12);
@@ -193,7 +195,7 @@ export async function sealFile(
   const hasPassword = factors?.mask.includes("password") ?? false;
   const envelope = newFileEnvelope(nonce, context.hkdfSalt, undefined, {
     factorMask: factors?.mask ?? "link",
-    passwordSalt: hasPassword ? (factors?.passwordSalt as string) : null,
+    passwordSalt: hasPassword ? factors?.passwordSalt ?? null : null,
   });
   const aad = canonicalAad(context.publicId, envelope);
 

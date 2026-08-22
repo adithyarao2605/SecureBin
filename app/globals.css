@@ -1366,3 +1366,76 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Day 4: protection controls, receipt, actions, factor gate ---------- */
+
+.protection-controls {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.protection-toggle,
+.preflight-toggle {
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  color: var(--ink);
+  font-weight: 600;
+  text-align: left;
+}
+
+.preflight-toggle { margin-top: 0.5rem; font-weight: 400; text-decoration: underline; }
+
+.protection-body { margin-top: 0.5rem; display: grid; gap: 0.6rem; }
+
+.preflight-panel {
+  border-left: 3px solid var(--mineral);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9em;
+}
+.preflight-panel ul { margin: 0.25rem 0 0.75rem; padding-left: 1.25rem; }
+.preflight-panel p { margin: 0.25rem 0; font-weight: 600; }
+
+.unlock-code-box {
+  border: 1px dashed var(--copper);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-top: 0.9rem;
+}
+.unlock-heading { margin: 0 0 0.35rem; font-weight: 700; }
+.unlock-code {
+  font-family: monospace;
+  font-size: 1.15em;
+  letter-spacing: 0.08em;
+  word-break: break-all;
+  margin: 0 0 0.4rem;
+}
+
+.privacy-receipt {
+  border-top: 1px solid var(--line);
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+}
+.receipt-heading { margin: 0 0 0.5rem; }
+.receipt-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0 0 0.6rem;
+}
+.receipt-grid dt { color: var(--slate); }
+.receipt-grid dd { margin: 0; overflow-wrap: anywhere; }
+.receipt-fingerprint { font-size: 0.9em; }
+.receipt-note { font-size: 0.88em; color: var(--slate); }
+
+.share-actions-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+.qr-panel { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; }
+
+.factor-box .policy-input-group { margin-bottom: 0.6rem; }
