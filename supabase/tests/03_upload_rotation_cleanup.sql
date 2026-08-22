@@ -132,16 +132,18 @@ select * from ins;
 insert into public.shares (
   public_id, content_envelope, expires_at, max_reveals,
   delete_token_hash, password_required, unlock_required,
-  file_object_path, idempotency_key_hash
+  file_object_path, file_envelope, file_ciphertext_size, idempotency_key_hash
 ) values (
   'DQ0NDQ0NDQ0NDQ0NDQ0NDA',
-  '{"version":1,"objectType":"content","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link","ciphertext":"AAAAAAAAAAAAAAAAAAAAAA"}'::jsonb,
+  '{"version":2,"objectType":"content","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link","ciphertext":"AAAAAAAAAAAAAAAAAAAAAA"}'::jsonb,
   now() + interval '1 day',
   1,
   decode(repeat('55', 32), 'hex'),
   false,
   false,
   'objects/cccccccccccccccccccccccccccccccccccccccccccccccc.bin',
+  '{"version":2,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
+  1024,
   decode(repeat('56', 32), 'hex')
 );
 
