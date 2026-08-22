@@ -35,9 +35,12 @@ reset role;
 -- A queue row is visible to the privileged cleanup RPC but has no direct table
 -- access path for anonymous or authenticated clients.
 create temp table queued_path on commit drop as
-insert into public.upload_rotation_cleanup_queue (source_reservation_id, object_path)
-values (gen_random_uuid(), 'objects/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bin')
-returning id, object_path;
+with ins as (
+  insert into public.upload_rotation_cleanup_queue (source_reservation_id, object_path)
+  values (gen_random_uuid(), 'objects/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bin')
+  returning id, object_path
+)
+select * from ins;
 
 select is(
   (select count(*)::integer from public.list_cleanup_candidates()
@@ -63,20 +66,23 @@ select is(
 -- Reinitializing an expired unattached reservation records its old path and
 -- changes the current reservation path in one transaction.
 create temp table expired_reservation on commit drop as
-insert into public.upload_reservations (
-  id, reserved_public_id, idempotency_key_hash, file_envelope,
-  expected_ciphertext_size, object_path, created_at, expires_at
-) values (
-  gen_random_uuid(),
-  'CQkJCQkJCQkJCQkJCQkJCQ',
-  decode(repeat('44', 32), 'hex'),
-  '{"version":1,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
-  1024,
-  'objects/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bin',
-  now() - interval '30 minutes',
-  now() - interval '15 minutes'
+with ins as (
+  insert into public.upload_reservations (
+    id, reserved_public_id, idempotency_key_hash, file_envelope,
+    expected_ciphertext_size, object_path, created_at, expires_at
+  ) values (
+    gen_random_uuid(),
+    'CQkJCQkJCQkJCQkJCQkJCQ',
+    decode(repeat('44', 32), 'hex'),
+    '{"version":1,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
+    1024,
+    'objects/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bin',
+    now() - interval '30 minutes',
+    now() - interval '15 minutes'
+  )
+  returning id, object_path
 )
-returning id, object_path;
+select * from ins;
 
 create temp table rotated_reservation on commit drop as
 select * from public.create_upload_reservation(
@@ -116,9 +122,12 @@ select is(
 -- A path referenced by a live share is never a cleanup candidate and its queue
 -- row is retained even when a caller passes its queue ID.
 create temp table protected_queue on commit drop as
-insert into public.upload_rotation_cleanup_queue (source_reservation_id, object_path)
-values (gen_random_uuid(), 'objects/cccccccccccccccccccccccccccccccccccccccccccccccc.bin')
-returning id;
+with ins as (
+  insert into public.upload_rotation_cleanup_queue (source_reservation_id, object_path)
+  values (gen_random_uuid(), 'objects/cccccccccccccccccccccccccccccccccccccccccccccccc.bin')
+  returning id
+)
+select * from ins;
 
 insert into public.shares (
   public_id, content_envelope, expires_at, max_reveals,

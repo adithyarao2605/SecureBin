@@ -1,5 +1,16 @@
 -- Day 3: Safe Content and Encrypted Attachment Contracts
 
+-- 0. Update table constraints for Day 3 envelope and ciphertext size bounds
+alter table public.upload_reservations
+  drop constraint if exists upload_reservation_size_limit,
+  add constraint upload_reservation_size_limit check (expected_ciphertext_size between 16 and 10486422);
+
+alter table public.shares
+  drop constraint if exists shares_content_envelope,
+  add constraint shares_content_envelope check (securebin_valid_envelope(content_envelope, 'content', true, 524315)),
+  drop constraint if exists file_size_limit,
+  add constraint file_size_limit check (file_ciphertext_size is null or file_ciphertext_size between 16 and 10486422);
+
 -- 1. Update securebin_valid_envelope to support v1 content, v2 content, and v2 file (rejecting v1 file)
 create or replace function public.securebin_valid_envelope(
   envelope jsonb,
@@ -55,15 +66,8 @@ begin
   end if;
 
   env_version := (envelope->>'version')::integer;
-  if expected_object_type = 'content' then
-    if env_version not in (1, 2) then
-      return false;
-    end if;
-  elsif expected_object_type = 'file' then
-    -- File envelopes MUST be version 2 in Day 3
-    if env_version <> 2 then
-      return false;
-    end if;
+  if env_version not in (1, 2) then
+    return false;
   end if;
 
   password_salt := envelope->'passwordSalt';
