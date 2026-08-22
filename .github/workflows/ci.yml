@@ -63,7 +63,7 @@ jobs:
       - name: Start local Supabase instance and export its runtime keys
         run: |
           supabase start
-          supabase status -o env | grep '^SERVICE_ROLE_KEY=' | sed 's/^/SUPABASE_/' >> "$GITHUB_ENV"
+          supabase status -o env | grep '^SERVICE_ROLE_KEY=' | tr -d '"' | sed 's/^/SUPABASE_/' >> "$GITHUB_ENV"
       - name: Run Supabase pgTAP database tests
         run: pnpm supabase:test
       - name: Run validation gate
