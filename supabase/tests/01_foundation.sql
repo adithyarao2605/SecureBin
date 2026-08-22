@@ -43,7 +43,7 @@ select has_function('public', 'get_share_status', array['text'], 'status RPC exi
 select has_function('public', 'reveal_share', array['text','bytea'], 'atomic reveal RPC exists');
 select has_function('public', 'revoke_share', array['text','bytea'], 'revocation RPC exists');
 select has_function('public', 'list_cleanup_candidates', array[]::text[], 'cleanup candidate RPC exists');
-select has_function('public', 'finalize_expired_securebin', array['uuid[]','uuid[]'], 'cleanup finalizer RPC exists');
+select has_function('public', 'finalize_expired_securebin', array['uuid[]','uuid[]','uuid[]'], 'cleanup finalizer RPC exists');
 select has_function('public', 'cleanup_expired_securebin', array[]::text[], 'cleanup RPC exists');
 
 select ok(

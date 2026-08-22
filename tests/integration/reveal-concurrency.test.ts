@@ -4,17 +4,30 @@ import { describe, expect, it } from "vitest";
 import { createShareService } from "@/lib/server/share-service";
 import { sha256Base64Url } from "@/lib/server/hashing";
 import { createRpcClient } from "@/lib/server/supabase-rpc";
+import { createSecureStorage } from "@/lib/server/storage";
 import type { Envelope } from "@/lib/shares/contracts";
 
-const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "*REMOVED*<local-CLI-constant>";
+const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const rateLimitHmacKey = process.env.RATE_LIMIT_HMAC_KEY;
+const cronSecret = process.env.CRON_SECRET;
+
+if (!supabaseUrl || !serviceRoleKey || !rateLimitHmacKey || !cronSecret) {
+  throw new Error("Missing required environment variables for integration test");
+}
 
 const rpc = createRpcClient({
   supabaseUrl,
   serviceRoleKey,
-  rateLimitHmacKey: "test-rate-limit-key",
+  rateLimitHmacKey,
 });
-const service = createShareService(rpc);
+const storage = createSecureStorage({
+  supabaseUrl,
+  serviceRoleKey,
+  rateLimitHmacKey,
+  cronSecret,
+});
+const service = createShareService(rpc, storage);
 
 function randomPublicId(): string {
   return randomBytes(16).toString("base64url");
