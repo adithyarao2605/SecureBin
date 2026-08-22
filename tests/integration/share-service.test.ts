@@ -123,6 +123,7 @@ describe("share service RPC mapping", () => {
     await expect(service.reveal(publicId, "raw-reveal-token")).resolves.toEqual({
       status: "authorized",
       contentEnvelope,
+      file: null,
       retryExpiresAt: "2099-01-01T00:05:00.000Z",
     });
     await expect(service.revoke(publicId, "raw-delete-capability")).resolves.toBe(true);
