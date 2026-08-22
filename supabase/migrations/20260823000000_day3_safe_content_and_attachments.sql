@@ -66,8 +66,15 @@ begin
   end if;
 
   env_version := (envelope->>'version')::integer;
-  if env_version not in (1, 2) then
-    return false;
+  if expected_object_type = 'content' then
+    if env_version not in (1, 2) then
+      return false;
+    end if;
+  elsif expected_object_type = 'file' then
+    -- File envelopes MUST be version 2 in Day 3
+    if env_version <> 2 then
+      return false;
+    end if;
   end if;
 
   password_salt := envelope->'passwordSalt';
@@ -110,6 +117,7 @@ language plpgsql
 security definer
 set search_path = public, extensions, pg_temp
 as $$
+#variable_conflict use_column
 declare
   existing public.upload_reservations%rowtype;
   new_id uuid := gen_random_uuid();
@@ -159,7 +167,7 @@ begin
       source_reservation_id, object_path
     ) values (
       existing.id, existing.object_path
-    ) on conflict (object_path) do nothing;
+    ) on conflict on constraint upload_rotation_cleanup_path_unique do nothing;
 
     update public.upload_reservations
       set object_path = new_path,
