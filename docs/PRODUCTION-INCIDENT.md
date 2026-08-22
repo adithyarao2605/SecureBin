@@ -11,8 +11,11 @@ evidence for the production create and viewer issues at
 1. **Authentication & RPC Header:** Commit `c07804a` fixed Supabase `sb_secret_...` key authentication by sending it through the `apikey` header instead of `Authorization: Bearer`.
 2. **Viewer Response Schema:** Commit `0c93b5c` fixed client-side exact key validation in `app/s/[publicId]/viewer.tsx` to expect the full 7-key status payload (`availableAt` included) and 3-key reveal payload (`status`, `contentEnvelope`, `retryExpiresAt`).
 3. **PostgREST Timestamp Parsing:** Commit `fd7e0db` broadened `ISO_UTC_PATTERN` in `lib/shares/contracts.ts` and normalized `timestamptz` strings from PostgREST (`+00:00` offset format) to ISO UTC strings in `getStatus` and `reveal`.
+4. **Day 3 Schema & Envelope Migration:** Applied `20260823000000_day3_safe_content_and_attachments.sql` to remote Supabase to accept version 2 framed content and file envelopes up to 10 MiB ciphertext size.
+5. **Storage URL Normalization & Safe Error Logging:** Commit `d1b1502` normalized Supabase Storage signed upload/download URLs to fully qualified absolute paths and added structured error logs on server route catch blocks.
+6. **Hermetic Test Isolation:** Commit `d55cd6b` and `3158819` reverted test env overrides in `tests/setup.ts`, injected `fakeStorage` into unit/integration RPC mapping tests, and updated E2E envelope version expectations for Day 3.
 
-Live testing confirmed `GET /api/health` (200), `POST /api/shares` (201), `GET /api/shares/[id]/status` (200), and `POST /api/shares/[id]/reveal` (200) all operate cleanly.
+Live testing confirmed `GET /api/health` (200), `POST /api/uploads` (201), `PUT <storageUrl>` (200), `POST /api/shares` (201), `GET /api/shares/[id]/status` (200), and `POST /api/shares/[id]/reveal` (200) all operate cleanly.
 
 ## User-visible symptom
 

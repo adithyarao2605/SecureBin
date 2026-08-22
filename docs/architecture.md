@@ -7,17 +7,11 @@ This document is the technical source of truth for the judged SecureBin release.
 
 ### Current implementation status
 
-The Day 1 plain-text path is implemented: browser encryption/decryption, strict
-create/status/reveal/delete APIs, atomic reveal authorization, private database
-boundaries, security headers, and automated unit/integration/browser/a11y
-coverage. Password and two-channel factors, Markdown/code modes, attachment
-routes, the Privacy Receipt, scheduled cleanup HTTP operation, and a verified
-production deployment remain planned. Sections below define their intended
-release contract and must not be read as evidence that they have shipped.
+Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), and Day 3 (Multi-Mode Content for Notes, Sanitized Markdown & Syntax-Highlighted Code with SBCT Binary Framing, Single-File Encrypted Attachments up to 10 MiB, Storage URL Normalization, and Safe Local Attachment Previews) are **implemented and fully verified**.
 
-The current Vercel create path is blocked by
-[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Do not weaken envelope
-validation based on its public redacted error.
+The production environment at `https://secure-bin.vercel.app/` is live and verified with all forward database migrations applied (including migration 5 for Day 3 envelope validation and attachment size bounds). The previous production incident is closed (see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md)).
+
+Password factors (PBKDF2/Argon2id), two-channel unlock codes, QR generation, and the Privacy Receipt are scheduled for Day 4.
 
 SecureBin provides anonymous, browser-encrypted sharing with server-enforced availability, expiry, revocation, and reveal limits. The server stores ciphertext and lifecycle metadata but never receives content keys, passwords, unlock codes, filenames, plaintext MIME types, or plaintext content.
 

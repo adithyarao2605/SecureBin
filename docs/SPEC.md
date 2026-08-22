@@ -22,20 +22,13 @@ clearly marked as future work.
 
 ## Progress snapshot
 
-Day 1 is implemented and green in local and GitHub CI evidence: reproducible
-tooling, browser-encrypted plain-text create/status/reveal/delete, atomic
-database foundations, strict API boundaries, production build, integration,
-Chromium, keyboard/mobile, and accessibility coverage. It is **deployment
-pending**, not a completed live milestone: the owner still needs to apply the
-production migration, deploy `main`, and record a backend-backed browser check.
-The current host still fails share creation; the evidence and friend workflow
-are in [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Resolve it before Day 2.
-Day 2 and later feature work has not been claimed as complete.
+Days 1, 2, and 3 are implemented and fully green across local and GitHub Actions CI gates: reproducible tooling, multi-mode browser encryption (plain note, sanitized Markdown, and syntax-highlighted code with binary `SBCT` framing), independent encrypted file attachments up to 10 MiB, storage URL normalization, atomic database lifecycle policy, upload reservations and rotation queue, clean local history desk, production build, 101 unit tests, 4 live concurrency/integration tests, 54 pgTAP database tests, 8 Playwright E2E tests, and 2 Axe accessibility tests.
 
-When another maintainer or friend continues the schedule, hand them the exact
-commit and [`docs/deployment.md`](deployment.md), have them reproduce the gates
-from a fresh clone, and exchange provider access through team membership rather
-than copied secrets.
+The production incident is closed, and remote Supabase has been migrated with all forward schema changes (`20260823000000_day3_safe_content_and_attachments.sql`).
+
+Day 4 (Passwords, Two-Channel Unlock Codes, QR Code Generation, and the Privacy Receipt) is the active next milestone.
+
+When another maintainer or friend continues the schedule, hand them the exact commit and [`docs/deployment.md`](deployment.md), have them reproduce the gates from a fresh clone, and exchange provider access through team membership rather than copied secrets.
 
 ## Experience direction — quiet proof
 

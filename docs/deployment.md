@@ -1,6 +1,6 @@
 # Deployment and reproducibility
 
-The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md)). All Day 2 database migrations, atomic reveal procedures, CSP nonce handling, and clean hydration have been verified locally and in CI.
+The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md)). All Day 2 and Day 3 database migrations (including `20260823000000_day3_safe_content_and_attachments.sql`), atomic reveal procedures, storage URL normalization, CSP nonce handling, and clean hydration have been verified locally, in CI, and in production.
 
 
 ## Local prerequisites
