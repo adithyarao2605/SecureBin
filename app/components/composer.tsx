@@ -493,10 +493,14 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         />
 
         <div className="file-attachment-section">
+          <label htmlFor="file-attachment-input" className="sr-only">
+            Attach file (max 10 MB)
+          </label>
           <input
             type="file"
             ref={fileInputRef}
             id="file-attachment-input"
+            aria-label="Attach file (max 10 MB)"
             className="sr-only"
             disabled={isPending}
             onChange={handleFileSelect}
