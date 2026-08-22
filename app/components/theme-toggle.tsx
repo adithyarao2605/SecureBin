@@ -28,7 +28,11 @@ export function ThemeToggle() {
   function toggleTheme() {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    window.localStorage.setItem("securebin-theme", next);
+    try {
+      window.localStorage.setItem("securebin-theme", next);
+    } catch {
+      // Storage may be unavailable (private mode); theme still applies live.
+    }
     applyThemeToDom(next);
   }
 

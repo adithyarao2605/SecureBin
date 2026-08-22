@@ -208,7 +208,7 @@ export default function HomePage() {
                 </div>
                 <h3>Local first</h3>
                 <p>
-                  Encryption, key derivation, QR codes, and decryption execute inside your browser using Web Crypto. Keys remain in the URL fragment and are never sent to the server.
+                  Encryption, key derivation, and decryption execute inside your browser using Web Crypto; QR codes will be generated locally too (Day 4). Keys remain in the URL fragment and are never sent to the server.
                 </p>
               </article>
 

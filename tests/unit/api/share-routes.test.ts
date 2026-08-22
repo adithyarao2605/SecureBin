@@ -223,6 +223,23 @@ describe("share route handlers", () => {
     expect(deps.service.createShare).not.toHaveBeenCalled();
   });
 
+  it("maps client-class database rejections to 400 instead of 503", async () => {
+    const deps = dependencies({
+      createShare: vi.fn(async () => {
+        throw new ShareServiceError("invalid");
+      }),
+    });
+    const handler = createPostShareHandler(deps);
+    const response = await handler(new Request("http://localhost/api/shares", {
+      method: "POST",
+      body: JSON.stringify(validPayload({
+        policy: { availableAt: null, expiresAt: new Date(Date.now() + 86400000).toISOString(), maxReveals: 3 },
+      })),
+    }));
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toBe("invalid_request");
+  });
+
   it("returns 201 with policy and publicId on valid create", async () => {
     const deps = dependencies();
     const handler = createPostShareHandler(deps);

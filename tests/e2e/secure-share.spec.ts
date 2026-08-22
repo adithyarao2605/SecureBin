@@ -117,7 +117,8 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
   await expect(shareLinkInput).toBeVisible();
 
   const createBody = capture.createBody;
-  if (createBody === null) return;
+  expect(createBody, "create request was not intercepted").not.toBeNull();
+  if (!createBody) throw new Error("unreachable: create body asserted above");
   expect(createBody).not.toHaveProperty("deleteCapability");
   expect(createBody).not.toHaveProperty("idempotencyKey");
   expect(createBody).not.toHaveProperty("linkSecret");

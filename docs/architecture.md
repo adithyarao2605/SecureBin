@@ -72,8 +72,9 @@ only an explanation of the client flow. It must never be used as evidence that
 encryption, authorization, or deletion succeeded; those states come from the
 actual local and API results and are written in accessible text.
 
-Display, body, and receipt typography are bundled/self-hosted with system
-fallbacks. Secret routes do not fetch remote fonts, media, analytics, or other
+Typography currently ships as a deliberate system-font stack (the CSS names
+its intended display/body/receipt faces; no webfont files are bundled yet).
+Secret routes do not fetch remote fonts, media, analytics, or other
 third-party assets. The visual direction avoids security theatre—neon effects,
 terminal styling, fake threat meters, and shield/lock clichés—and does not
 change the cryptographic or trust boundaries above.
@@ -87,7 +88,7 @@ change the cryptographic or trust boundaries above.
 - **Supabase scheduled cleanup:** hourly database cleanup plus removal of associated private objects.
 - **Vercel:** application deployment, nonce-based security headers, health endpoint, and sanitized logs.
 
-The service-role credential is imported only from server-only modules. Browser code receives the public Supabase URL and anonymous key but does not receive direct table privileges.
+The service-role credential is imported only from server-only modules. Browser code never talks to Supabase directly: it exchanges ciphertext only with this application's API and, for attachments, with pre-signed Storage URLs. No anonymous key ships in any bundle.
 
 ## 5. Cryptographic Protocol v1
 

@@ -31,9 +31,13 @@ export function safeUrlTransform(url: string): string {
   const trimmed = url.trim();
   if (!trimmed) return "";
 
+  // Browsers strip tabs/newlines and treat backslashes as slashes for special
+  // schemes; normalize before the protocol-relative guard so "/\t/evil.com"
+  // and "/\\evil.com" cannot masquerade as site-relative links.
+  if (trimmed.replace(/[\t\n\r\\]/g, "").startsWith("//")) return "";
+
   // Relative links and fragment hashes within the page are allowed if safe
   if (trimmed.startsWith("#") || trimmed.startsWith("/")) {
-    if (trimmed.startsWith("//")) return ""; // Protocol-relative URLs could be unsafe
     return trimmed;
   }
 

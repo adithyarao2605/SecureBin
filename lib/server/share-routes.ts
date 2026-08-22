@@ -60,6 +60,9 @@ export function createPostShareHandler(dependencies: ShareRouteDependencies): (r
       if (error instanceof ShareServiceError && error.kind === "conflict") {
         return errorResponse("idempotency_conflict", 409);
       }
+      if (error instanceof ShareServiceError && error.kind === "invalid") {
+        return errorResponse("invalid_request", 400);
+      }
       return isDependencyFailure(error) ? errorResponse("server_error", 503) : errorResponse("server_error", 500);
     }
   };

@@ -10,7 +10,7 @@ export type FilePreviewKind =
 export function sanitizeFilename(rawFilename: string): string {
   // Strip null bytes, control chars, replace path separators with underscores
   let sanitized = rawFilename
-    .replace(/[\0\x00-\x1f\x7f]/g, "")
+    .replace(/[\0\x00-\x1f\x7f\u202A-\u202E\u2066-\u2069]/g, "")
     .replace(/[/\\]+/g, "_")
     .trim();
 

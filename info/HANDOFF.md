@@ -51,6 +51,20 @@ Environment note: Playwright ≥1.55.1 browser v1193 had to be installed manuall
   `CI_LOCAL_SUPABASE_SERVICE_KEY` repository secret; docs may reference the
   `sb_secret_...` *format* only.
 
+## 2026-08-22 independent review pass (post-scrub)
+
+Three independent reviewer agents audited the full repo. Fixed from their findings:
+
+- **HIGH (DB):** Day-3 migration dropped non-existent constraint names, leaving foundation caps of 524304/10485776 bytes live under the new limits — boundary creates failed with opaque 503s. Forward migration `20260826000000` drops the stale constraints; pgTAP now inserts at exactly 524315/10486422 (+1-byte rejections).
+- **MED (API):** `create_share` client-class DB rejections (`22023`, `23514`) map to 400 instead of outage-flavored 503.
+- **HIGH (UI):** history desk marked shares unavailable on ANY non-404 status; now only 404 is terminal.
+- **MED (UI):** viewer decrypt/download failures were silent dead-ends that could burn reveals invisibly — added explicit failure notice + quiet authoritative counter refresh; transport errors during status checks route to the retryable `network_error` state instead of terminal `unavailable`; scheduled shares auto-recheck at unlock time.
+- Composer staged-upload flow gained its first component tests (byte-limit rejection; failed-create retry reuses identical idempotency hash and does not re-upload); `secure-share.spec` can no longer silently skip its zero-knowledge assertions.
+- Hygiene: bidi-override characters stripped from filenames; markdown sanitizer normalizes tab/newline/backslash before the protocol-relative guard; theme toggle guards localStorage writes.
+- CI: local service key is extracted at runtime from `supabase status -o env` — no repository secret needed, fork PRs work, zero key material anywhere.
+
+Accepted/document-only: rate-limit XFF trust off-Vercel (documented), fixed-minute rate windows, timing-side channels on digest lookups, hljs compound-class fallback degradation, ARIA tab keyboard pattern + confirm-focus management (folded into the plan_v2 Day 6 UI pass).
+
 ## Next Steps
 
 Day 4 is planned in `docs/DAY-4-PLAN.md` and ready to implement: PBKDF2 password factor, two-channel unlock codes, QR + share actions, Privacy Receipt, complete non-happy-path states. `info/plan_v2.md` Days 4–7 stay gated until SPEC Day 5 completes.

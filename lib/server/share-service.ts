@@ -11,7 +11,7 @@ import {
   type ShareStatus,
 } from "../shares/contracts";
 import { sha256Base64Url } from "./hashing";
-import { createRpcClient, type RpcClient } from "./supabase-rpc";
+import { createRpcClient, RpcRequestError, type RpcClient } from "./supabase-rpc";
 import { createSecureStorage, type SecureStorage } from "./storage";
 
 export interface CreatedShare {
@@ -106,6 +106,14 @@ export function createShareService(
           (error.code === "23505" || ("errorDetails" in error && typeof error.errorDetails === "string" && error.errorDetails.includes("idempotency_conflict")))
         ) {
           throw new ShareServiceError("conflict");
+        }
+        // Client-class DB rejections (bad policy values, constraint bounds)
+        // are request errors, not outages.
+        if (
+          error instanceof RpcRequestError &&
+          (error.code === "22023" || error.code === "23514")
+        ) {
+          throw new ShareServiceError("invalid");
         }
         throw dependencyError();
       }

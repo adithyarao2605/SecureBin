@@ -46,8 +46,12 @@ export function ShareHistoryDesk({ refreshSignal, onSwitchToCreate }: ShareHisto
       });
 
       if (!response.ok) {
-        updateShareInHistory(publicId, { status: "unavailable", remainingReveals: 0 });
-        setHistory(loadShareHistory());
+        // Only a 404 means the share is truly gone; other statuses are
+        // transient and must not corrupt the local record.
+        if (response.status === 404) {
+          updateShareInHistory(publicId, { status: "unavailable", remainingReveals: null });
+          setHistory(loadShareHistory());
+        }
         return;
       }
 

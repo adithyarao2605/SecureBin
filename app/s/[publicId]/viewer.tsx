@@ -211,16 +211,21 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [content, setContent] = useState<ContentPayload | null>(null);
   const [attachedFile, setAttachedFile] = useState<FilePayload | null>(null);
   const [requestToken, setRequestToken] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
   const requestTokenRef = useRef<string | null>(null);
   const revealInFlightRef = useRef(false);
+
+  function clearNotice() {
+    setNotice("");
+  }
 
   function clearRequestToken() {
     requestTokenRef.current = null;
     setRequestToken(null);
   }
 
-  async function checkShare() {
-    setState("checking");
+  async function checkShare(quiet = false) {
+    if (!quiet) setState("checking");
     try {
       validatePublicId(publicId);
       const fragment = window.location.hash.slice(1);
@@ -253,12 +258,15 @@ export function Viewer({ publicId }: { publicId: string }) {
         setState("scheduled");
       } else if (status.maxReveals === null) {
         setState("ready_unlimited");
-      } else {
+      } else if (state !== "opened") {
+        // A quiet refresh must not yank the recipient out of the opened view.
         setState("ready_limited");
       }
     } catch {
-      setState("unavailable");
-      setShareStatus({ status: "unavailable" });
+      // Transport or payload failure is retryable; only the server's own
+      // unavailable verdict may end the session. A quiet refresh keeps the
+      // current view rather than forcing a retry screen.
+      if (!quiet) setState("network_error");
     }
   }
 
@@ -266,6 +274,19 @@ export function Viewer({ publicId }: { publicId: string }) {
     void checkShare();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicId]);
+
+  // Scheduled shares re-check when their availability time arrives instead of
+  // leaving the recipient stuck on a static message.
+  useEffect(() => {
+    if (state !== "scheduled" || shareStatus?.status !== "scheduled") return;
+    const delay = Math.min(
+      Math.max(Date.parse(shareStatus.availableAt) + 1000 - Date.now(), 1000),
+      60 * 60 * 1000
+    );
+    const timer = setTimeout(() => void checkShare(true), delay);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, shareStatus]);
 
   async function handleReveal() {
     if (
@@ -302,6 +323,7 @@ export function Viewer({ publicId }: { publicId: string }) {
           clearRequestToken();
           return;
         }
+        setNotice("The reveal could not be completed. Retrying with the same authorization…");
         setState(shareStatus.maxReveals === null ? "ready_unlimited" : "ready_limited");
         return;
       }
@@ -335,7 +357,15 @@ export function Viewer({ publicId }: { publicId: string }) {
       setState("opened");
       clearRequestToken();
     } catch {
+      // Return to the ready panel immediately, surface what happened, then
+      // quietly refresh authoritative counters (a consumed lease shows there).
       setState(shareStatus.maxReveals === null ? "ready_unlimited" : "ready_limited");
+      setNotice(
+        shareStatus.maxReveals === null
+          ? "This reveal attempt failed. Check your connection and try again."
+          : "This reveal attempt failed. The counts below show whether an authorization was consumed."
+      );
+      void checkShare(true);
     } finally {
       revealInFlightRef.current = false;
     }
@@ -442,10 +472,18 @@ export function Viewer({ publicId }: { publicId: string }) {
             <p className="viewer-status-text">
               This share has a reveal limit. Revealing will consume one count.
             </p>
+            {notice && (
+              <p className="viewer-status-text" role="status">
+                {notice}
+              </p>
+            )}
             <button
               type="button"
               className="action-button primary-button"
-              onClick={() => void handleReveal()}
+              onClick={() => {
+                clearNotice();
+                void handleReveal();
+              }}
             >
               Reveal
             </button>

@@ -15,7 +15,7 @@ templates, or visual identity.
 
 Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, Browser-Local Share History Desk with Reveal Tracking, and Quiet Proof Design System v1), and Day 3 (Multi-Mode Content for Notes, Sanitized Markdown & Syntax-Highlighted Code with SBCT Binary Framing, Single-File Encrypted Attachments up to 10 MiB, Storage URL Normalization, and Safe Local Attachment Previews) are **100% complete and fully verified**.
 
-All 101 unit tests, 4 live concurrency/integration tests, 54 pgTAP database tests, 8 Playwright E2E tests, and 2 Axe accessibility tests pass with zero critical violations. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)) and all forward database migrations are applied to production.
+All 113 unit tests, live concurrency/integration tests, 89 pgTAP database tests, 9 Playwright E2E tests (including a real-backend attachment round trip), and 2 Axe accessibility tests pass with zero critical violations. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)) and all forward database migrations are applied to production.
 
 CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request. Passwords (PBKDF2/Argon2id), two-channel unlock codes, QR generation, and the Privacy Receipt are scheduled for Day 4.
 
@@ -41,10 +41,10 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
   browser; infrastructure receives ciphertext and bounded lifecycle metadata.
 - Availability, expiry, revocation, and reveal limits are transactional policy,
   not client-side suggestions.
-- Two-channel shares require both the URL fragment and an independently shared
-  unlock code.
-- The Privacy Receipt explains what was protected and what metadata remains
-  visible.
+- Two-channel shares will require both the URL fragment and an independently
+  shared unlock code (Day 4).
+- The Privacy Receipt will explain what was protected and what metadata
+  remains visible (Day 4).
 - The design explicitly documents residual risks: browser compromise,
   recipient copying, and network metadata are not solved by zero-knowledge
   storage.
@@ -60,8 +60,11 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
 - [`docs/policy-state.md`](docs/policy-state.md) — atomic lifecycle state model.
 - [`docs/deployment.md`](docs/deployment.md) — fresh-clone, environment, and
   deployment checklist.
-- [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md) — evidence-led
-  friend handoff for the unresolved production create failure.
+- [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md) — resolved
+  2026-08-21 create-failure incident record and investigation order.
+- [`docs/DAY-4-PLAN.md`](docs/DAY-4-PLAN.md) through
+  [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) — locked execution plans for the
+  remaining roadmap days.
 - [`docs/SPEC.md`](docs/SPEC.md) — five-day delivery schedule and the quiet-proof
   visual/copy direction.
 - [`docs/DAY-2-PLAN.md`](docs/DAY-2-PLAN.md) — detailed lifecycle, concurrency,

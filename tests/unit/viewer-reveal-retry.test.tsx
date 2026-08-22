@@ -45,6 +45,31 @@ function activeStatusResponse(): Response {
   });
 }
 
+// The viewer now issues a quiet /status refresh after failed reveal
+// attempts, so mocks route by URL instead of strict call order.
+function routedFetchMock(opts: {
+  statusResponse?: () => Response;
+  firstReveal: () => Promise<Response>;
+  laterReveals?: () => Response;
+}) {
+  let revealCount = 0;
+  return vi.fn((input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("/status")) {
+      return Promise.resolve((opts.statusResponse ?? activeStatusResponse)());
+    }
+    revealCount += 1;
+    if (revealCount === 1) return opts.firstReveal();
+    return Promise.resolve((opts.laterReveals ?? authorizedResponse)());
+  });
+}
+
+function revealCalls(fetchMock: ReturnType<typeof vi.fn>): Array<unknown> {
+  return fetchMock.mock.calls
+    .filter(([url]) => String(url).includes("/reveal"))
+    .map((call) => (call[1] as { body?: unknown })?.body);
+}
+
 function authorizedResponse(): Response {
   return response(200, {
     status: "authorized",
@@ -76,11 +101,7 @@ describe("viewer reveal retry token", () => {
   });
 
   it.each(retryFailures)("reuses the byte-identical token after %s", async (_failure, failure) => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(activeStatusResponse())
-      .mockImplementationOnce(failure)
-      .mockResolvedValueOnce(authorizedResponse());
+    const fetchMock = routedFetchMock({ firstReveal: failure });
     await renderReady(fetchMock);
 
     fireEvent.click(screen.getByRole("button", { name: "Reveal" }));
@@ -88,16 +109,14 @@ describe("viewer reveal retry token", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reveal" }));
     await waitFor(() => expect(screen.getByText("opened locally")).toBeVisible());
 
-    expect(fetchMock.mock.calls[1]?.[1]?.body).toBe(fetchMock.mock.calls[2]?.[1]?.body);
+    const bodies = revealCalls(fetchMock);
+    expect(bodies.length).toBe(2);
+    expect(bodies[0]).toBe(bodies[1]);
   });
 
   it("reuses the token after local decryption uncertainty", async () => {
     mockedOpenContent.mockRejectedValueOnce(new Error("decryption interrupted"));
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(activeStatusResponse())
-      .mockResolvedValueOnce(authorizedResponse())
-      .mockResolvedValueOnce(authorizedResponse());
+    const fetchMock = routedFetchMock({ firstReveal: () => Promise.resolve(authorizedResponse()) });
     await renderReady(fetchMock);
 
     fireEvent.click(screen.getByRole("button", { name: "Reveal" }));
@@ -105,7 +124,9 @@ describe("viewer reveal retry token", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reveal" }));
     await waitFor(() => expect(screen.getByText("opened locally")).toBeVisible());
 
-    expect(fetchMock.mock.calls[1]?.[1]?.body).toBe(fetchMock.mock.calls[2]?.[1]?.body);
+    const bodies = revealCalls(fetchMock);
+    expect(bodies.length).toBe(2);
+    expect(bodies[0]).toBe(bodies[1]);
   });
 
   it("blocks duplicate pending requests", async () => {

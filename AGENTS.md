@@ -115,7 +115,7 @@ Keep this list synchronized with `package.json`. Use `pnpm validate` as the fina
 - Use subagents for bounded parallel work when it helps. Subagents must use `gpt-5.6-luna` with medium or high reasoning effort. Record delegated work and its outcome in `info/HANDOFF.md`.
 - Make frequent, coherent Conventional Commits as work progresses so GitHub history shows the implementation sequence. Keep commits small enough to validate and review; never commit broken checkpoints merely to increase commit count. Push to the configured GitHub remote when credentials and network access are available.
 - Update `info/HANDOFF.md` at the end of every run with completed work, current validation results, remaining work, blockers, and the latest relevant commits.
-- Keep `info/plan.md` local and read-only. Never stage or commit it.
+- Treat `info/plan.md` as a read-only planning reference: never modify or move it, and do not re-stage incidental changes to it.
 - Keep every `main` CI run as a completed audit record. CI may cancel a
   superseded pull-request run, but it must queue rather than cancel pushed
   `main` commits.
