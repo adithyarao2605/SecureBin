@@ -1,6 +1,9 @@
 import { createGetStatusHandler, defaultShareRouteDependencies } from "@/lib/server/share-routes";
+import { withAudit } from "@/lib/server/observability";
 
 export const dynamic = "force-dynamic";
-export async function GET(request: Request, context: { params: Promise<{ publicId: string }> }): Promise<Response> {
-  return createGetStatusHandler(defaultShareRouteDependencies())(request, context);
-}
+export const GET = withAudit(
+  "status",
+  (request: Request, context: { params: Promise<{ publicId: string }> }): Promise<Response> =>
+    createGetStatusHandler(defaultShareRouteDependencies())(request, context)
+);

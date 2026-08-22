@@ -3,6 +3,7 @@ import { networkDiscriminator } from "./hashing";
 import { errorResponse, jsonResponse, readJsonBody } from "./http";
 import { readServerConfig } from "./config";
 import { createShareService, ShareServiceError, type ShareService } from "./share-service";
+import { RpcRequestError } from "./supabase-rpc";
 
 export interface ShareRouteDependencies {
   readonly service: ShareService;
@@ -53,7 +54,9 @@ export function createPostShareHandler(dependencies: ShareRouteDependencies): (r
         },
       }, 201);
     } catch (error) {
-      console.error("[SecureBin Server] create_share failed:", error instanceof Error ? error.message : String(error));
+      // Coarse log only; RpcRequestError messages carry upstream detail.
+      const code = error instanceof RpcRequestError ? `status=${error.status} code=${error.code ?? "none"}` : "unknown";
+      console.error(`[SecureBin Server] create_share failed: ${code}`);
       if (error instanceof ShareServiceError && error.kind === "conflict") {
         return errorResponse("idempotency_conflict", 409);
       }

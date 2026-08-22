@@ -19,7 +19,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
-      <body nonce={nonce}>{children}</body>
+      <body nonce={nonce} suppressHydrationWarning>{children}</body>
     </html>
   );
 }

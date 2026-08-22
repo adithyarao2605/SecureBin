@@ -44,3 +44,6 @@ supabase/.branches/
 
 # Local Antigravity MCP credentials
 .agents/mcp_config.json
+
+# Playwright MCP session artifacts
+.playwright-mcp/

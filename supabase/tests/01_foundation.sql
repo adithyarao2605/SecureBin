@@ -1,6 +1,6 @@
 begin;
 
-select plan(25);
+select plan(28);
 
 select has_table('public', 'shares', 'shares table exists');
 select has_table('public', 'upload_reservations', 'upload reservations table exists');
@@ -35,6 +35,29 @@ select ok(
 select ok(
   public.securebin_b64url('AAAAAAAAAAAAAAAA', 12),
   'canonical unpadded base64url decodes to 12 bytes'
+);
+
+-- Regression (20260825000000): encode(...,'base64') wraps at 76 characters;
+-- canonical comparison must ignore the inserted newlines.
+select ok(
+  public.securebin_b64url_range(
+    'R-t9Ew-xctpjR6E6t5WGx0y4n8uiq-BuC6mQOiiz7RQzrW0Y3fjZBQOvYFzzSYOwfk-DvmHnp_E2QcTMfBII4UFzEMsF-Wyzx3T-WBkcLMUE-dLe6SX7DvaQ',
+    16, 524315
+  ),
+  'canonical base64url longer than 76 characters validates'
+);
+select is(
+  public.securebin_b64url_range(
+    'R-t9Ew-xctpjR6E6t5WGx0y4n8uiq-BuC6mQOiiz7RQzrW0Y3fjZBQOvYFzzSYOwfk-DvmHnp_E2QcTMfBII4UFzEMsF-Wyzx3T-WBkcLMUE-dLe6SX7DvaQ=',
+    16, 524315
+  ),
+  false,
+  'padded base64url is rejected by the unpadded alphabet rule'
+);
+select is(
+  public.securebin_b64url_range(repeat('A', 700_000), 16, 524_315),
+  false,
+  'base64url above the maximum byte budget is rejected'
 );
 
 select has_function('public', 'create_upload_reservation', array['text','bytea','jsonb','bigint'], 'reservation RPC exists');

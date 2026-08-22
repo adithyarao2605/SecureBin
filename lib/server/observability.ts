@@ -1,5 +1,7 @@
 import { randomBytes } from "node:crypto";
 
+import { errorResponse } from "./http";
+
 export type AuditAction =
   | "create"
   | "upload"
@@ -65,4 +67,44 @@ export function logAuditEvent(
   }
 ): void {
   writer(formatAuditEvent(event));
+}
+
+/**
+ * Wrap an API route handler with coarse, secret-free audit logging and a
+ * uniform JSON failure for unexpected throws. The request id echoes a
+ * sanitized inbound `x-request-id` or is generated, and is returned to the
+ * caller in the response header.
+ */
+export function withAudit<A extends unknown[]>(
+  action: AuditAction,
+  handler: (...args: A) => Promise<Response>
+): (...args: A) => Promise<Response> {
+  return async (...args: A): Promise<Response> => {
+    const startedAtMs = Date.now();
+    const request = args[0];
+    const inboundId = request instanceof Request ? request.headers.get("x-request-id") : null;
+    const requestId = sanitizeRequestId(inboundId);
+
+    let response: Response;
+    try {
+      response = await handler(...args);
+    } catch {
+      response = errorResponse("server_error", 500);
+    }
+
+    let declaredBytes: number | null = null;
+    if (request instanceof Request) {
+      const parsed = Number.parseInt(request.headers.get("content-length") ?? "", 10);
+      if (Number.isSafeInteger(parsed) && parsed > 0) declaredBytes = parsed;
+    }
+    logAuditEvent({
+      requestId,
+      action,
+      statusClass: classifyStatus(response.status),
+      durationMs: Date.now() - startedAtMs,
+      sizeBucket: classifySize(declaredBytes),
+    });
+    response.headers.set("x-request-id", requestId);
+    return response;
+  };
 }
