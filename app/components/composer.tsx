@@ -482,7 +482,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           maxLength={524288}
           placeholder={
             mode === "note"
-              ? "Write something only the recipient should read…"
+              ? "Start typing your note here..."
               : mode === "markdown"
               ? "Write Markdown (# heading, **bold**, - list)…"
               : "Paste code snippet…"

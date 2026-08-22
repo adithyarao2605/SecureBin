@@ -1,8 +1,16 @@
 # SecureBin Handoff
 
-Updated: 2026-08-21 (Asia/Kolkata)
+Updated: 2026-08-22 (Asia/Kolkata)
 
 ## Completed
+
+- **UI Copy & Quiet Proof Polish Audit**:
+  * Inspected all 10 screens in Stitch MCP project (`SecureBin Quiet Proof Design System v1`).
+  * Removed AI marketing tropes ("military-grade encryption", "self-destruct", "sensitive data", "Destroy Now").
+  * Standardized proofline node nomenclature (`Browser` → `Sealed parcel` → `Recipient`) across all viewports.
+  * Standardized policy controls, clean trust line descriptions (`Your browser encrypts this before it leaves the page.`), and action button labels (`Copy link`, `Create share`, `Reveal once`).
+  * Synced newly generated clean UI screens into owned Stitch project `projects/5041201174043254098` ("SecureBin Quiet Proof V2").
+  * Validated that local codebase components (`composer.tsx`, `proofline.tsx`, `evidence-rail.tsx`, `policy-controls.tsx`, `viewer.tsx`) strictly conform to the approved copy contract.
 
 - **Day 3: Safe Content and Encrypted Attachments Fully Implemented and Validated**:
   * **Independent Cryptography (Step 1 & 2)**:
