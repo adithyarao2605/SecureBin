@@ -55,7 +55,7 @@ select is(
   'padded base64url is rejected by the unpadded alphabet rule'
 );
 select is(
-  public.securebin_b64url_range(repeat('A', 700_000), 16, 524_315),
+  public.securebin_b64url_range(repeat('A', 700000), 16, 524315),
   false,
   'base64url above the maximum byte budget is rejected'
 );
