@@ -40,7 +40,7 @@ if [ ! -x .venv/bin/python ]; then python3 -m venv .venv; fi
 corepack pnpm validate
 ```
 
-Baseline must include `c07804a` or a descendant. Confirm Vercel Production actually runs that commit; green GitHub CI does not prove promotion. The RPC client supports both an opaque `sb_secret_...` key and a legacy service-role JWT beginning `eyJ`. This production incident uses the opaque form; do not reject a valid legacy key.
+Baseline must include `de07efa` or a descendant. Confirm Vercel Production actually runs that commit; green GitHub CI does not prove promotion. The RPC client supports both an opaque `sb_secret_...` key and a legacy service-role JWT beginning `eyJ`. This production incident uses the opaque form; do not reject a valid legacy key.
 
 Run a synthetic create/status/reveal smoke flow. `POST /api/shares` must return `201`, not `503`. This deployment is confirmed to use the supported `sb_secret_...` form. If production still returns `503`, stop feature work and inspect the matching Vercel function log. Confirm variable names `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `RATE_LIMIT_HMAC_KEY`, deployment commit, and the redacted Supabase error. Never record values.
 
@@ -347,3 +347,14 @@ Stop for review if work would change envelope version/fields, move counters outs
 ## 15. Handoff entry
 
 Record UTC time, baseline/deployed commit, delegated audits, commits, migration, every validation result, 1/20 and 3/20 counts, RLS and cleanup evidence, production smoke, variable names added, Day 3 prerequisites, blockers, and owner actions.
+
+## 16. Errata (2026-08-22)
+
+- The baseline SHA referenced above was rewritten during the 2026-08-22
+  secret-hygiene history scrub; the same change now lives at `de07efa`.
+  Commit subjects were preserved across the rewrite.
+- `finalize_expired_securebin` collapsed to a single three-argument
+  signature via forward migration `20260824000000`; the two-array overload
+  described earlier no longer exists on any environment.
+- CI obtains the local Supabase service key from the repository secret
+  `CI_LOCAL_SUPABASE_SERVICE_KEY` instead of an inline literal.

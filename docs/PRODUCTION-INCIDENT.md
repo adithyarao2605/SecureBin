@@ -8,12 +8,12 @@ evidence for the production create and viewer issues at
 
 ## Resolution Summary
 
-1. **Authentication & RPC Header:** Commit `c07804a` fixed Supabase `sb_secret_...` key authentication by sending it through the `apikey` header instead of `Authorization: Bearer`.
-2. **Viewer Response Schema:** Commit `0c93b5c` fixed client-side exact key validation in `app/s/[publicId]/viewer.tsx` to expect the full 7-key status payload (`availableAt` included) and 3-key reveal payload (`status`, `contentEnvelope`, `retryExpiresAt`).
-3. **PostgREST Timestamp Parsing:** Commit `fd7e0db` broadened `ISO_UTC_PATTERN` in `lib/shares/contracts.ts` and normalized `timestamptz` strings from PostgREST (`+00:00` offset format) to ISO UTC strings in `getStatus` and `reveal`.
+1. **Authentication & RPC Header:** Commit `de07efa` fixed Supabase `sb_secret_...` key authentication by sending it through the `apikey` header instead of `Authorization: Bearer`.
+2. **Viewer Response Schema:** Commit `c972b5c` fixed client-side exact key validation in `app/s/[publicId]/viewer.tsx` to expect the full 7-key status payload (`availableAt` included) and 3-key reveal payload (`status`, `contentEnvelope`, `retryExpiresAt`).
+3. **PostgREST Timestamp Parsing:** Commit `2cb4000` broadened `ISO_UTC_PATTERN` in `lib/shares/contracts.ts` and normalized `timestamptz` strings from PostgREST (`+00:00` offset format) to ISO UTC strings in `getStatus` and `reveal`.
 4. **Day 3 Schema & Envelope Migration:** Applied `20260823000000_day3_safe_content_and_attachments.sql` to remote Supabase to accept version 2 framed content and file envelopes up to 10 MiB ciphertext size.
-5. **Storage URL Normalization & Safe Error Logging:** Commit `af90c97` normalized Supabase Storage signed upload/download URLs to fully qualified absolute paths and added structured error logs on server route catch blocks.
-6. **Hermetic Test Isolation:** Commits `4b8e396` and `45c3e66` reverted test env overrides in `tests/setup.ts`, injected `fakeStorage` into unit/integration RPC mapping tests, and updated E2E envelope version expectations for Day 3.
+5. **Storage URL Normalization & Safe Error Logging:** Commit `4ce62e8` normalized Supabase Storage signed upload/download URLs to fully qualified absolute paths and added structured error logs on server route catch blocks.
+6. **Hermetic Test Isolation:** Commits `98e8ce3` and `834273a` reverted test env overrides in `tests/setup.ts`, injected `fakeStorage` into unit/integration RPC mapping tests, and updated E2E envelope version expectations for Day 3.
 
 Live testing confirmed `GET /api/health` (200), `POST /api/uploads` (201), `PUT <storageUrl>` (200), `POST /api/shares` (201), `GET /api/shares/[id]/status` (200), and `POST /api/shares/[id]/reveal` (200) all operate cleanly.
 
@@ -30,12 +30,12 @@ Live testing confirmed `GET /api/health` (200), `POST /api/uploads` (201), `PUT 
 
 ### Repository and CI
 
-- Opaque Supabase secret-key handling was fixed in commit `c07804a`.
+- Opaque Supabase secret-key handling was fixed in commit `de07efa`.
 - For `sb_secret_...`, the RPC client sends the key through `apikey` and does
   not incorrectly place it in `Authorization: Bearer`.
 - Legacy service-role JWTs remain supported through both `apikey` and Bearer.
-- Commit `7cd519f` contains `c07804a` and the latest documentation state.
-- GitHub Actions run `32440488536` passed for `7cd519f`.
+- Commit `65f8353` contains `de07efa` and the incident-closure documentation.
+- GitHub Actions run `32440488536` passed for the original fix commit (hashes across the repository were later rewritten once during the 2026-08-22 secret-hygiene scrub; subjects are preserved).
 
 These facts prove the repository and CI state. They do not prove which commit
 or environment Vercel Production is executing.
@@ -102,7 +102,7 @@ fields, or log ciphertext to make the symptom disappear.
 Give the maintainer:
 
 - repository URL;
-- exact starting commit `7cd519f` or a named descendant;
+- exact starting commit `65f8353` or a descendant on the rewritten main line;
 - this document and [`deployment.md`](deployment.md);
 - least-privilege GitHub, Vercel, and Supabase team access.
 
@@ -119,10 +119,10 @@ Work in this order and record UTC timestamps and request IDs.
 
 1. Open Vercel → SecureBin → Production deployment.
 2. Record its source commit SHA and deployment ID.
-3. Confirm the SHA contains `c07804a`:
+3. Confirm the SHA contains `de07efa`:
 
    ```bash
-   git merge-base --is-ancestor c07804a <deployed-sha>
+   git merge-base --is-ancestor de07efa <deployed-sha>
    ```
 
 4. Confirm the Git integration targets this repository and `main`.
@@ -243,7 +243,7 @@ object and must not be double-stringified.
 
 | New evidence | Action |
 | --- | --- |
-| Deployed SHA predates `c07804a` | Redeploy latest green commit without cache |
+| Deployed SHA predates `de07efa` | Redeploy latest green commit without cache |
 | Production variable is absent/wrong project | Correct Production scope and redeploy |
 | New SQLSTATE/message differs | Follow that exact error; do not reuse this diagnosis |
 | Envelope safe metadata differs before RPC | Fix server mapping and add regression test |

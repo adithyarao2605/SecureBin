@@ -327,3 +327,17 @@ feat(ui): add safe local attachment previews
 feat(cleanup): remove orphaned encrypted files
 test(day3): prove attachment and renderer safety
 ```
+
+## Errata (2026-08-22)
+
+Postgres `encode(bytea,'base64')` wraps output every 76 characters, and the
+canonical base64url round-trip check originally stripped only `=` padding.
+Any envelope whose ciphertext exceeded 76 base64 characters was therefore
+rejected with `invalid content envelope` at create time — masked until now
+because unit tests mock the RPC layer and early smoke notes were shorter than
+the wrap width. Forward migration `20260825000000` replaces both
+`securebin_b64url` helpers with newline-tolerant canonical comparison, and
+pgTAP `01_foundation.sql` carries >76-character regression vectors. A real
+browser e2e (`tests/e2e/attachment.spec.ts`) now covers the full staged
+upload → create → reveal → preview path against local Supabase so this class
+of defect cannot ship green again.

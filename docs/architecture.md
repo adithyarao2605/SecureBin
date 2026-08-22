@@ -207,7 +207,7 @@ A new forward migration replaces SQL validation and size constraints atomically 
 | `file_ciphertext_size` | Nullable bounded byte count |
 | `idempotency_key_hash` | Unique digest for safe creation retry |
 
-Database constraints enforce supported reveal limits, timestamp ordering, size bounds, non-negative counters, and `reveal_count <= max_reveals` when limited.
+Database constraints enforce supported reveal limits, timestamp ordering, size bounds, non-negative counters, and `reveal_count <= max_reveals` when limited. Envelope fields are validated in SQL by `securebin_valid_envelope` and its `securebin_b64url` / `securebin_b64url_range` helpers, whose canonical base64url comparison is newline-tolerant (forward migration `20260825000000`) because Postgres `encode(bytea,'base64')` wraps output every 76 characters.
 
 ### `upload_reservations`
 
