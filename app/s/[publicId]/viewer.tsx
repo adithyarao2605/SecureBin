@@ -223,11 +223,15 @@ export function Viewer({ publicId }: { publicId: string }) {
     setNotice("");
   }
 
-  function factorsNeeded(status: ShareStatus): boolean {
+  function factorsNeeded(_status: ShareStatus): boolean {
+    return !factorsProvided;
+  }
+
+  function gateVisible(status: ShareStatus): boolean {
     return (
       status.status === "active" &&
-      ((status.passwordRequired && passwordInput.length === 0) ||
-        (status.unlockRequired && unlockInput.trim().length === 0))
+      (status.passwordRequired || status.unlockRequired) &&
+      !factorsProvided
     );
   }
 
@@ -416,6 +420,11 @@ export function Viewer({ publicId }: { publicId: string }) {
       // Return to the ready panel immediately, surface what happened, then
       // quietly refresh authoritative counters (a consumed lease shows there).
       setState(shareStatus.maxReveals === null ? "ready_unlimited" : "ready_limited");
+      // A decryption failure usually means a wrong factor: reopen the gate
+      // with the previous entries kept for editing.
+      if (shareStatus.passwordRequired || shareStatus.unlockRequired) {
+        setFactorsProvided(false);
+      }
       setFactorError("");
       setNotice(
         shareStatus.maxReveals === null
@@ -465,6 +474,15 @@ export function Viewer({ publicId }: { publicId: string }) {
           <p className="trust-line">Decrypted in your browser using the link fragment.</p>
         </div>
 
+        {notice && state !== "opened" && (
+          <div role="status">
+            <p className="viewer-status-text">{notice}</p>
+            <button type="button" className="action-button tertiary-button" onClick={clearNotice}>
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {state === "checking" && (
           <div className="viewer-message-box" role="status">
             <p className="viewer-status-text">Checking share availability…</p>
@@ -502,7 +520,7 @@ export function Viewer({ publicId }: { publicId: string }) {
           </div>
         )}
 
-        {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && factorsNeeded(shareStatus) && (
+        {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && gateVisible(shareStatus) && (
           <div className="viewer-action-box factor-box">
             <p className="viewer-status-text">This share is protected. Enter the required details to continue.</p>
             {shareStatus.passwordRequired && (
@@ -573,11 +591,6 @@ export function Viewer({ publicId }: { publicId: string }) {
             <p className="viewer-status-text">
               This share has a reveal limit. Revealing will consume one count.
             </p>
-            {notice && (
-              <p className="viewer-status-text" role="status">
-                {notice}
-              </p>
-            )}
             <button
               type="button"
               className="action-button primary-button"
