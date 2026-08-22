@@ -39,6 +39,18 @@ Environment note: Playwright ≥1.55.1 browser v1193 had to be installed manuall
 - Rate-limit discriminator falls back to client-forwarded headers off Vercel.
 - No live Markdown authoring preview in the composer (deferred with plan_v2 scope).
 
+## Project Decisions
+
+- 2026-08-22 (owner): a dedicated **UI improvement pass** is scheduled as
+  plan_v2 **Day 6** work, after the five-day SPEC release and the earlier
+  plan_v2 slices. Do not fold general UI polish into Day 4/5 beyond what the
+  SPEC already requires.
+- 2026-08-22 (owner): zero key material policy — both the local CLI service
+  constant and Supabase's public demo anon token were scrubbed from all git
+  history (two filter-repo passes); CI reads the service key from the
+  `CI_LOCAL_SUPABASE_SERVICE_KEY` repository secret; docs may reference the
+  `sb_secret_...` *format* only.
+
 ## Next Steps
 
 Day 4 is planned in `docs/DAY-4-PLAN.md` and ready to implement: PBKDF2 password factor, two-channel unlock codes, QR + share actions, Privacy Receipt, complete non-happy-path states. `info/plan_v2.md` Days 4–7 stay gated until SPEC Day 5 completes.

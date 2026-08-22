@@ -260,7 +260,7 @@ Status lookup is non-consuming. Retain the same request token after uncertain re
 - Provides one-click action buttons: "Copy link", "Check status" (queries `/api/shares/[id]/status`), "Revoke", and "Remove from history".
 
 
-## 9. Test matrix
+## 10. Test matrix
 
 Unit: preset mappings; 24h/7d/30d; local-to-UTC; DST boundary; invalid schedule order; summary equals payload.
 
@@ -268,7 +268,7 @@ E2E: default payload; all presets; scheduled blocking; limited confirmation; one
 
 A11y/visual: keyboard traversal, focus movement, live announcements, light/dark axe, 390px/desktop screenshots, reduced motion, and no third-party secret-route requests.
 
-## 10. Acceptance and stop gate
+## 11. Acceptance and stop gate
 
 Approve implementation only when quiet-proof tokens replace old colors, shields/locks disappear, one surface plus rail is clear, proofline is the only signature, mappings are exact, later-day controls remain disabled, copy distinguishes authorization from reading, unavailable is uniform, retry tokens survive uncertainty, and keyboard/mobile/dark/reduced-motion/axe gates pass.
 
