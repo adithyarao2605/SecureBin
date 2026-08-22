@@ -171,6 +171,7 @@ begin
 
     update public.upload_reservations
       set object_path = new_path,
+          created_at = now(),
           expires_at = new_expiry
       where id = existing.id;
 
