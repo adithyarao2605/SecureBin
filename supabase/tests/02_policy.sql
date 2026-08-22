@@ -123,7 +123,7 @@ create temp table test_res_1 on commit drop as
 select * from public.create_upload_reservation(
   'AwMDAwMDAwMDAwMDAwMDAw',
   decode(repeat('03', 32), 'hex'),
-  '{"version":1,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
+  '{"version":2,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
   1024
 );
 
@@ -137,7 +137,7 @@ create temp table test_res_retry on commit drop as
 select * from public.create_upload_reservation(
   'AwMDAwMDAwMDAwMDAwMDAw',
   decode(repeat('03', 32), 'hex'),
-  '{"version":1,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
+  '{"version":2,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
   1024
 );
 
@@ -153,7 +153,7 @@ select throws_ok(
     select * from public.create_upload_reservation(
       'AwMDAwMDAwMDAwMDAwMDAw',
       decode(repeat('03', 32), 'hex'),
-      '{"version":1,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
+      '{"version":2,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
       2048
     )
   $$,

@@ -74,7 +74,7 @@ with ins as (
     gen_random_uuid(),
     'CQkJCQkJCQkJCQkJCQkJCQ',
     decode(repeat('44', 32), 'hex'),
-    '{"version":1,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
+    '{"version":2,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
     1024,
     'objects/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bin',
     now() - interval '30 minutes',
@@ -88,7 +88,7 @@ create temp table rotated_reservation on commit drop as
 select * from public.create_upload_reservation(
   'CQkJCQkJCQkJCQkJCQkJCQ',
   decode(repeat('44', 32), 'hex'),
-  '{"version":1,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
+  '{"version":2,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
   1024
 );
 
