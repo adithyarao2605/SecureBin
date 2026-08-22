@@ -110,12 +110,44 @@ button {
 
 .site-shell {
   margin: 0 auto;
-  max-width: 1180px;
-  padding: 0 clamp(1rem, 3vw, 2.5rem);
-  min-height: 100vh;
+  max-width: 1320px;
+  width: 100%;
+  padding: 0 clamp(1rem, 3vw, 2.75rem);
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
+
+.site-main {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .workspace-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+    align-items: start;
+    flex: 1 0 auto;
+  }
+}
+
+@media (max-width: 1023px) {
+  .workspace-grid {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* Decrypted content must fill the workspace and wrap/scroll correctly */
+.decrypted-content-container { min-width: 0; }
+.decrypted-text,
+.decrypted-code-block,
+.attachment-text-preview,
+.markdown-link { overflow-wrap: anywhere; }
+.decrypted-code-block code { white-space: pre; }
 
 .site-header {
   display: flex;

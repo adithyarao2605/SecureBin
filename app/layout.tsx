@@ -16,9 +16,15 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") ?? undefined;
+  // Pre-hydration theme script (nonce'd, CSP-safe): applies the stored theme
+  // before first paint so there is no wrong-theme flash on any route.
+  const themeScript = `try{var t=localStorage.getItem("securebin-theme");if(t==="light"||t==="dark"){document.documentElement.className=t;document.documentElement.dataset.theme=t;}}catch(e){}`;
 
   return (
     <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body nonce={nonce} suppressHydrationWarning>{children}</body>
     </html>
   );

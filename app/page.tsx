@@ -139,7 +139,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main id="main-content" className="main-content-desk">
+      <main id="main-content" className="main-content-desk site-main">
         {/* Tab 1: Create New Share */}
         <div
           id="panel-create"
@@ -148,7 +148,7 @@ export default function HomePage() {
           hidden={activeTab !== "create"}
           className="tab-panel"
         >
-          <div className="desk-grid">
+          <div className="workspace-grid">
             <div className="primary-surface-container">
               <Composer
                 onPhaseChange={setPhase}
