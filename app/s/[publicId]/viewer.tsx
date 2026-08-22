@@ -223,11 +223,8 @@ export function Viewer({ publicId }: { publicId: string }) {
     setNotice("");
   }
 
-  function factorsNeeded(_status: ShareStatus): boolean {
-    return !factorsProvided;
-  }
-
-  function gateVisible(status: ShareStatus): boolean {
+  /** A protected share keeps its factor gate up until factors are submitted. */
+  function factorsNeeded(status: ShareStatus): boolean {
     return (
       status.status === "active" &&
       (status.passwordRequired || status.unlockRequired) &&
@@ -520,7 +517,7 @@ export function Viewer({ publicId }: { publicId: string }) {
           </div>
         )}
 
-        {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && gateVisible(shareStatus) && (
+        {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && factorsNeeded(shareStatus) && (
           <div className="viewer-action-box factor-box">
             <p className="viewer-status-text">This share is protected. Enter the required details to continue.</p>
             {shareStatus.passwordRequired && (
