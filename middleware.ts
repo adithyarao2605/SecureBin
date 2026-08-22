@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+/**
+ * The browser uploads ciphertext to and downloads attachments from Supabase
+ * Storage via short-lived signed URLs, so that exact origin must be reachable
+ * from page JavaScript. No other cross-origin connection is permitted.
+ */
+function storageConnectSource(): string {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+  if (!supabaseUrl) return "";
+  try {
+    const origin = new URL(supabaseUrl).origin;
+    return origin === "null" ? "" : ` ${origin}`;
+  } catch {
+    return "";
+  }
+}
+
 export function buildContentSecurityPolicy(nonce: string, isDevelopment: boolean): string {
   const scriptDevelopmentDirective = isDevelopment ? " 'unsafe-eval'" : "";
   const styleDevelopmentDirective = isDevelopment ? " 'unsafe-inline'" : ` 'nonce-${nonce}'`;
@@ -11,7 +27,7 @@ export function buildContentSecurityPolicy(nonce: string, isDevelopment: boolean
     `style-src 'self'${styleDevelopmentDirective}`,
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "connect-src 'self'",
+    `connect-src 'self'${storageConnectSource()}`,
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
