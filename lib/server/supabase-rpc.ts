@@ -6,7 +6,7 @@ export class RpcRequestError extends Error {
   readonly errorDetails: string | null;
 
   constructor(status: number, code: string | null, errorDetails: string | null = null) {
-    super("SecureBin server dependency request failed");
+    super(`SecureBin server dependency request failed: ${status} ${code ?? ""} ${errorDetails ?? ""}`.trim());
     this.name = "RpcRequestError";
     this.status = status;
     this.code = code;
@@ -30,9 +30,6 @@ export function createRpcClient(
           apikey: config.serviceRoleKey,
           "Content-Type": "application/json",
         };
-        // New sb_secret_* API keys are opaque, not JWTs. Supabase authenticates
-        // them through `apikey`; only legacy service_role JWTs belong in the
-        // Bearer header.
         if (!config.serviceRoleKey.startsWith("sb_secret_")) {
           headers.Authorization = `Bearer ${config.serviceRoleKey}`;
         }

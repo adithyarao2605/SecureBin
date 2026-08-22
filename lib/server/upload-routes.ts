@@ -3,6 +3,7 @@ import { readServerConfig } from "./config";
 import { networkDiscriminator } from "./hashing";
 import { parseUploadReservationInput } from "@/lib/shares/contracts";
 import { createUploadService, UploadServiceError, type UploadService } from "./upload-service";
+import { RpcRequestError } from "./supabase-rpc";
 import { createShareService, type ShareService } from "./share-service";
 
 const MAX_UPLOAD_JSON_BYTES = 65_536;
@@ -55,7 +56,10 @@ export function createPostUploadHandler(
         expiresAt: result.expiresAt,
       }, 201);
     } catch (error) {
-      console.error("[SecureBin Server] create_upload_reservation failed:", error instanceof Error ? error.message : String(error));
+      // Redacted coarse log only: RpcRequestError messages carry upstream
+      // details for incident diagnosis and must not reach persisted logs.
+      const code = error instanceof RpcRequestError ? `status=${error.status} code=${error.code ?? "none"}` : "unknown";
+      console.error(`[SecureBin Server] create_upload_reservation failed: ${code}`);
       if (error instanceof UploadServiceError) {
         if (error.kind === "conflict") {
           return errorResponse("reservation_conflict", 409);
