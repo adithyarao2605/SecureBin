@@ -24,6 +24,7 @@ import {
   type ContentPayload,
 } from "./payload";
 import { generateShareContext, type ShareCryptoContext } from "./share-context";
+import { buildFactorIkm, type FactorInputs, type FactorMask } from "./factors";
 
 export type SealedContent = {
   readonly publicId: string;
@@ -47,16 +48,15 @@ export class ContentCryptoError extends Error {
 async function deriveContentKey(
   linkSecret: string,
   hkdfSalt: Uint8Array,
-  version: 1 | 2
+  version: 1 | 2,
+  options?: { mask?: FactorMask; ikmOverride?: Uint8Array }
 ): Promise<CryptoKey> {
-  const label = version === 1 ? CONTENT_HKDF_LABEL_V1 : CONTENT_HKDF_LABEL_V2;
-  const ikm = await crypto.subtle.importKey(
-    "raw",
-    bytesToArrayBuffer(validateLinkSecret(linkSecret)),
-    "HKDF",
-    false,
-    ["deriveKey"]
-  );
+  const mask: FactorMask = options?.mask ?? "link";
+  const label = `securebin/v${version}/${mask}/content`;
+  const rawIkm = options?.ikmOverride
+    ? bytesToArrayBuffer(options.ikmOverride)
+    : bytesToArrayBuffer(validateLinkSecret(linkSecret));
+  const ikm = await crypto.subtle.importKey("raw", rawIkm, "HKDF", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
     {
       name: "HKDF",
@@ -71,9 +71,35 @@ async function deriveContentKey(
   );
 }
 
+export interface ContentFactorOptions {
+  /** Factor mask; defaults to the context's mask (link-only shares). */
+  readonly mask?: FactorMask;
+  readonly passwordSalt?: Uint8Array | string | null;
+  readonly password?: string;
+  readonly unlockCode?: string;
+  readonly unlockBytes?: Uint8Array;
+}
+
+/** Build the masked IKM for a share, honoring its factor mask. */
+export async function contentIkm(
+  linkSecret: string,
+  options: ContentFactorOptions = {}
+): Promise<Uint8Array> {
+  if (!options.mask || options.mask === "link") {
+    return validateLinkSecret(linkSecret);
+  }
+  return buildFactorIkm(linkSecret, options.mask, {
+    password: options.password,
+    passwordSalt: options.passwordSalt ?? undefined,
+    unlockCode: options.unlockCode,
+    unlockBytes: options.unlockBytes,
+  });
+}
+
 export async function sealContent(
   input: string | ContentPayload,
-  customContext?: ShareCryptoContext
+  customContext?: ShareCryptoContext,
+  factors?: ContentFactorOptions & { mask: FactorMask; passwordSalt: string }
 ): Promise<SealedContent> {
   const payload: ContentPayload =
     typeof input === "string" ? { mode: "note", text: input } : input;
@@ -82,9 +108,29 @@ export async function sealContent(
   const context = customContext ?? generateShareContext();
 
   const nonce = randomBytes(12);
-  const key = await deriveContentKey(context.linkSecret, context.hkdfSalt, 2);
+  const ikm = await contentIkm(context.linkSecret, {
+    ...factors,
+    passwordSalt: factors?.passwordSalt ?? null,
+  });
+  const key = await deriveContentKey(context.linkSecret, context.hkdfSalt, 2, { ikmOverride: ikm });
 
-  const shape = newContentEnvelope(nonce, context.hkdfSalt, new Uint8Array(16), 2);
+  const shape = newContentEnvelope(
+    nonce,
+    context.hkdfSalt,
+    new Uint8Array(16),
+    2,
+    factors
+      ? {
+          factorMask: factors.mask,
+          passwordSalt:
+            factors.mask === "link+password" || factors.mask === "link+password+unlock"
+              ? (factors.passwordSalt as string)
+              : null,
+          kdf: factors.mask.includes("password") ? "PBKDF2-HMAC-SHA-256" : "none",
+          kdfParameters: factors.mask.includes("password") ? { iterations: 600000 } : {},
+        }
+      : undefined
+  );
   const aad = canonicalAad(context.publicId, shape);
 
   const ciphertextBuffer = await crypto.subtle.encrypt(
@@ -94,7 +140,17 @@ export async function sealContent(
   );
 
   const ciphertext = new Uint8Array(ciphertextBuffer);
-  const envelope = newContentEnvelope(nonce, context.hkdfSalt, ciphertext, 2);
+  const envelope = newContentEnvelope(nonce, context.hkdfSalt, ciphertext, 2, factors
+    ? {
+        factorMask: factors.mask,
+        passwordSalt:
+          factors.mask === "link+password" || factors.mask === "link+password+unlock"
+            ? (factors.passwordSalt as string)
+            : null,
+        kdf: factors.mask.includes("password") ? "PBKDF2-HMAC-SHA-256" : "none",
+        kdfParameters: factors.mask.includes("password") ? { iterations: 600000 } : {},
+      }
+    : undefined);
 
   return {
     publicId: context.publicId,
@@ -109,7 +165,8 @@ export async function sealContent(
 export async function openContent(
   envelopeValue: unknown,
   publicId: string,
-  linkSecret: string
+  linkSecret: string,
+  factors?: ContentFactorOptions
 ): Promise<ContentPayload> {
   const envelope = validateContentEnvelope(envelopeValue);
   validatePublicId(publicId);
@@ -118,7 +175,12 @@ export async function openContent(
   const nonce = base64UrlToBytes(envelope.nonce);
   const hkdfSalt = base64UrlToBytes(envelope.hkdfSalt);
   const ciphertext = base64UrlToBytes(envelope.ciphertext);
-  const key = await deriveContentKey(linkSecret, hkdfSalt, envelope.version);
+  const ikm = await contentIkm(linkSecret, {
+    ...factors,
+    mask: envelope.factorMask as FactorMask,
+    passwordSalt: envelope.passwordSalt,
+  });
+  const key = await deriveContentKey(linkSecret, hkdfSalt, envelope.version, { ikmOverride: ikm });
   const aad = canonicalAad(publicId, envelope);
 
   let plaintextBytes: Uint8Array;

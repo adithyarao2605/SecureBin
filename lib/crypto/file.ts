@@ -16,6 +16,7 @@ import {
   type FileEnvelope,
 } from "./envelope";
 import type { ShareCryptoContext } from "./share-context";
+import { buildFactorIkm, type FactorMask } from "./factors";
 
 export const MAX_FILE_PLAINTEXT_BYTES = 10_485_760; // 10 MiB
 export const MAX_FILENAME_BYTES = 512;
@@ -138,20 +139,23 @@ export function decodeFileFrame(framedBytes: Uint8Array): FilePayload {
   return { filename, mimeType, data };
 }
 
-async function deriveFileKey(linkSecret: string, hkdfSalt: Uint8Array): Promise<CryptoKey> {
-  const ikm = await crypto.subtle.importKey(
-    "raw",
-    bytesToArrayBuffer(validateLinkSecret(linkSecret)),
-    "HKDF",
-    false,
-    ["deriveKey"]
-  );
+async function deriveFileKey(
+  linkSecret: string,
+  hkdfSalt: Uint8Array,
+  options?: { mask?: FactorMask; ikmOverride?: Uint8Array }
+): Promise<CryptoKey> {
+  const mask: FactorMask = options?.mask ?? "link";
+  const label = mask === "link" ? FILE_HKDF_LABEL_V2 : `securebin/v2/${mask}/file`;
+  const rawIkm = options?.ikmOverride
+    ? bytesToArrayBuffer(options.ikmOverride)
+    : bytesToArrayBuffer(validateLinkSecret(linkSecret));
+  const ikm = await crypto.subtle.importKey("raw", rawIkm, "HKDF", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
     {
       name: "HKDF",
       hash: "SHA-256",
       salt: bytesToArrayBuffer(hkdfSalt),
-      info: bytesToArrayBuffer(utf8Encode(FILE_HKDF_LABEL_V2)),
+      info: bytesToArrayBuffer(utf8Encode(label)),
     },
     ikm,
     { name: "AES-GCM", length: 256 },
@@ -160,15 +164,37 @@ async function deriveFileKey(linkSecret: string, hkdfSalt: Uint8Array): Promise<
   );
 }
 
+export interface FileFactorOptions {
+  readonly mask?: FactorMask;
+  readonly passwordSalt?: Uint8Array | string | null;
+  readonly password?: string;
+  readonly unlockCode?: string;
+  readonly unlockBytes?: Uint8Array;
+}
+
 export async function sealFile(
   file: FilePayload,
-  context: ShareCryptoContext
+  context: ShareCryptoContext,
+  factors?: FileFactorOptions & { mask: FactorMask; passwordSalt: string }
 ): Promise<SealedFile> {
   const framedBytes = encodeFileFrame(file.filename, file.mimeType, file.data);
   const nonce = randomBytes(12);
-  const key = await deriveFileKey(context.linkSecret, context.hkdfSalt);
+  const ikmOverride =
+    factors && factors.mask !== "link"
+      ? await buildFactorIkm(context.linkSecret, factors.mask, {
+          password: factors.password,
+          passwordSalt: factors.passwordSalt,
+          unlockCode: factors.unlockCode,
+          unlockBytes: factors.unlockBytes,
+        })
+      : undefined;
+  const key = await deriveFileKey(context.linkSecret, context.hkdfSalt, { ikmOverride });
 
-  const envelope = newFileEnvelope(nonce, context.hkdfSalt);
+  const hasPassword = factors?.mask.includes("password") ?? false;
+  const envelope = newFileEnvelope(nonce, context.hkdfSalt, undefined, {
+    factorMask: factors?.mask ?? "link",
+    passwordSalt: hasPassword ? (factors?.passwordSalt as string) : null,
+  });
   const aad = canonicalAad(context.publicId, envelope);
 
   const ciphertextBuffer = await crypto.subtle.encrypt(
@@ -193,7 +219,8 @@ export async function openFile(
   envelopeValue: unknown,
   ciphertext: Uint8Array,
   publicId: string,
-  linkSecret: string
+  linkSecret: string,
+  factors?: FileFactorOptions
 ): Promise<FilePayload> {
   const envelope = validateFileEnvelope(envelopeValue);
   validatePublicId(publicId);
@@ -205,7 +232,16 @@ export async function openFile(
 
   const nonce = base64UrlToBytes(envelope.nonce);
   const hkdfSalt = base64UrlToBytes(envelope.hkdfSalt);
-  const key = await deriveFileKey(linkSecret, hkdfSalt);
+  const ikmOverride =
+    factors && factors.mask && factors.mask !== "link"
+      ? await buildFactorIkm(linkSecret, factors.mask, {
+          password: factors.password,
+          passwordSalt: factors.passwordSalt ?? envelope.passwordSalt,
+          unlockCode: factors.unlockCode,
+          unlockBytes: factors.unlockBytes,
+        })
+      : undefined;
+  const key = await deriveFileKey(linkSecret, hkdfSalt, { ikmOverride });
   const aad = canonicalAad(publicId, envelope);
 
   let decryptedBuffer: ArrayBuffer;

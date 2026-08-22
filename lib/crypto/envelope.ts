@@ -1,5 +1,8 @@
 import { base64UrlToBytes, bytesToBase64Url, utf8Encode } from "./encoding";
 
+export const PBKDF2_ITERATIONS = 600000 as const;
+export const PASSWORD_SALT_BYTES = 16 as const;
+
 export const CONTENT_FORMAT_VERSION_V1 = 1 as const;
 export const CONTENT_FORMAT_VERSION_V2 = 2 as const;
 export const FILE_FORMAT_VERSION_V2 = 2 as const;
@@ -21,29 +24,35 @@ export const MAX_CONTENT_CIPHERTEXT_BYTES_V1 = 524_304; // 524,288 + 16
 export const MAX_CONTENT_CIPHERTEXT_BYTES_V2 = 524_315; // 524,288 + 11 (SBCT frame) + 16 (GCM tag)
 export const MAX_FILE_CIPHERTEXT_BYTES = 10_486_422;
 
-export type ContentEnvelope = {
+export type EnvelopeFactorMask =
+  | typeof CONTENT_FACTOR_MASK
+  | "link+password"
+  | "link+unlock"
+  | "link+password+unlock";
+
+export type EnvelopeKdf = typeof CONTENT_KDF | "PBKDF2-HMAC-SHA-256";
+
+interface EnvelopeBase {
   version: 1 | 2;
-  objectType: typeof CONTENT_OBJECT_TYPE;
+  objectType: typeof CONTENT_OBJECT_TYPE | typeof FILE_OBJECT_TYPE;
   algorithm: typeof CONTENT_ALGORITHM;
   nonce: string;
   hkdfSalt: string;
-  passwordSalt: null;
-  kdf: typeof CONTENT_KDF;
-  kdfParameters: typeof CONTENT_KDF_PARAMETERS;
-  factorMask: typeof CONTENT_FACTOR_MASK;
+  passwordSalt: string | null;
+  kdf: EnvelopeKdf;
+  kdfParameters: Readonly<Record<string, number>>;
+  factorMask: EnvelopeFactorMask;
+}
+
+export type ContentEnvelope = EnvelopeBase & {
+  version: 1 | 2;
+  objectType: typeof CONTENT_OBJECT_TYPE;
   ciphertext: string;
 };
 
-export type FileEnvelope = {
+export type FileEnvelope = Omit<EnvelopeBase, "version" | "objectType"> & {
   version: 2;
   objectType: typeof FILE_OBJECT_TYPE;
-  algorithm: typeof CONTENT_ALGORITHM;
-  nonce: string;
-  hkdfSalt: string;
-  passwordSalt: null;
-  kdf: typeof CONTENT_KDF;
-  kdfParameters: typeof CONTENT_KDF_PARAMETERS;
-  factorMask: typeof CONTENT_FACTOR_MASK;
   ciphertext?: string;
 };
 
@@ -112,17 +121,43 @@ export function validateContentEnvelope(value: unknown): ContentEnvelope {
     (value.version !== 1 && value.version !== 2) ||
     value.objectType !== CONTENT_OBJECT_TYPE ||
     value.algorithm !== CONTENT_ALGORITHM ||
-    value.passwordSalt !== null ||
-    value.kdf !== CONTENT_KDF ||
-    !isRecord(value.kdfParameters) ||
-    Object.keys(value.kdfParameters).length !== 0 ||
-    value.factorMask !== CONTENT_FACTOR_MASK
+    typeof value.kdf !== "string" ||
+    !isRecord(value.kdfParameters)
+  ) {
+    throw new EnvelopeValidationError();
+  }
+
+  // Factor-mask rules mirror lib/shares/contracts.parseEnvelope exactly:
+  // link/link+unlock use no KDF and no salt; password masks require PBKDF2
+  // with the locked iteration count and a 16-byte salt.
+  const mask = value.factorMask;
+  const hasPassword = mask === "link+password" || mask === "link+password+unlock";
+  const expectedKdf = hasPassword ? "PBKDF2-HMAC-SHA-256" : "none";
+  const validMask =
+    mask === "link" || mask === "link+password" || mask === "link+unlock" || mask === "link+password+unlock";
+  const kdfOk =
+    value.kdf === expectedKdf &&
+    (hasPassword
+      ? Object.keys(value.kdfParameters).length === 1 &&
+        value.kdfParameters.iterations === PBKDF2_ITERATIONS
+      : Object.keys(value.kdfParameters).length === 0);
+  const saltOk = hasPassword
+    ? typeof value.passwordSalt === "string" && base64UrlToBytes(value.passwordSalt).length === PASSWORD_SALT_BYTES
+    : value.passwordSalt === null;
+
+  if (
+    !validMask ||
+    !kdfOk ||
+    !saltOk ||
+    typeof value.nonce !== "string" ||
+    typeof value.hkdfSalt !== "string"
   ) {
     throw new EnvelopeValidationError();
   }
 
   const nonceBytes = requireBytes(value.nonce, 12, "nonce");
   const hkdfSaltBytes = requireBytes(value.hkdfSalt, 16, "HKDF salt");
+  void hkdfSaltBytes;
 
   const ciphertext = decodeBytes(value.ciphertext, "ciphertext");
   const maxCiphertext =
@@ -133,15 +168,15 @@ export function validateContentEnvelope(value: unknown): ContentEnvelope {
   }
 
   return {
-    version: value.version,
+    version: value.version as 1 | 2,
     objectType: CONTENT_OBJECT_TYPE,
     algorithm: CONTENT_ALGORITHM,
     nonce: bytesToBase64Url(nonceBytes),
     hkdfSalt: bytesToBase64Url(hkdfSaltBytes),
-    passwordSalt: null,
-    kdf: CONTENT_KDF,
-    kdfParameters: {},
-    factorMask: CONTENT_FACTOR_MASK,
+    passwordSalt: hasPassword ? bytesToBase64Url(base64UrlToBytes(value.passwordSalt as string)) : null,
+    kdf: expectedKdf as EnvelopeKdf,
+    kdfParameters: hasPassword ? { iterations: PBKDF2_ITERATIONS } : {},
+    factorMask: mask as EnvelopeFactorMask,
     ciphertext: bytesToBase64Url(ciphertext),
   };
 }
@@ -231,9 +266,20 @@ export function canonicalAad(
   }
 ): Uint8Array {
   validatePublicId(publicId);
-  if (!isRecord(envelope.kdfParameters) || Object.keys(envelope.kdfParameters).length !== 0) {
+  if (!isRecord(envelope.kdfParameters)) {
     throw new EnvelopeValidationError("Unsupported KDF parameters.");
   }
+  const keys = Object.keys(envelope.kdfParameters).sort();
+  const allowed: Record<string, unknown> = { iterations: PBKDF2_ITERATIONS };
+  for (const key of keys) {
+    if (allowed[key] !== envelope.kdfParameters[key]) {
+      throw new EnvelopeValidationError("Unsupported KDF parameters.");
+    }
+  }
+  // Canonical serialization: sorted keys, so the AAD is byte-stable.
+  const canonicalParameters = JSON.stringify(
+    Object.fromEntries(keys.map((key) => [key, envelope.kdfParameters[key]]))
+  );
   const values: readonly (string | number)[] = [
     "securebin",
     envelope.version,
@@ -241,17 +287,43 @@ export function canonicalAad(
     envelope.objectType,
     envelope.algorithm,
     envelope.kdf,
-    JSON.stringify(envelope.kdfParameters),
+    canonicalParameters,
     envelope.factorMask,
   ];
   return utf8Encode(JSON.stringify(values));
+}
+
+export type EnvelopeKdfOptions = {
+  readonly factorMask?: "link" | "link+password" | "link+unlock" | "link+password+unlock";
+  /** base64url 16-byte PBKDF2 salt; required when the mask includes a password. */
+  readonly passwordSalt?: string | null;
+  readonly kdf?: "none" | "PBKDF2-HMAC-SHA-256";
+  readonly kdfParameters?: Readonly<Record<string, number>>;
+};
+
+function kdfFields(options?: EnvelopeKdfOptions): {
+  factorMask: EnvelopeFactorMask;
+  passwordSalt: string | null;
+  kdf: EnvelopeKdf;
+  kdfParameters: Readonly<Record<string, number>>;
+} {
+  const factorMask: EnvelopeFactorMask = options?.factorMask ?? CONTENT_FACTOR_MASK;
+  const hasPassword = factorMask.includes("password");
+  const passwordSalt = hasPassword ? options?.passwordSalt ?? null : null;
+  return {
+    factorMask,
+    passwordSalt,
+    kdf: (hasPassword ? "PBKDF2-HMAC-SHA-256" : "none") as "none" | "PBKDF2-HMAC-SHA-256",
+    kdfParameters: hasPassword ? { iterations: 600000 } : {},
+  };
 }
 
 export function newContentEnvelope(
   nonce: Uint8Array,
   hkdfSalt: Uint8Array,
   ciphertext: Uint8Array,
-  version: 1 | 2 = 2
+  version: 1 | 2 = 2,
+  options?: EnvelopeKdfOptions
 ): ContentEnvelope {
   return {
     version,
@@ -259,10 +331,7 @@ export function newContentEnvelope(
     algorithm: CONTENT_ALGORITHM,
     nonce: bytesToBase64Url(nonce),
     hkdfSalt: bytesToBase64Url(hkdfSalt),
-    passwordSalt: null,
-    kdf: CONTENT_KDF,
-    kdfParameters: CONTENT_KDF_PARAMETERS,
-    factorMask: CONTENT_FACTOR_MASK,
+    ...kdfFields(options),
     ciphertext: bytesToBase64Url(ciphertext),
   };
 }
@@ -270,7 +339,8 @@ export function newContentEnvelope(
 export function newFileEnvelope(
   nonce: Uint8Array,
   hkdfSalt: Uint8Array,
-  ciphertext?: Uint8Array
+  ciphertext?: Uint8Array,
+  options?: EnvelopeKdfOptions
 ): FileEnvelope {
   const envelope: FileEnvelope = {
     version: 2,
@@ -278,10 +348,7 @@ export function newFileEnvelope(
     algorithm: CONTENT_ALGORITHM,
     nonce: bytesToBase64Url(nonce),
     hkdfSalt: bytesToBase64Url(hkdfSalt),
-    passwordSalt: null,
-    kdf: CONTENT_KDF,
-    kdfParameters: CONTENT_KDF_PARAMETERS,
-    factorMask: CONTENT_FACTOR_MASK,
+    ...kdfFields(options),
   };
 
   if (ciphertext !== undefined) {
