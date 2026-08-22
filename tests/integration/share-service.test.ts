@@ -4,7 +4,15 @@ import { describe, expect, it } from "vitest";
 
 import type { CreateShareInput } from "../../lib/shares/contracts";
 import { createShareService } from "../../lib/server/share-service";
+import type { SecureStorage } from "../../lib/server/storage";
 import type { RpcClient } from "../../lib/server/supabase-rpc";
+
+const fakeStorage: SecureStorage = {
+  createSignedUpload: async () => ({ url: "https://example.com/upload" }),
+  createSignedDownload: async () => "https://example.com/download",
+  inspectSize: async () => 1024,
+  remove: async () => "deleted",
+};
 
 const publicId = "abcdefghijklmnopqrstug";
 const digest = "a".repeat(43);
@@ -82,7 +90,7 @@ function bytea(base64UrlValue: string): string {
 describe("share service RPC mapping", () => {
   it("maps create arguments without exposing plaintext and matches 11-arg signature", async () => {
     const rpc = new FakeRpcClient();
-    const service = createShareService(rpc);
+    const service = createShareService(rpc, fakeStorage);
 
     await expect(service.createShare(createInput)).resolves.toEqual({ publicId, created: true });
 
@@ -108,7 +116,7 @@ describe("share service RPC mapping", () => {
       }
     }
 
-    const service = createShareService(new ConflictRpcClient());
+    const service = createShareService(new ConflictRpcClient(), fakeStorage);
     await expect(service.createShare(createInput)).rejects.toMatchObject({
       name: "ShareServiceError",
       kind: "conflict",
@@ -117,7 +125,7 @@ describe("share service RPC mapping", () => {
 
   it("maps status, preserves ciphertext on reveal, and hashes raw retry/delete capabilities", async () => {
     const rpc = new FakeRpcClient();
-    const service = createShareService(rpc);
+    const service = createShareService(rpc, fakeStorage);
 
     await expect(service.getStatus(publicId)).resolves.toMatchObject({ status: "active", expiresAt: "2099-01-01T00:00:00.000Z" });
     await expect(service.reveal(publicId, "raw-reveal-token")).resolves.toEqual({
@@ -154,7 +162,7 @@ describe("share service RPC mapping", () => {
       unlock_required: false,
       max_reveals: 5,
       remaining_reveals: 5,
-    }));
+    }), fakeStorage);
     await expect(scheduledService.getStatus(publicId)).resolves.toEqual({
       status: "scheduled",
       availableAt: "2026-08-25T12:00:00.000Z",
@@ -174,7 +182,7 @@ describe("share service RPC mapping", () => {
       unlock_required: false,
       max_reveals: null,
       remaining_reveals: null,
-    }));
+    }), fakeStorage);
     await expect(unavailableService.getStatus(publicId)).resolves.toEqual({ status: "unavailable" });
 
     // Burn after reading (maxReveals: 1)
@@ -186,7 +194,7 @@ describe("share service RPC mapping", () => {
       unlock_required: false,
       max_reveals: 1,
       remaining_reveals: 1,
-    }));
+    }), fakeStorage);
     await expect(burnService.getStatus(publicId)).resolves.toEqual({
       status: "active",
       availableAt: null,
