@@ -114,14 +114,9 @@ export function isSafePlainText(bytes: Uint8Array): string | null {
   }
 
   const trimmedLower = text.trimStart().toLowerCase();
-  // Reject HTML/XML/SVG active markup from text preview to avoid rendering/parsing ambiguity
-  if (
-    trimmedLower.startsWith("<!doctype html") ||
-    trimmedLower.startsWith("<html") ||
-    trimmedLower.startsWith("<xml") ||
-    trimmedLower.startsWith("<?xml") ||
-    trimmedLower.startsWith("<svg")
-  ) {
+  // Markup ambiguity: any leading "<" (tags, declarations, comments) goes to
+  // download-only instead of inline text preview.
+  if (trimmedLower.startsWith("<")) {
     return null;
   }
 

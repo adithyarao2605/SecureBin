@@ -9,6 +9,7 @@ import {
   type FilePayload,
   type SealedFile,
 } from "../../lib/crypto/file";
+import { MAX_CONTENT_BYTES } from "../../lib/crypto/envelope";
 import {
   CODE_LANGUAGES,
   type CodeLanguage,
@@ -22,7 +23,7 @@ import {
   type ProoflinePhase,
   type ValidatedPolicy,
 } from "../../lib/shares/policy-ui";
-import { saveShareToHistory } from "../../lib/shares/share-history";
+import { saveShareToHistory, updateShareInHistory } from "../../lib/shares/share-history";
 import { PolicyControls } from "./policy-controls";
 
 export type ComposerMode = "note" | "markdown" | "code";
@@ -120,6 +121,12 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
 
     if (!draft.trim() && !attachedFile) {
       setErrorMessage("Write some content or attach a file before creating a share.");
+      return;
+    }
+
+    const draftBytes = new TextEncoder().encode(draft).length;
+    if (draftBytes > MAX_CONTENT_BYTES) {
+      setErrorMessage(`Content is too large for one share (${formatBytes(draftBytes)} of text, limit ${formatBytes(MAX_CONTENT_BYTES)}). Shorten the note or attach the rest as a file.`);
       return;
     }
 
@@ -311,6 +318,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       setRevokedMessage("Share revoked. Future reveals are unavailable.");
       setShowRevokeConfirm(false);
       setActiveDeleteCapability(null);
+      updateShareInHistory(activePublicId, { status: "revoked", remainingReveals: null });
       if (onPhaseChange) onPhaseChange("unavailable");
     } catch {
       setRevokedMessage("The share could not be revoked. Try again.");
@@ -477,7 +485,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           )}
 
           <span className="character-count" aria-live="polite">
-            {draft.length.toLocaleString()} / 524,288
+            {formatBytes(new TextEncoder().encode(draft).length)} / {formatBytes(MAX_CONTENT_BYTES)}
           </span>
         </div>
 
@@ -487,7 +495,6 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         <textarea
           id="draft-textarea"
           className="composer-textarea"
-          maxLength={524288}
           placeholder={
             mode === "note"
               ? "Start typing your note here..."

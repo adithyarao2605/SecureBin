@@ -121,8 +121,8 @@ export function validateContentEnvelope(value: unknown): ContentEnvelope {
     throw new EnvelopeValidationError();
   }
 
-  requireBytes(value.nonce, 12, "nonce");
-  requireBytes(value.hkdfSalt, 16, "HKDF salt");
+  const nonceBytes = requireBytes(value.nonce, 12, "nonce");
+  const hkdfSaltBytes = requireBytes(value.hkdfSalt, 16, "HKDF salt");
 
   const ciphertext = decodeBytes(value.ciphertext, "ciphertext");
   const maxCiphertext =
@@ -132,25 +132,17 @@ export function validateContentEnvelope(value: unknown): ContentEnvelope {
     throw new EnvelopeValidationError("Ciphertext size is outside the supported range.");
   }
 
-  if (
-    typeof value.nonce !== "string" ||
-    typeof value.hkdfSalt !== "string" ||
-    typeof value.ciphertext !== "string"
-  ) {
-    throw new EnvelopeValidationError();
-  }
-
   return {
     version: value.version,
     objectType: CONTENT_OBJECT_TYPE,
     algorithm: CONTENT_ALGORITHM,
-    nonce: value.nonce,
-    hkdfSalt: value.hkdfSalt,
+    nonce: bytesToBase64Url(nonceBytes),
+    hkdfSalt: bytesToBase64Url(hkdfSaltBytes),
     passwordSalt: null,
     kdf: CONTENT_KDF,
     kdfParameters: {},
     factorMask: CONTENT_FACTOR_MASK,
-    ciphertext: value.ciphertext,
+    ciphertext: bytesToBase64Url(ciphertext),
   };
 }
 
@@ -197,36 +189,30 @@ export function validateFileEnvelope(value: unknown, requireCiphertext = false):
     throw new EnvelopeValidationError("Invalid file envelope metadata.");
   }
 
-  requireBytes(value.nonce, 12, "nonce");
-  requireBytes(value.hkdfSalt, 16, "HKDF salt");
+  const nonce = requireBytes(value.nonce, 12, "nonce");
+  const hkdfSalt = requireBytes(value.hkdfSalt, 16, "HKDF salt");
 
-  if (requireCiphertext) {
-    const ciphertext = decodeBytes(value.ciphertext, "ciphertext");
-    if (ciphertext.length > MAX_FILE_CIPHERTEXT_BYTES || ciphertext.length < 16) {
-      throw new EnvelopeValidationError("File ciphertext size is outside the supported range.");
-    }
-  }
-
-  if (typeof value.nonce !== "string" || typeof value.hkdfSalt !== "string") {
-    throw new EnvelopeValidationError();
+  const ciphertext = requireCiphertext ? decodeBytes(value.ciphertext, "ciphertext") : null;
+  if (ciphertext && (ciphertext.length > MAX_FILE_CIPHERTEXT_BYTES || ciphertext.length < 16)) {
+    throw new EnvelopeValidationError("File ciphertext size is outside the supported range.");
   }
 
   const result: FileEnvelope = {
     version: 2,
     objectType: FILE_OBJECT_TYPE,
     algorithm: CONTENT_ALGORITHM,
-    nonce: value.nonce,
-    hkdfSalt: value.hkdfSalt,
+    nonce: bytesToBase64Url(nonce),
+    hkdfSalt: bytesToBase64Url(hkdfSalt),
     passwordSalt: null,
     kdf: CONTENT_KDF,
     kdfParameters: {},
     factorMask: CONTENT_FACTOR_MASK,
   };
 
-  if (requireCiphertext && typeof value.ciphertext === "string") {
+  if (ciphertext) {
     return {
       ...result,
-      ciphertext: value.ciphertext,
+      ciphertext: bytesToBase64Url(ciphertext),
     };
   }
 

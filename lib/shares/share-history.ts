@@ -64,7 +64,7 @@ export function loadShareHistory(): ShareHistoryItem[] {
     const valid: ShareHistoryItem[] = [];
     for (const item of parsed) {
       const validItem = parseHistoryItem(item);
-      if (validItem) valid: valid.push(validItem);
+      if (validItem) valid.push(validItem);
     }
     return valid;
   } catch {

@@ -95,5 +95,12 @@ describe("File Safety and Preview Inspection (Day 3)", () => {
         type: "download_only",
       });
     });
+
+    it("classifies HTML comment-wrapped and script-bearing text as download_only", () => {
+      const commentedHtml = new TextEncoder().encode("<!-- greeting --><html><body>hi</body></html>");
+      expect(inspectFileForPreview(commentedHtml)).toEqual({ type: "download_only" });
+      const leadingScript = new TextEncoder().encode("<script>alert(1)</script>plain tail");
+      expect(inspectFileForPreview(leadingScript)).toEqual({ type: "download_only" });
+    });
   });
 });
