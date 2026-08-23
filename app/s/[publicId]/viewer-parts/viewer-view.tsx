@@ -115,7 +115,7 @@ export function ViewerView({
           </div>
         )}
 
-        {state === "ready_unlimited" && activeStatus && factorsNeeded && (
+        {(state === "ready_unlimited" || state === "ready_limited") && activeStatus && factorsNeeded && (
           <FactorGate
             passwordRequired={activeStatus.passwordRequired}
             unlockRequired={activeStatus.unlockRequired}

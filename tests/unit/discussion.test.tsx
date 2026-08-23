@@ -70,8 +70,11 @@ describe("DiscussionThread", () => {
       screen.getByText(/Comments are encrypted locally; the server stores opaque ciphertext/)
     ).toBeInTheDocument();
 
-    const [getUrl] = vi.mocked(fetch).mock.calls[0] as [string];
-    expect(getUrl).toContain(`capability=${encodeURIComponent(bytesToBase64Url(capability))}`);
+    const [getUrl, getInit] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+    expect(getUrl).not.toContain("capability=");
+    expect((getInit.headers as Record<string, string>)["x-discussion-capability"]).toBe(
+      bytesToBase64Url(capability)
+    );
   });
 
   it("posts a sealed reply bound to the capability and refetches", async () => {

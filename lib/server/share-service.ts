@@ -48,6 +48,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function bytesHex(value: string): string {
   return `\\x${Buffer.from(value, "base64url").toString("hex")}`;
 }
@@ -197,9 +200,12 @@ export function createShareService(
 
     async addComment(publicId, payload) {
       const capability = typeof payload.capability === "string" ? payload.capability : "";
-      const parentCommentId = typeof payload.parentCommentId === "string" && payload.parentCommentId.length === 36
-        ? payload.parentCommentId
-        : null;
+      // A present-but-malformed parent id would surface as a PG 22P02 cast
+      // failure and map to a false dependency outage; reject it as invalid.
+      const parentCommentId = typeof payload.parentCommentId === "string" ? payload.parentCommentId : "";
+      if (parentCommentId !== "" && !UUID_PATTERN.test(parentCommentId)) {
+        throw new ShareServiceError("invalid");
+      }
       if (!capability || typeof payload.bodyEnvelope !== "object" || payload.bodyEnvelope === null) {
         throw new ShareServiceError("invalid");
       }
@@ -207,7 +213,7 @@ export function createShareService(
         const value = await rpc.call("add_share_comment", {
           p_public_id: publicId,
           p_discussion_capability: bytesHex(capability),
-          p_parent_comment_id: parentCommentId,
+          p_parent_comment_id: parentCommentId === "" ? null : parentCommentId,
           p_body_envelope: payload.bodyEnvelope,
           p_nickname_envelope: payload.nicknameEnvelope ?? null,
         });

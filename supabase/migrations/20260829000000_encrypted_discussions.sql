@@ -18,8 +18,12 @@ create table if not exists public.share_comments (
   nickname_envelope jsonb,
   created_at timestamptz not null default now(),
   constraint share_comments_body_envelope check (jsonb_typeof(body_envelope) = 'object'),
+  constraint share_comments_body_envelope_size check (octet_length(body_envelope::text) <= 4096),
   constraint share_comments_nickname_envelope check (
     nickname_envelope is null or jsonb_typeof(nickname_envelope) = 'object'
+  ),
+  constraint share_comments_nickname_envelope_size check (
+    coalesce(octet_length(nickname_envelope::text), 0) <= 1024
   )
 );
 
@@ -67,6 +71,16 @@ begin
     raise exception using errcode = '22023', message = 'discussion capability mismatch';
   end if;
 
+  -- Lifecycle inheritance: revoked, expired, exhausted, or not-yet-available
+  -- shares disable their threads. Enforced here so BOTH list_share_comments
+  -- and add_share_comment inherit the same gating.
+  if share.revoked_at is not null
+     or share.expires_at <= now()
+     or share.max_reveals is not null and share.reveal_count >= share.max_reveals
+     or share.available_at is not null and share.available_at > now() then
+    raise exception using errcode = '22023', message = 'discussion unavailable';
+  end if;
+
   return share;
 end;
 $$;
@@ -93,17 +107,6 @@ declare
   rate_ok boolean;
 begin
   share := public.securebin_discussion_share(p_public_id, p_discussion_capability);
-
-  -- Lifecycle inheritance: expired/revoked/exhausted shares disable threads.
-  if share.revoked_at is not null
-     or share.expires_at is not null and share.expires_at <= now()
-     or share.max_reveals is not null and share.reveal_count >= share.max_reveals then
-    raise exception using errcode = '22023', message = 'discussion unavailable';
-  end if;
-
-  if share.available_at is not null and share.available_at > now() then
-    raise exception using errcode = '22023', message = 'discussion unavailable';
-  end if;
 
   if p_body_envelope is null or jsonb_typeof(p_body_envelope) <> 'object' then
     raise exception using errcode = '22023', message = 'invalid comment envelope';
@@ -342,3 +345,38 @@ revoke all on function public.create_share(text, jsonb, timestamptz, timestamptz
   from public, anon, authenticated;
 grant execute on function public.create_share(text, jsonb, timestamptz, timestamptz, integer, bytea, boolean, boolean, bytea, bytea)
   to service_role;
+
+-- Audit fix: widen the shared rate-limit whitelist to include 'discussion'.
+create or replace function public.consume_rate_limit(
+  p_discriminator_hash bytea,
+  p_action text,
+  p_limit integer
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  bucket timestamptz := date_trunc('minute', now());
+  current_count integer;
+begin
+  if p_discriminator_hash is null or octet_length(p_discriminator_hash) <> 32
+     or p_action not in ('upload','create','status','reveal','delete','discussion')
+     or p_limit is null or p_limit < 1 or p_limit > 10000 then
+    raise exception using errcode = '22023', message = 'invalid rate-limit input';
+  end if;
+  insert into public.rate_limit_buckets (
+    discriminator_hash, action, bucket_started_at, request_count, expires_at
+  ) values (
+    p_discriminator_hash, p_action, bucket, 1, bucket + interval '2 minutes'
+  )
+  on conflict (discriminator_hash, action, bucket_started_at)
+  do update set request_count = public.rate_limit_buckets.request_count + 1
+  returning request_count into current_count;
+  return current_count <= p_limit;
+end;
+$$;
+
+alter table public.rate_limit_buckets
+  drop constraint if exists rate_limit_action_allowed;

@@ -42,15 +42,6 @@ export function AttachmentZone({
       <label htmlFor="file-attachment-input" className="sr-only">
         Attach file (max 10 MB)
       </label>
-      <input
-        type="file"
-        ref={inputRef}
-        id="file-attachment-input"
-        aria-label="Attach file (max 10 MB)"
-        className="sr-only"
-        disabled={disabled}
-        onChange={onInputChange}
-      />
       <p className="file-drop-hint">Drag files here or use the button below</p>
       {files.length === 0 && (
         <button

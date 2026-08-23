@@ -11,7 +11,7 @@ export function EvidenceRail({ phase, policy }: EvidenceRailProps) {
   const isPolicyValid = policy.valid;
   const availableText = isPolicyValid
     ? policy.availableAt
-      ? `Available ${formatLocalizedDateTime(policy.availableAt)}`
+      ? `Available ${formatLocalizedDateTime(policy.availableAt, "now")}`
       : "Available immediately"
     : "Policy invalid";
 

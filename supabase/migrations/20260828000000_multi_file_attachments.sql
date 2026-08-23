@@ -560,3 +560,9 @@ revoke all on function public.finalize_expired_securebin(uuid[], uuid[], uuid[])
   from public, anon, authenticated;
 grant execute on function public.finalize_expired_securebin(uuid[], uuid[], uuid[])
   to service_role;
+
+-- Audit fix: the Day-2 (reserved_public_id, idempotency_key_hash) unique
+-- constraint predates attachment slots and makes staging a second object for
+-- one create attempt impossible; the tuple-slot constraint supersedes it.
+alter table public.upload_reservations
+  drop constraint if exists upload_reservations_public_id_idempotency_unique;

@@ -49,7 +49,7 @@ function activeStatusResponse(): Response {
 // attempts, so mocks route by URL instead of strict call order.
 function routedFetchMock(opts: {
   statusResponse?: () => Response;
-  firstReveal: () => Promise<Response>;
+  firstReveal?: () => Promise<Response>;
   laterReveals?: () => Response;
 }) {
   let revealCount = 0;
@@ -59,7 +59,7 @@ function routedFetchMock(opts: {
       return Promise.resolve((opts.statusResponse ?? activeStatusResponse)());
     }
     revealCount += 1;
-    if (revealCount === 1) return opts.firstReveal();
+    if (revealCount === 1) return opts.firstReveal ? opts.firstReveal() : Promise.resolve((opts.laterReveals ?? authorizedResponse)());
     return Promise.resolve((opts.laterReveals ?? authorizedResponse)());
   });
 }
@@ -179,5 +179,46 @@ describe("viewer reveal retry token", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Reveal" })[0]);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(6));
     expect(fetchMock.mock.calls[5]?.[1]?.body).not.toBe(openedToken);
+  });
+
+  it("renders a never-expiry share without a network error", async () => {
+    const statusResponse = () =>
+      response(200, {
+        status: "active",
+        availableAt: null,
+        expiresAt: null,
+        maxReveals: null,
+        remainingReveals: null,
+        passwordRequired: false,
+        unlockRequired: false,
+      });
+    const fetchMock = routedFetchMock({ statusResponse });
+    vi.stubGlobal("fetch", fetchMock);
+    window.location.hash = `#${linkSecret}`;
+    render(<Viewer publicId={publicId} />);
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Reveal" })).toBeVisible());
+    expect(screen.queryByText(/Could not reach the server/)).toBeNull();
+  });
+
+  it("shows the factor gate for a limited protected share instead of an empty card", async () => {
+    const statusResponse = () =>
+      response(200, {
+        status: "active",
+        availableAt: null,
+        expiresAt: null,
+        maxReveals: 3,
+        remainingReveals: 3,
+        passwordRequired: true,
+        unlockRequired: false,
+      });
+    const fetchMock = routedFetchMock({ statusResponse });
+    vi.stubGlobal("fetch", fetchMock);
+    window.location.hash = `#${linkSecret}`;
+    render(<Viewer publicId={publicId} />);
+
+    await waitFor(() => expect(screen.getByLabelText("Password")).toBeVisible());
+    expect(screen.getByRole("button", { name: "Continue" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Reveal" })).toBeNull();
   });
 });

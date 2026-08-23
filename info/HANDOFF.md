@@ -82,3 +82,18 @@ Day 4 is planned in `docs/DAY-4-PLAN.md` and ready to implement: PBKDF2 password
 - `0d4cb15` fix(ci): read service key from repository secret; drop unused anon key
 - `3ded54a` docs: day 4 plan, secret-hygiene scrub notes, SHA remap, DAY-2/3 errata
 - `18d2888` fix(db): accept canonical base64url longer than 76 chars; wire audit logging
+
+## 2026-08-23 discussion/attachment audit fix pass
+
+Scope: discussions + multi-file migration hardening, comment-route capability hygiene, new pgTAP files.
+
+- **MED (DB):** lifecycle gating moved into `securebin_discussion_share` (revoked / expired / reveal-exhausted / scheduled all raise 22023 `discussion unavailable`) so `list_share_comments` inherits the same gating `add_share_comment` already had; duplicate block removed from add.
+- **MED (DB):** `share_comments` gained size CHECKs — body envelope text ≤ 4096 bytes, nickname ≤ 1024 (`share_comments_body_envelope_size`, `share_comments_nickname_envelope_size`).
+- **HIGH (DB, found by new tests):** stale Day-2 `upload_reservations_public_id_idempotency_unique` on `(reserved_public_id, idempotency_key_hash)` made staging a second attachment slot impossible; dropped at end of `20260828000000` (tuple-slot constraint supersedes).
+- **LOW (API):** `addComment` validates parent id against UUID regex and throws `invalid` early instead of letting PG 22P02 map to a false 503.
+- **MED (API/UI):** comments GET capability moved from `?capability=` query param to `x-discussion-capability` request header (kept out of proxy logs); thread component sends the header.
+- Thread component: polling in-flight guard ref, `postStatus` cleared after successful post, detached `.catch` on key derivation memo to prevent unhandled rejections; unit test updated to assert header transport.
+
+Validation: `pnpm supabase:reset` + `pnpm supabase:test` → 7 files, 115 tests, PASS; `pnpm typecheck` clean; `pnpm lint` clean; unit suite 21 files / 151 tests pass. Not committed yet (parallel agent work in flight on composer/viewer/hooks).
+
+## Next Steps

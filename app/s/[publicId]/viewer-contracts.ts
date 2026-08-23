@@ -10,7 +10,7 @@ import type { ProoflinePhase } from "../../../lib/shares/policy-ui";
 export type ActiveStatus = {
   status: "active";
   availableAt: string | null;
-  expiresAt: string;
+  expiresAt: string | null;
   maxReveals: MaxReveals;
   remainingReveals: number | null;
   passwordRequired: boolean;
@@ -20,7 +20,7 @@ export type ActiveStatus = {
 export type ScheduledStatus = {
   status: "scheduled";
   availableAt: string;
-  expiresAt: string;
+  expiresAt: string | null;
   maxReveals: MaxReveals;
   remainingReveals: number | null;
   passwordRequired: boolean;
@@ -113,7 +113,7 @@ export function parseStatus(value: unknown): ShareStatus {
     ]);
     if (
       typeof value.availableAt !== "string" ||
-      typeof value.expiresAt !== "string" ||
+      (value.expiresAt !== null && typeof value.expiresAt !== "string") ||
       typeof value.passwordRequired !== "boolean" ||
       typeof value.unlockRequired !== "boolean"
     ) {
@@ -145,7 +145,7 @@ export function parseStatus(value: unknown): ShareStatus {
   ]);
   if (
     (value.availableAt !== null && typeof value.availableAt !== "string") ||
-    typeof value.expiresAt !== "string" ||
+    (value.expiresAt !== null && typeof value.expiresAt !== "string") ||
     typeof value.passwordRequired !== "boolean" ||
     typeof value.unlockRequired !== "boolean"
   ) {

@@ -58,13 +58,9 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
       } catch {
         return jsonResponse({ comments: [] }, 404);
       }
-      // Hand-rolled single-parameter extraction avoids DOM lib dependence.
-      const query = request.url.slice(request.url.indexOf("?") + 1);
-      const capability =
-        query
-          .split("&")
-          .map((pair) => pair.split("="))
-          .find(([key]) => key === "capability")?.[1] ?? "";
+      // The capability travels in a header instead of the URL so it never
+      // lands in proxy or access logs.
+      const capability = request.headers.get("x-discussion-capability") ?? "";
       try {
         const comments: Array<Record<string, unknown>> =
           await dependencies.service.listComments(publicId, capability);

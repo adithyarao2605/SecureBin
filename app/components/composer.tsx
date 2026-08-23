@@ -19,6 +19,7 @@ import {
   prepareCreateAttempt,
   revokeShare,
   useStagedCreate,
+  type CreateAttempt,
 } from "../hooks/use-staged-create";
 import { ModeTabs, type ComposerMode } from "./composer/mode-tabs";
 import { EditorPane, type MarkdownViewMode } from "./composer/editor-pane";
@@ -54,10 +55,15 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
   const [receiptData, setReceiptData] = useState<PrivacyReceiptData | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // Last valid attempt, reused until any composer input changes. Re-running
+  // prepareCreateAttempt on a retry would mint a fresh unlock code that no
+  // longer matches the already-sealed staged attempt.
+  const lastAttemptRef = useRef<CreateAttempt | null>(null);
   const { stage, discard } = useStagedCreate();
 
   function resetPrepared() {
     discard();
+    lastAttemptRef.current = null;
     setErrorMessage("");
   }
 
@@ -84,8 +90,12 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         return false;
       }
     }
+    const truncated = attachedFiles.length + candidates.length > 5;
     setAttachedFiles((prev) => [...prev, ...candidates].slice(0, 5));
     resetPrepared();
+    if (truncated) {
+      setErrorMessage("Up to 5 files per share — extra files were ignored.");
+    }
     return true;
   }
 
@@ -120,16 +130,21 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
     event.preventDefault();
     if (isPending) return;
 
-    const attempt = prepareCreateAttempt({
-      draft,
-      hasFiles: attachedFiles.length > 0,
-      protection,
-      policyDraft,
-    });
+    const cached = lastAttemptRef.current;
+    const attempt =
+      cached && cached.valid
+        ? cached
+        : prepareCreateAttempt({
+            draft,
+            hasFiles: attachedFiles.length > 0,
+            protection,
+            policyDraft,
+          });
     if (!attempt.valid) {
       setErrorMessage(attempt.error);
       return;
     }
+    lastAttemptRef.current = attempt;
 
     setIsPending(true);
     setErrorMessage("");
@@ -138,7 +153,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
     try {
       const outcome = await stage({
         contentPayload: buildContentPayload(mode, draft, language),
-        factorArgs: attempt.factorArgs,
+        factors: attempt.factors,
+        password: protection.password || undefined,
         discussionCapability: null,
         files: attachedFiles,
         policy: attempt.policy,
@@ -148,10 +164,12 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       setShareUrl(outcome.shareUrl);
       setActivePublicId(outcome.publicId);
       setActiveDeleteCapability(outcome.deleteCapability);
-      setUnlockCodeShown(attempt.unlockCode);
+      // Show the code that sealed the share, not a freshly minted one.
+      setUnlockCodeShown(outcome.unlockCode);
       setReceiptData(outcome.receipt);
 
       discard();
+      lastAttemptRef.current = null;
       setProtection(EMPTY_PROTECTION);
       if (onPhaseChange) onPhaseChange("created");
       if (onShareCreated) onShareCreated();
@@ -206,6 +224,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
     setRevokedMessage("");
     setErrorMessage("");
     discard();
+    lastAttemptRef.current = null;
     if (onPhaseChange) onPhaseChange("draft");
   }
 

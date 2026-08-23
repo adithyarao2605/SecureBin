@@ -6,7 +6,7 @@ import {
   type PolicyDraft,
   type PolicyPresetId,
   type RevealPreset,
-} from "@/lib/shares/policy-ui";
+} from "../../lib/shares/policy-ui";
 
 export interface PolicyControlsProps {
   readonly draft: PolicyDraft;
@@ -15,6 +15,8 @@ export interface PolicyControlsProps {
 }
 
 export function PolicyControls({ draft, onChange, disabled = false }: PolicyControlsProps) {
+  // Preset wins when set; otherwise infer from maxReveals, falling through to
+  // "custom" for a non-preset count so the custom input reflects its value.
   const currentRevealPreset: RevealPreset =
     draft.revealPreset ??
     (draft.maxReveals === 1
@@ -27,7 +29,7 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
       ? "10"
       : draft.maxReveals === null
       ? "unlimited"
-      : "unlimited");
+      : "custom");
 
   return (
     <div className="policy-controls-container">

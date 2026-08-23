@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   deriveDiscussionKey,
   openDiscussionText,
@@ -57,10 +57,14 @@ export function DiscussionThread({
   mask,
   onCapabilityUsed,
 }: DiscussionThreadProps) {
-  const keyPromise = useMemo(
-    () => deriveDiscussionKey({ capability, hkdfSalt, mask }),
-    [capability, hkdfSalt, mask]
-  );
+  // A detached rejection handler keeps an unawaited key derivation from
+  // becoming an unhandled rejection; awaiting the original promise below
+  // still surfaces the failure to the caller.
+  const keyPromise = useMemo(() => {
+    const promise = deriveDiscussionKey({ capability, hkdfSalt, mask });
+    promise.catch(() => {});
+    return promise;
+  }, [capability, hkdfSalt, mask]);
   const [comments, setComments] = useState<DecryptedComment[]>([]);
   const [loadError, setLoadError] = useState("");
   const [replyText, setReplyText] = useState("");
@@ -68,13 +72,19 @@ export function DiscussionThread({
   const [parentId, setParentId] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [postStatus, setPostStatus] = useState("");
+  const loadInFlight = useRef(false);
 
   const loadComments = useCallback(async () => {
+    if (loadInFlight.current) return;
+    loadInFlight.current = true;
     try {
       const key = await keyPromise;
       const response = await fetch(
-        `/api/shares/${encodeURIComponent(publicId)}/comments?capability=${encodeURIComponent(bytesToBase64Url(capability))}`,
-        { cache: "no-store" }
+        `/api/shares/${encodeURIComponent(publicId)}/comments`,
+        {
+          cache: "no-store",
+          headers: { "x-discussion-capability": bytesToBase64Url(capability) },
+        }
       );
       if (!response.ok) throw new Error("comments_fetch_failed");
       const raw = parseComments(await response.json());
@@ -104,6 +114,8 @@ export function DiscussionThread({
       setLoadError("");
     } catch {
       setLoadError("Comments could not be loaded right now.");
+    } finally {
+      loadInFlight.current = false;
     }
   }, [keyPromise, publicId, capability]);
 
@@ -144,6 +156,7 @@ export function DiscussionThread({
       if (!response.ok) throw new Error("comment_post_failed");
       setReplyText("");
       setParentId(null);
+      setPostStatus("");
       await loadComments();
     } catch {
       setPostStatus("The reply could not be posted. Try again.");

@@ -185,8 +185,8 @@ export function localDateTimeToIsoUtc(dateStr: string, timeStr: string): string 
   return localDate.toISOString();
 }
 
-export function formatLocalizedDateTime(isoUtc: string | null): string {
-  if (!isoUtc) return "Available now";
+export function formatLocalizedDateTime(isoUtc: string | null, nullLabel = "Never"): string {
+  if (!isoUtc) return nullLabel;
   try {
     const date = new Date(isoUtc);
     return date.toLocaleString(undefined, {

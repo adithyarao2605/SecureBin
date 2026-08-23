@@ -1,7 +1,12 @@
 "use client";
 
 import { useRef } from "react";
-import { digestCapability, sealContent, type SealedContent } from "../../lib/crypto/content";
+import {
+  digestCapability,
+  sealContent,
+  type SealedContent,
+  type SealedFactorArgs,
+} from "../../lib/crypto/content";
 import { bytesToArrayBuffer, randomBytes } from "../../lib/crypto/encoding";
 import { MAX_CONTENT_BYTES } from "../../lib/crypto/envelope";
 import { sealFile, type SealedFile } from "../../lib/crypto/file";
@@ -26,6 +31,8 @@ interface PreparedAttemptFile {
 
 interface PreparedAttempt {
   readonly context: ShareCryptoContext;
+  /** The factors actually used for sealing; reused verbatim on retries. */
+  readonly factors: PreparedFactors;
   readonly sealedContent: SealedContent;
   readonly files: PreparedAttemptFile[];
   readonly payload: Record<string, unknown>;
@@ -33,7 +40,9 @@ interface PreparedAttempt {
 
 export interface StagedCreateRequest {
   readonly contentPayload: ContentPayload;
-  readonly factorArgs: Parameters<typeof sealContent>[2];
+  readonly factors: PreparedFactors;
+  /** Sender password; only mixed in when the mask includes the password factor. */
+  readonly password?: string;
   readonly discussionCapability: Uint8Array | null;
   readonly files: readonly File[];
   readonly policy: {
@@ -48,6 +57,8 @@ export interface StagedCreateOutcome {
   readonly publicId: string;
   readonly shareUrl: string;
   readonly deleteCapability: string;
+  /** The unlock code that actually sealed this share; "" when unused. */
+  readonly unlockCode: string;
   readonly receipt: PrivacyReceiptData;
 }
 
@@ -57,9 +68,20 @@ export type CreateAttempt =
       readonly valid: true;
       readonly mask: PreparedFactors["mask"];
       readonly unlockCode: string;
-      readonly factorArgs: Parameters<typeof sealContent>[2];
+      readonly factors: PreparedFactors;
       readonly policy: Extract<ValidatedPolicy, { valid: true }>;
     };
+
+/** Derive sealing arguments from the prepared factors; password only joins the password mask. */
+function factorArgsFor(factors: PreparedFactors, password: string | undefined): SealedFactorArgs {
+  return {
+    mask: factors.mask,
+    ...(factors.passwordSalt && password
+      ? { passwordSalt: factors.passwordSalt, password }
+      : {}),
+    ...(factors.unlockCode ? { unlockCode: factors.unlockCode } : {}),
+  };
+}
 
 export function buildContentPayload(
   mode: ComposerMode,
@@ -104,7 +126,6 @@ export function prepareCreateAttempt(options: {
     password: wantsPassword ? protection.password : undefined,
     enableUnlock: protection.enableUnlock,
   });
-  const mask = preparedFactors.mask;
 
   const validated = validatePolicyDraft(options.policyDraft);
   if (!validated.valid) {
@@ -113,15 +134,9 @@ export function prepareCreateAttempt(options: {
 
   return {
     valid: true,
-    mask,
+    mask: preparedFactors.mask,
     unlockCode: preparedFactors.unlockCode ?? "",
-    factorArgs: {
-      mask,
-      ...(preparedFactors.passwordSalt
-        ? { passwordSalt: preparedFactors.passwordSalt, password: protection.password }
-        : {}),
-      unlockCode: preparedFactors.unlockCode ?? undefined,
-    },
+    factors: preparedFactors,
     policy: validated,
   };
 }
@@ -144,7 +159,8 @@ export async function revokeShare(publicId: string, deleteCapability: string): P
  * Sender-side staged creation: seal content and attachments in the browser,
  * reserve + PUT each attachment, then create the share record. The prepared
  * attempt is memoized so a retry after a network failure reuses the identical
- * idempotency hash instead of minting a second share.
+ * idempotency hash and the identical factors (unlock code, password salt)
+ * instead of minting a second share or redisplaying a mismatched code.
  */
 export function useStagedCreate() {
   const preparedRef = useRef<PreparedAttempt | null>(null);
@@ -158,7 +174,8 @@ export function useStagedCreate() {
 
     if (!prepared) {
       const context = generateShareContext();
-      const factorArgs = request.factorArgs;
+      const factors = request.factors;
+      const factorArgs = factorArgsFor(factors, request.password);
       const sealedContent = await sealContent(
         request.contentPayload,
         context,
@@ -202,7 +219,7 @@ export function useStagedCreate() {
         unlockRequired: request.mask.includes("unlock"),
       };
 
-      prepared = { context, sealedContent, files: stagedFiles, payload };
+      prepared = { context, factors, sealedContent, files: stagedFiles, payload };
       preparedRef.current = prepared;
     }
 
@@ -287,9 +304,10 @@ export function useStagedCreate() {
       publicId: returnedPublicId,
       shareUrl: fullUrl,
       deleteCapability: prepared.context.deleteCapability,
+      unlockCode: prepared.factors.unlockCode ?? "",
       receipt: {
         publicId: returnedPublicId,
-        fingerprint: await digestCapability(prepared.sealedContent.envelope.ciphertext ?? ""),
+        fingerprint: await digestCapability(prepared.sealedContent.envelope.ciphertext),
         mask: request.mask,
         hasFile: prepared.files.length > 0,
         availableAt: request.policy.availableAt,

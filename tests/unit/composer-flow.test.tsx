@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Composer } from "../../app/components/composer";
+import * as factorsModule from "../../lib/crypto/factors";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -22,6 +23,7 @@ function callsTo(fetchMock: ReturnType<typeof vi.fn>, path: string): JsonRecord[
 describe("composer staged creation flow", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("rejects drafts above the UTF-8 byte budget before any network call", async () => {
@@ -86,5 +88,47 @@ describe("composer staged creation flow", () => {
     expect(creates.length).toBe(2);
     expect(creates[0].idempotencyKeyHash).toBe(creates[1].idempotencyKeyHash);
     expect(creates[0].publicId).toBe(creates[1].publicId);
+  });
+
+  it("redisplays the originally minted unlock code when a failed create is retried", async () => {
+    const prepareSpy = vi.spyOn(factorsModule, "prepareFactors");
+    let createCalls = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/shares")) {
+        createCalls += 1;
+        if (createCalls === 1) return Promise.resolve(jsonResponse(503, { error: "server_error" }));
+        return Promise.resolve(jsonResponse(201, { publicId: "AQEBAQEBAQEBAQEBAQEBAQ", created: true }));
+      }
+      return Promise.reject(new Error(`unexpected fetch ${url}`));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { container } = render(<Composer />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add password or second channel" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Require a separate unlock code/i }));
+    fireEvent.change(screen.getByLabelText("Note content"), { target: { value: "unlock retry probe" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Create share" }));
+    await screen.findByText(/This share could not be created/u);
+    expect(prepareSpy).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Create share" }));
+
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Share link" })).toBeVisible());
+    expect(createCalls).toBe(2);
+
+    // The retry reuses the sealed attempt byte-for-byte.
+    const creates = callsTo(fetchMock, "/api/shares");
+    expect(creates.length).toBe(2);
+    expect(creates[0].unlockRequired).toBe(true);
+    expect(creates[1]).toEqual(creates[0]);
+
+    // Exactly one factor preparation happened, and the box shows that
+    // minted code - the one actually mixed into the sealed content.
+    expect(prepareSpy).toHaveBeenCalledTimes(1);
+    const minted = prepareSpy.mock.results[0]?.value;
+    if (!minted) throw new Error("prepareFactors never returned");
+    expect(container.querySelector(".unlock-code")?.textContent).toBe(minted.unlockCode);
   });
 });
