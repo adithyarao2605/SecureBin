@@ -20,6 +20,7 @@ import { prepareFactors, FactorError } from "../../lib/crypto/factors";
 import { ProtectionControls, EMPTY_PROTECTION, type ProtectionState } from "./protection-controls";
 import { PrivacyReceipt } from "./privacy-receipt";
 import { ShareActions } from "./share-actions";
+import { MarkdownView } from "./markdown-view";
 import {
   defaultPolicyDraft,
   validatePolicyDraft,
@@ -31,6 +32,7 @@ import { saveShareToHistory, updateShareInHistory } from "../../lib/shares/share
 import { PolicyControls } from "./policy-controls";
 
 export type ComposerMode = "note" | "markdown" | "code";
+export type MarkdownViewMode = "edit" | "split" | "preview";
 
 interface PreparedAttempt {
   readonly context: ShareCryptoContext;
@@ -54,6 +56,7 @@ function formatBytes(bytes: number): string {
 
 export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: ComposerProps = {}) {
   const [mode, setMode] = useState<ComposerMode>("note");
+  const [markdownView, setMarkdownView] = useState<MarkdownViewMode>("edit");
   const [language, setLanguage] = useState<CodeLanguage>("typescript");
   const [draft, setDraft] = useState("");
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
@@ -98,6 +101,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
 
   function handleModeChange(newMode: ComposerMode) {
     setMode(newMode);
+    if (newMode !== "markdown") setMarkdownView("edit");
     resetPrepared();
   }
 
@@ -562,23 +566,66 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           </span>
         </div>
 
-        <label htmlFor="draft-textarea" className="sr-only">
-          {mode === "note" ? "Note content" : mode === "markdown" ? "Markdown content" : "Code content"}
-        </label>
-        <textarea
-          id="draft-textarea"
-          className="composer-textarea"
-          placeholder={
-            mode === "note"
-              ? "Start typing your note here..."
-              : mode === "markdown"
-              ? "Write Markdown (# heading, **bold**, - list)…"
-              : "Paste code snippet…"
-          }
-          value={draft}
-          disabled={isPending}
-          onChange={(e) => handleDraftChange(e.target.value)}
-        />
+        {mode === "markdown" && (
+          <div className="md-view-toggle" role="tablist" aria-label="Markdown editor view">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={markdownView === "edit"}
+              className={`md-view-option ${markdownView === "edit" ? "active" : ""}`}
+              onClick={() => setMarkdownView("edit")}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={markdownView === "split"}
+              className={`md-view-option ${markdownView === "split" ? "active" : ""}`}
+              onClick={() => setMarkdownView("split")}
+            >
+              Split
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={markdownView === "preview"}
+              className={`md-view-option ${markdownView === "preview" ? "active" : ""}`}
+              onClick={() => setMarkdownView("preview")}
+            >
+              Preview
+            </button>
+          </div>
+        )}
+
+        <div className={mode === "markdown" && markdownView === "split" ? "md-split" : undefined}>
+          {(mode !== "markdown" || markdownView !== "preview") && (
+            <>
+              <label htmlFor="draft-textarea" className="sr-only">
+                {mode === "note" ? "Note content" : mode === "markdown" ? "Markdown content" : "Code content"}
+              </label>
+              <textarea
+                id="draft-textarea"
+                className="composer-textarea"
+                placeholder={
+                  mode === "note"
+                    ? "Start typing your note here..."
+                    : mode === "markdown"
+                    ? "Write Markdown (# heading, **bold**, - list)…"
+                    : "Paste code snippet…"
+                }
+                value={draft}
+                disabled={isPending}
+                onChange={(e) => handleDraftChange(e.target.value)}
+              />
+            </>
+          )}
+          {mode === "markdown" && markdownView !== "edit" && (
+            <div className="composer-md-preview" aria-label="Markdown preview">
+              <MarkdownView markdown={draft} />
+            </div>
+          )}
+        </div>
 
         <div className="file-attachment-section">
           <label htmlFor="file-attachment-input" className="sr-only">

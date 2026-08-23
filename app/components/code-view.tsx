@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { CodeLanguage } from "../../lib/crypto/payload";
 import { highlightCode } from "../../lib/render/code";
 
@@ -9,8 +9,30 @@ export interface CodeViewProps {
   readonly language: CodeLanguage;
 }
 
+const LANGUAGE_TO_EXTENSION: Record<CodeLanguage, string> = {
+  plaintext: "txt",
+  javascript: "js",
+  typescript: "ts",
+  json: "json",
+  python: "py",
+  bash: "sh",
+  sql: "sql",
+  css: "css",
+  html: "html",
+};
+
 export function CodeView({ code, language }: CodeViewProps) {
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
+  const blobUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current !== null) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
+  }, []);
 
   async function handleCopy() {
     try {
@@ -22,24 +44,59 @@ export function CodeView({ code, language }: CodeViewProps) {
     }
   }
 
+  function handleDownload() {
+    try {
+      if (blobUrlRef.current !== null) URL.revokeObjectURL(blobUrlRef.current);
+      const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      blobUrlRef.current = url;
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `snippet.${LANGUAGE_TO_EXTENSION[language]}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    } catch {
+      // Download is best-effort; the code remains visible and copyable.
+    }
+  }
+
   const highlighted = highlightCode(code, language);
+  const lineCount = code.split("\n").length;
 
   return (
     <div className="decrypted-code-wrapper" role="region" aria-label={`Code snippet in ${language}`}>
       <div className="code-header-bar">
         <span className="code-language-tag">{language}</span>
-        <button
-          type="button"
-          className="code-copy-button"
-          onClick={handleCopy}
-          aria-label="Copy code to clipboard"
-        >
-          {copyStatus === "copied" ? "Copied" : "Copy code"}
-        </button>
+        <div className="code-header-actions">
+          <button
+            type="button"
+            className="code-copy-button"
+            onClick={handleDownload}
+            aria-label="Download code snippet"
+          >
+            Download
+          </button>
+          <button
+            type="button"
+            className="code-copy-button"
+            onClick={handleCopy}
+            aria-label="Copy code to clipboard"
+          >
+            {copyStatus === "copied" ? "Copied" : "Copy code"}
+          </button>
+        </div>
       </div>
-      <pre className="decrypted-code-block">
-        <code className={`hljs language-${language}`}>{highlighted}</code>
-      </pre>
+      <div className="code-view-body">
+        <span className="code-line-numbers" aria-hidden="true">
+          {Array.from({ length: lineCount }, (_, i) => (
+            <span key={i}>{i + 1}</span>
+          ))}
+        </span>
+        <pre className="decrypted-code-block">
+          <code className={`hljs language-${language}`}>{highlighted}</code>
+        </pre>
+      </div>
     </div>
   );
 }

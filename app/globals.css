@@ -1439,3 +1439,99 @@ button {
 .qr-panel { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; }
 
 .factor-box .policy-input-group { margin-bottom: 0.6rem; }
+
+/* code view line numbers */
+.code-view-body {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.code-line-numbers {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-width: 2.25rem;
+  padding-right: 0.6rem;
+  border-right: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  text-align: right;
+  color: var(--muted-ink);
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+
+.code-line-numbers span {
+  display: block;
+}
+
+.code-view-body .decrypted-code-block {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding-top: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+/* Markdown composer edit / split / preview */
+.md-view-toggle {
+  display: inline-flex;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 0.6rem;
+}
+
+.md-view-option {
+  border: none;
+  background: transparent;
+  padding: 0.3rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  color: var(--muted-ink);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.md-view-option.active {
+  background: var(--surface-subtle);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.md-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.md-split .composer-textarea {
+  min-height: 260px;
+}
+
+.composer-md-preview {
+  min-width: 0;
+  max-height: 420px;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-subtle);
+}
+
+@media (max-width: 767px) {
+  .md-split {
+    grid-template-columns: 1fr;
+  }
+
+  .md-split .composer-md-preview {
+    max-height: 300px;
+  }
+}
