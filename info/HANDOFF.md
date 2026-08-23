@@ -5,8 +5,8 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
 ## Read this first
 
 - Active roadmap: **`info/plan_v3.md`** (Phases A–G, in order, green gates
-  between phases). Your first task is **Phase A: landing page at `/`** and
-  moving the app to `/new`.
+  between phases). **Phase A is complete.** Your first task is Phase B: the
+  selector, QR, Markdown preview, and Privacy Receipt fixes.
 - Day 6/7 detail: `docs/DAY-6-PLAN.md` / `docs/DAY-7-PLAN.md` (referenced by
   plan_v3 Phases F/G). Historical day plans and the resolved incident:
   `docs/archive/`.
@@ -18,7 +18,19 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
   landing-screen generation attempt hit a service "entity not found" error —
   retry, or create a fresh project if it persists.
 
-## Current state (all green at `1961f79` + doc commit)
+## Current state (Phase A complete; doc/code checkpoint follows this handoff)
+
+- `/` is now the screenshot-led landing page: black/teal two-column hero,
+  three-tab header (`New share`, `My shares`, `How it works`), right-aligned
+  `Create share`, local aurora canvas, composer mock, self-hosting section,
+  and compact footer.
+- `/new` owns the working composer, history desk, and how-it-works app panel.
+  Landing tab links open `/new`, `/new#history`, and `/new#how-it-works`.
+- The old root composer was extracted to `app/components/app-workspace.tsx`;
+  route-specific tests now use `/new`. Duplicate `public/icon.svg` was
+  removed because `app/icon.svg` already owns that route.
+
+## Previous shipped state (before Phase A)
 
 - **Days 1–5 shipped and live in production**
   (https://secure-bin.vercel.app). Day 4: password factor (PBKDF2 600k),
@@ -44,7 +56,7 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
 ## Validation (rerun these; numbers recorded at last green)
 
 `pnpm validate` (lint, typecheck, 145 unit tests, build) · `pnpm test:integration`
-(14) · `pnpm supabase:test` (115 pgTAP, 7 files) · `pnpm test:e2e` (10,
+(14) · `pnpm supabase:test` (115 pgTAP, 7 files) · `pnpm test:e2e` (11,
 **workers: 1 — do not raise**, dev-server compile races flake parallel runs)
 · `pnpm test:a11y` (2) · reproducibility script · `pnpm audit` clean.
 
@@ -72,12 +84,10 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
 
 ## Next steps (in order)
 
-1. Implement `info/plan_v3.md` Phase A (landing at `/`, app at `/new`),
-   including the e2e path updates.
-2. Phase B UI fixes, then C/D/E with green gates.
-3. Phases F/G per `docs/DAY-6-PLAN.md` / `DAY-7-PLAN.md` (Day 6 exit gate
+1. Implement `info/plan_v3.md` Phase B UI fixes, then C/D/E with green gates.
+2. Phases F/G per `docs/DAY-6-PLAN.md` / `DAY-7-PLAN.md` (Day 6 exit gate
    before Day 7; freeze means freeze).
-4. Keep `info/HANDOFF.md` updated at the end of every run.
+3. Keep `info/HANDOFF.md` updated at the end of every run.
 
 ## Recent Commits
 

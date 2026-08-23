@@ -27,7 +27,7 @@ test("creates a share with an encrypted attachment and reveals both", async ({ p
     if (message.type() === "error") console.log(`[diag] console.error: ${message.text().slice(0, 300)}`);
   });
 
-  await page.goto("/");
+  await page.goto("/new");
   await page.getByLabel("Note content").fill(NOTE);
 
   await page.setInputFiles("#file-attachment-input", {

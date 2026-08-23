@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("the Day 2 composer explains the browser-side trust boundary and defaults to dark theme", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/new");
 
   await expect(page.getByRole("heading", { name: "Create a private share" })).toBeVisible();
   await expect(
@@ -15,7 +15,7 @@ test("the Day 2 composer explains the browser-side trust boundary and defaults t
 });
 
 test("the user can toggle between dark and light theme", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/new");
 
   const toggleBtn = page.getByRole("button", { name: /switch to light theme|switch to dark theme/i });
   await expect(toggleBtn).toBeVisible();
@@ -30,7 +30,7 @@ test("the user can toggle between dark and light theme", async ({ page }) => {
 });
 
 test("the user can navigate between application tabs", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/new");
 
   // Starts on New share
   await expect(page.getByRole("tab", { name: "New share" })).toHaveAttribute("aria-selected", "true");
@@ -53,7 +53,7 @@ test("the user can navigate between application tabs", async ({ page }) => {
 });
 
 test("the user can select custom expiration duration", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/new");
 
   const expirySelect = page.getByLabel("Expires after");
   await expirySelect.selectOption("custom");
@@ -71,7 +71,7 @@ test("the user can select custom expiration duration", async ({ page }) => {
 });
 
 test("the user can select a supported reveal limit", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/new");
 
   const tenReveals = page.getByLabel("10 reveals", { exact: true });
   await tenReveals.click();
@@ -107,7 +107,7 @@ test("created share appears in the local history desk with live actions", async 
     await route.continue();
   });
 
-  await page.goto("/");
+  await page.goto("/new");
 
   // Fill and create a share
   await page.getByLabel("Note content").fill("History desk test note");

@@ -15,7 +15,7 @@ test("creates a password + unlock protected share and reveals with both factors"
     if (request.method() === "POST") bodies.push(request.postData() ?? "");
   });
 
-  await page.goto("/");
+  await page.goto("/new");
   await page.getByLabel("Note content").fill(NOTE);
   await page.getByRole("button", { name: /Add password or second channel/u }).click();
 

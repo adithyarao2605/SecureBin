@@ -110,7 +110,7 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
     await route.continue();
   });
 
-  await page.goto("/");
+  await page.goto("/new");
   await page.getByLabel("Note content").fill(NOTE);
   await page.getByRole("button", { name: "Create share" }).click();
 
@@ -157,7 +157,7 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
 
 test("the composer remains usable from the keyboard on a narrow viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/new");
 
   const textarea = page.getByLabel("Note content");
   await textarea.focus();

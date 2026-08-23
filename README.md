@@ -175,7 +175,7 @@ authorized at a non-preset limit).
 | Rubric area | Evidence location | Status |
 | --- | --- | --- |
 | Problem understanding | This README, local planning references, threat model | Foundation documented |
-| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions, custom policies, Privacy Receipt | Implemented through Day 5; plan_v3 Phases C–G in flight |
+| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions, custom policies, Privacy Receipt | Phase A landing shipped; plan_v3 Phases B–G in flight |
 | Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented through discussions and multi-file model |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Composer, viewer, factor prompts, receipt, and discussions covered |
 | Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local + CI gates green: 145 unit / 14 integration / 115 pgTAP / 10 E2E / 2 Axe |
