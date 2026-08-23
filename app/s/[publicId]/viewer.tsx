@@ -19,6 +19,8 @@ import { CodeView } from "../../components/code-view";
 import { FilePreview } from "../../components/file-preview";
 import { MarkdownView } from "../../components/markdown-view";
 import { Proofline } from "../../components/proofline";
+import Link from "next/link";
+import { ThemeToggle } from "../../components/theme-toggle";
 
 type ActiveStatus = {
   status: "active";
@@ -392,183 +394,199 @@ export function Viewer({ publicId }: { publicId: string }) {
   }, [state]);
 
   return (
-    <main className="view-shell" role="main">
-      <header className="brand-header">
-        <h1 className="brand-title">SecureBin</h1>
-        <p className="brand-subtitle">Zero-knowledge secure sharing</p>
-      </header>
-
-      <section className="evidence-rail" aria-label="Evidence rail">
-        <Proofline phase={prooflinePhase} />
-      </section>
-
-      <div className="surface-card viewer-card">
-        <div className="viewer-header">
-          <h2 className="surface-heading">Decrypted share</h2>
-          <p className="trust-line">Decrypted in your browser using the link fragment.</p>
+    <div className="site-shell">
+      <header className="site-header">
+        <div className="brand-group">
+          <Link
+            href="/"
+            className="brand brand-btn"
+            aria-label="SecureBin home - New share"
+          >
+            <span className="brand-name">SecureBin</span>
+            <span className="brand-status">private by design</span>
+          </Link>
         </div>
 
-        {state === "checking" && (
-          <div className="viewer-message-box" role="status">
-            <p className="viewer-status-text">Checking share availability…</p>
-          </div>
-        )}
+        <div className="header-actions">
+          <ThemeToggle />
+        </div>
+      </header>
 
-        {state === "incomplete" && (
-          <div className="viewer-message-box" role="alert">
-            <p className="viewer-status-text">
-              The link is missing its decryption key. Ask the sender for the complete link with fragment.
-            </p>
-          </div>
-        )}
+      <main id="main-content" className="main-content-desk viewer-desk-layout">
+        <div className="viewer-container">
+          <section className="evidence-rail viewer-proofline-section" aria-label="Evidence rail">
+            <Proofline phase={prooflinePhase} />
+          </section>
 
-        {state === "network_error" && (
-          <div className="viewer-message-box" role="alert">
-            <p className="viewer-status-text">
-              Could not reach the server to verify this share.
-            </p>
-            <button
-              type="button"
-              className="action-button secondary-button"
-              onClick={() => void checkShare()}
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {state === "scheduled" && shareStatus && shareStatus.status === "scheduled" && (
-          <div className="viewer-message-box" role="status">
-            <p className="viewer-status-text">
-              This share is scheduled to unlock at {formatLocalizedDateTime(shareStatus.availableAt)}.
-            </p>
-          </div>
-        )}
-
-        {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && (
-          <div className="viewer-action-box">
-            <div className="viewer-policy-meta">
-              <span className="policy-badge">Expires {formatLocalizedDateTime(shareStatus.expiresAt)}</span>
+          <div className="surface-card viewer-card">
+            <div className="viewer-header">
+              <h2 className="surface-heading">Decrypted share</h2>
             </div>
-            <p className="viewer-status-text">Ready to reveal.</p>
-            <button
-              type="button"
-              className="action-button primary-button"
-              onClick={() => void handleReveal()}
-            >
-              Reveal
-            </button>
-          </div>
-        )}
 
-        {state === "ready_limited" && shareStatus && shareStatus.status === "active" && (
-          <div className="viewer-action-box">
-            <div className="viewer-policy-meta">
-              <span className="policy-badge">
-                {shareStatus.remainingReveals} / {shareStatus.maxReveals} reveals remaining
-              </span>
-              <span className="policy-badge">Expires {formatLocalizedDateTime(shareStatus.expiresAt)}</span>
-            </div>
-            <p className="viewer-status-text">
-              This share has a reveal limit. Revealing will consume one count.
-            </p>
-            {notice && (
-              <p className="viewer-status-text" role="status">
-                {notice}
-              </p>
+            {state === "checking" && (
+              <div className="viewer-message-box" role="status">
+                <p className="viewer-status-text">Checking share availability…</p>
+              </div>
             )}
-            <button
-              type="button"
-              className="action-button primary-button"
-              onClick={() => {
-                clearNotice();
-                void handleReveal();
-              }}
-            >
-              Reveal
-            </button>
-          </div>
-        )}
 
-        {state === "confirming" && shareStatus && shareStatus.status === "active" && (
-          <div className="viewer-action-box confirm-box" role="alert">
-            <p className="viewer-status-text confirm-text">
-              Consuming this reveal cannot be undone. Do you want to open it now?
-            </p>
-            <div className="confirm-actions-row">
-              <button
-                type="button"
-                className="action-button primary-button"
-                onClick={() => void handleReveal()}
-              >
-                Yes, reveal now
-              </button>
-              <button
-                type="button"
-                className="action-button secondary-button"
-                onClick={() => setState("ready_limited")}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
+            {state === "incomplete" && (
+              <div className="viewer-message-box" role="alert">
+                <p className="viewer-status-text">
+                  The link is missing its decryption key. Ask the sender for the complete link with fragment.
+                </p>
+              </div>
+            )}
 
-        {state === "pending" && (
-          <div className="viewer-action-box">
-            <p className="viewer-status-text" role="status" aria-live="polite">
-              Authorizing one reveal…
-            </p>
-            <button type="button" className="action-button primary-button" disabled>
-              Opening…
-            </button>
-          </div>
-        )}
+            {state === "network_error" && (
+              <div className="viewer-message-box" role="alert">
+                <p className="viewer-status-text">
+                  Could not reach the server to verify this share.
+                </p>
+                <button
+                  type="button"
+                  className="action-button secondary-button"
+                  onClick={() => void checkShare()}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
 
-        {state === "opened" && content !== null && (
-          <div className="viewer-opened-box">
-            <p className="viewer-success-note">
-              Opened locally. The server released ciphertext; this browser did the decryption.
-            </p>
+            {state === "scheduled" && shareStatus && shareStatus.status === "scheduled" && (
+              <div className="viewer-message-box" role="status">
+                <p className="viewer-status-text">
+                  This share is scheduled to unlock at {formatLocalizedDateTime(shareStatus.availableAt)}.
+                </p>
+              </div>
+            )}
 
-            {content.text && (
-              <div className="decrypted-content-container">
-                {content.mode === "note" && (
-                  <article className="decrypted-content-box" aria-label="Decrypted note">
-                    <pre className="decrypted-text">{content.text}</pre>
-                  </article>
+            {state === "ready_unlimited" && shareStatus && shareStatus.status === "active" && (
+              <div className="viewer-action-box">
+                <div className="viewer-policy-meta">
+                  <span className="policy-badge">Expires {formatLocalizedDateTime(shareStatus.expiresAt)}</span>
+                </div>
+                <p className="viewer-status-text">Ready to reveal.</p>
+                <button
+                  type="button"
+                  className="action-button primary-button"
+                  onClick={() => void handleReveal()}
+                >
+                  Reveal
+                </button>
+              </div>
+            )}
+
+            {state === "ready_limited" && shareStatus && shareStatus.status === "active" && (
+              <div className="viewer-action-box">
+                <div className="viewer-policy-meta">
+                  <span className="policy-badge">
+                    {shareStatus.remainingReveals} / {shareStatus.maxReveals} reveals remaining
+                  </span>
+                  <span className="policy-badge">Expires {formatLocalizedDateTime(shareStatus.expiresAt)}</span>
+                </div>
+                <p className="viewer-status-text">
+                  This share has a reveal limit. Revealing will consume one count.
+                </p>
+                {notice && (
+                  <p className="viewer-status-text" role="status">
+                    {notice}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className="action-button primary-button"
+                  onClick={() => {
+                    clearNotice();
+                    void handleReveal();
+                  }}
+                >
+                  Reveal
+                </button>
+              </div>
+            )}
+
+            {state === "confirming" && shareStatus && shareStatus.status === "active" && (
+              <div className="viewer-action-box confirm-box" role="alert">
+                <p className="viewer-status-text confirm-text">
+                  Consuming this reveal cannot be undone. Do you want to open it now?
+                </p>
+                <div className="confirm-actions-row">
+                  <button
+                    type="button"
+                    className="action-button primary-button"
+                    onClick={() => void handleReveal()}
+                  >
+                    Yes, reveal now
+                  </button>
+                  <button
+                    type="button"
+                    className="action-button secondary-button"
+                    onClick={() => setState("ready_limited")}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {state === "pending" && (
+              <div className="viewer-action-box">
+                <p className="viewer-status-text" role="status" aria-live="polite">
+                  Authorizing one reveal…
+                </p>
+                <button type="button" className="action-button primary-button" disabled>
+                  Opening…
+                </button>
+              </div>
+            )}
+
+            {state === "opened" && content !== null && (
+              <div className="viewer-opened-box">
+                {content.text && (
+                  <div className="decrypted-content-container">
+                    {content.mode === "note" && (
+                      <article className="decrypted-content-box" aria-label="Decrypted note">
+                        <pre className="decrypted-text">{content.text}</pre>
+                      </article>
+                    )}
+
+                    {content.mode === "markdown" && (
+                      <MarkdownView markdown={content.text} />
+                    )}
+
+                    {content.mode === "code" && (
+                      <CodeView code={content.text} language={content.language} />
+                    )}
+                  </div>
                 )}
 
-                {content.mode === "markdown" && (
-                  <MarkdownView markdown={content.text} />
-                )}
-
-                {content.mode === "code" && (
-                  <CodeView code={content.text} language={content.language} />
+                {attachedFile && (
+                  <FilePreview file={attachedFile} />
                 )}
               </div>
             )}
 
-            {attachedFile && (
-              <FilePreview file={attachedFile} />
+            {state === "unavailable" && (
+              <div className="viewer-message-box" role="alert">
+                <p className="viewer-status-text">
+                  This share is no longer available. Ask the sender for a new link.
+                </p>
+              </div>
             )}
-          </div>
-        )}
 
-        {state === "unavailable" && (
-          <div className="viewer-message-box" role="alert">
-            <p className="viewer-status-text">
-              This share is no longer available. Ask the sender for a new link.
-            </p>
+            <div className="viewer-footer">
+              <p className="public-id-tag">
+                Public ID: <code>{publicId}</code>
+              </p>
+            </div>
           </div>
-        )}
-
-        <div className="viewer-footer">
-          <p className="public-id-tag">
-            Public ID: <code>{publicId}</code>
-          </p>
         </div>
-      </div>
-    </main>
+      </main>
+
+      <footer className="site-footer">
+        <span>SecureBin / private sharing</span>
+        <span>Keep the key close.</span>
+      </footer>
+    </div>
   );
 }

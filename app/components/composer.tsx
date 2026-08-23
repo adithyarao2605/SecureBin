@@ -433,56 +433,59 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
 
       <form className="composer-form" onSubmit={createShare}>
         <div className="composer-toolbar">
-          <div className="mode-tabs" role="tablist" aria-label="Share mode">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "note"}
-              className={`mode-tab ${mode === "note" ? "active" : ""}`}
-              onClick={() => handleModeChange("note")}
-            >
-              Plain note
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "markdown"}
-              className={`mode-tab ${mode === "markdown" ? "active" : ""}`}
-              onClick={() => handleModeChange("markdown")}
-            >
-              Markdown
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "code"}
-              className={`mode-tab ${mode === "code" ? "active" : ""}`}
-              onClick={() => handleModeChange("code")}
-            >
-              Code
-            </button>
-          </div>
-
-          {mode === "code" && (
-            <div className="language-selector-wrapper">
-              <label htmlFor="code-language-select" className="sr-only">
-                Programming language
-              </label>
-              <select
-                id="code-language-select"
-                className="language-select"
-                value={language}
-                disabled={isPending}
-                onChange={(e) => handleLanguageChange(e.target.value as CodeLanguage)}
+          <div className="composer-toolbar-left">
+            <div className="mode-tabs" role="tablist" aria-label="Share mode">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "note"}
+                className={`mode-tab ${mode === "note" ? "active" : ""}`}
+                onClick={() => handleModeChange("note")}
               >
-                {CODE_LANGUAGES.map((lang) => (
-                  <option key={lang} value={lang}>
-                    {lang}
-                  </option>
-                ))}
-              </select>
+                Plain note
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "markdown"}
+                className={`mode-tab ${mode === "markdown" ? "active" : ""}`}
+                onClick={() => handleModeChange("markdown")}
+              >
+                Markdown
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "code"}
+                className={`mode-tab ${mode === "code" ? "active" : ""}`}
+                onClick={() => handleModeChange("code")}
+              >
+                Code
+              </button>
             </div>
-          )}
+
+            {mode === "code" && (
+              <div className="language-selector-wrapper">
+                <label htmlFor="code-language-select" className="sr-only">
+                  Programming language
+                </label>
+                <select
+                  id="code-language-select"
+                  className="language-select"
+                  value={language}
+                  disabled={isPending}
+                  onChange={(e) => handleLanguageChange(e.target.value as CodeLanguage)}
+                  aria-label="Select code language"
+                >
+                  {CODE_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {lang}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
 
           <span className="character-count" aria-live="polite">
             {formatBytes(new TextEncoder().encode(draft).length)} / {formatBytes(MAX_CONTENT_BYTES)}
