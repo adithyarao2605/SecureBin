@@ -18,7 +18,7 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
   landing-screen generation attempt hit a service "entity not found" error —
   retry, or create a fresh project if it persists.
 
-## Current state (Phase A complete; doc/code checkpoint follows this handoff)
+## Current state (Phase A complete at `60aa696`)
 
 - `/` is now the screenshot-led landing page: black/teal two-column hero,
   three-tab header (`New share`, `My shares`, `How it works`), right-aligned
@@ -92,6 +92,7 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
 ## Recent Commits
 
 - `b4947a4` docs(day6): plan comment edit/delete, my-shares batch status sync, rubric backlog
+- `60aa696` feat: add landing route and app split
 - `1961f79` docs(handoff): production migrations applied and live flow verified
 - `c730535` fix(ui): restore three-tab layout, markdown preview typography, preset/unlock explanations
 - `4658c5e` fix(day5): audit remediation batch
