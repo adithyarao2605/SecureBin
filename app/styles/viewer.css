@@ -575,3 +575,71 @@
 }
 
 /* File Attachment & Preview */
+
+/* Viewer header/shell chrome (restored - lost in CSS partial split) */
+.viewer-shell {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.viewer-desk-layout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.viewer-container {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.viewer-proofline-section {
+  width: 100%;
+}
+
+.viewer-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.viewer-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.brand-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}

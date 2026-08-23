@@ -1,29 +1,10 @@
-import {
-  applyPolicyPreset,
-  policyPresetForDraft,
-  tomorrowLocalDate,
-  type ExpiryPreset,
-  type PolicyDraft,
-  type PolicyPresetId,
-  type RevealPreset,
-} from "../../lib/shares/policy-ui";
+import type { ExpiryPreset, PolicyDraft, RevealPreset } from "../../lib/shares/policy-ui";
 
 export interface PolicyControlsProps {
   readonly draft: PolicyDraft;
   readonly onChange: (updated: PolicyDraft) => void;
   readonly disabled?: boolean;
 }
-
-const PRESET_EXPLANATIONS: Record<string, string> = {
-  "quick-share":
-    "Everything unlocked right now, stays open for a day, and can be viewed as many times as needed — the everyday default.",
-  "one-time-secret":
-    "Burn-after-reading: the first person to open it consumes the only reveal, then the link stops working.",
-  "controlled-share":
-    "Stays available for a week and tolerates up to three separate views — good for small groups.",
-  "timed-handoff":
-    "Nothing is visible until tomorrow morning; content releases on schedule even if you are offline.",
-};
 
 export function PolicyControls({ draft, onChange, disabled = false }: PolicyControlsProps) {
   // Preset wins when set; otherwise infer from maxReveals, falling through to
@@ -44,41 +25,6 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
 
   return (
     <div className="policy-controls-container">
-      {/* Policy Preset */}
-      <div className="policy-field-group">
-        <label htmlFor="policy-preset-select" className="policy-legend">
-          Preset
-        </label>
-        <select
-          id="policy-preset-select"
-          className="policy-select"
-          value={policyPresetForDraft(draft)}
-          disabled={disabled}
-          onChange={(e) =>
-            onChange(
-              applyPolicyPreset(e.target.value as PolicyPresetId, draft, {
-                date: tomorrowLocalDate(),
-                time: "09:00",
-              })
-            )
-          }
-        >
-          <option value="custom">Custom</option>
-          <option value="quick-share">Quick Share</option>
-          <option value="one-time-secret">One-Time Secret</option>
-          <option value="controlled-share">Controlled Share</option>
-          <option value="timed-handoff">Timed Handoff</option>
-        </select>
-        {(() => {
-          const current = policyPresetForDraft(draft);
-          return current !== "custom" ? (
-            <p className="policy-hint" role="note">
-              {PRESET_EXPLANATIONS[current]}
-            </p>
-          ) : null;
-        })()}
-      </div>
-
       {/* Availability Fieldset */}
       <fieldset className="policy-fieldset">
         <legend className="policy-legend">When can this share be opened?</legend>
@@ -348,3 +294,4 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
     </div>
   );
 }
+

@@ -59,7 +59,7 @@ export function ViewerView({
   const activeStatus = shareStatus?.status === "active" ? shareStatus : null;
 
   return (
-    <main className="view-shell" role="main">
+    <main className="viewer-shell" role="main">
       <header className="brand-header">
         <h1 className="brand-title">SecureBin</h1>
         <p className="brand-subtitle">Zero-knowledge secure sharing</p>

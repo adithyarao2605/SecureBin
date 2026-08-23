@@ -11,7 +11,8 @@ wins on execution detail, `docs/architecture.md` wins on protocol.
 Turn SecureBin into a complete sharing product: rich Markdown authoring,
 code mode with local auto-detection, multiple encrypted attachments with safe
 previews and Download All, custom reveal counts, custom expiry plus Never,
-policy presets, a product landing layer, and encrypted discussions.
+a product landing layer, and encrypted discussions. (Policy presets were
+later removed by owner decision - see Outcome.)
 
 Do not add reveal windows, privacy veil, parcels, self-host scripts, padding,
 accounts, editing/deletion of comments, WebSockets, or moderation (Day 6/7 or never).
@@ -123,3 +124,11 @@ Deviations from this plan as written:
 Evidence gate: `pnpm supabase:reset` + `pnpm supabase:test` → 7 files, 115
 tests PASS; unit suite 21 files / 151 tests; integration 14; E2E 10; Axe 2 —
 all green. Migrations through `20260829000000_encrypted_discussions.sql`.
+
+## Post-outcome decision (2026-08-23)
+
+The policy-presets slice (§3.7 / build slice 5's preset half) was removed by
+owner decision after live evaluation: the individual controls already express
+every policy and the presets added no capability. `applyPolicyPreset` /
+`policyPresetForDraft` and the preset select were deleted; the underlying
+draft-field model is unchanged.

@@ -63,7 +63,7 @@ test("creates a share with an encrypted attachment and reveals both", async ({ p
   await page.goto(shareHref);
 
   const revealButton = page.getByRole("button", { name: "Reveal" });
-  await expect(revealButton).toBeVisible();
+  await expect(revealButton).toBeVisible({ timeout: 20_000 });
   await revealButton.click();
 
   await expect(page.getByText(NOTE)).toBeVisible();

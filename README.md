@@ -13,9 +13,9 @@ templates, or visual identity.
 
 ## Current status
 
-Days 1 through 5 are implemented and fully verified. That covers the core cryptographic engine, lifecycle policy correctness with concurrency proofs, safe multi-mode content (plain notes, sanitized Markdown, syntax-highlighted code) with SBCT binary framing, encrypted attachments up to five files per share with drag-and-drop and Download-all ZIP, password factors (PBKDF2-HMAC-SHA-256, 600,000 iterations), two-channel unlock codes (Crockford Base32 with check symbol), custom reveal counts from 1 to 100, "Never" expiry, policy presets, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions, QR + native share + email actions, and the Privacy Receipt with a pre-flight "What will SecureBin see?" disclosure.
+Days 1 through 5 are implemented and fully verified. That covers the core cryptographic engine, lifecycle policy correctness with concurrency proofs, safe multi-mode content (plain notes, sanitized Markdown, syntax-highlighted code) with SBCT binary framing, encrypted attachments up to five files per share with drag-and-drop and Download-all ZIP, password factors (PBKDF2-HMAC-SHA-256, 600,000 iterations), two-channel unlock codes (Crockford Base32 with check symbol), custom reveal counts from 1 to 100, "Never" expiry, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions, QR + native share + email actions, and the Privacy Receipt with a pre-flight "What will SecureBin see?" disclosure.
 
-All gates pass locally: 151 unit tests (21 files), 14 integration tests, 115 pgTAP database tests (7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)).
+All gates pass locally: 145 unit tests (21 files), 14 integration tests, 115 pgTAP database tests (7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)).
 
 Development happens on the `dev` branch, which deploys as a Vercel preview; `main` remains production. CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request.
 
@@ -178,7 +178,7 @@ authorized at a non-preset limit).
 | Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions, Privacy Receipt | Implemented through Day 5; plan_v2 Days 6–7 gated |
 | Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented through discussions and multi-file model |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Composer, viewer, factor prompts, receipt, and discussions covered |
-| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local + CI gates green: 151 unit / 14 integration / 115 pgTAP / 10 E2E / 2 Axe |
+| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local + CI gates green: 145 unit / 14 integration / 115 pgTAP / 10 E2E / 2 Axe |
 | Documentation | This README, threat model, architecture, runbook | Present |
 
 ## Security and limitations
