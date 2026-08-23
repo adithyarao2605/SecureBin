@@ -93,3 +93,97 @@ Stop for review if work would break uniform `unavailable`, leak window/factor
 metadata to logs, make offline decryption depend on network, store parcel
 secrets server-side, or claim erasure/screenshot-prevention powers the code
 does not have.
+
+---
+
+## 7. Discussion v1.1 — comment editing & deletion with proof of authorship
+
+Owner decision 2026-08-23: supersedes the plan_v2 "append-only, no edit/delete"
+stance for T1.1. Anonymous comments have no identity, so authorship is proven
+the same way every other capability in SecureBin is: a per-comment random
+token whose SHA-256 digest is the only thing the server stores.
+
+### Model
+
+- On POST, the client mints a random 32-byte `editToken`, sends the raw value
+  once, and persists `{commentId -> editToken}` in localStorage
+  (`securebin_comment_tokens_v1`). The server stores `edit_token_hash` only.
+- **Edit** = PATCH with `{capability, editToken, bodyEnvelope}` → server
+  verifies share active + capability digest + token digest, overwrites
+  `body_envelope`, sets `edited_at = now()`. One revision only (no history).
+- **Delete** = DELETE with `{capability, editToken}` → hard row delete.
+  Replies whose parent disappears render as "[comment removed]" placeholders
+  client-side (children are kept — deleting a whole subtree by accident is
+  worse than an orphan label).
+- Both operations inherit the discussion lifecycle gate (revoked / expired /
+  exhausted / scheduled ⇒ 404-uniform) and the existing rate limits.
+
+### Build slices
+
+1. Migration: `edit_token_hash bytea`, `edited_at timestamptz` on
+   share_comments; RLS/grants unchanged (RPCs stay service-definer).
+2. RPCs `edit_share_comment` / `delete_share_comment` mirroring
+   add_share_comment's verification order; pgTAP: wrong token, wrong
+   capability, expired share, edited_at set exactly once, orphan handling.
+3. API: `PATCH/DELETE /api/shares/:publicId/comments/:commentId`
+   (capability + editToken in body; uniform errors).
+4. UI: token map hook `useCommentTokens`; Edit inline textarea + Save/Cancel;
+   Delete confirm; "(edited)" suffix from `edited_at`; buttons render only
+   for locally-owned comments.
+
+### Acceptance
+
+Wrong/missing token ⇒ 400 indistinguishable from unknown comment; lifecycle
+rejection ⇒ uniform unavailable; token never appears in logs or server rows
+beyond its digest; local token loss simply means that comment becomes
+read-only for this device.
+
+## 8. My-shares live status sync
+
+Problem: statuses on the history desk are stale until each item's manual
+"Check status" button is pressed.
+
+Chosen design — one batch call per desk-open, plus event-driven refreshes:
+
+- New RPC `get_share_status_batch(p_public_ids text[])` returning
+  `(public_id, status, available_at, expires_at, max_reveals,
+  remaining_reveals)` rows, capped at 50 ids per call (hard cap in SQL).
+  Security identical to get_share_status (service-definer, uniform
+  `unavailable` row for missing/expired/exhausted/revoked).
+- Thin API: `POST /api/shares/status-batch {publicIds: string[]}` (strict
+  schema, ≤50 valid ids, discriminator rate-limit action `status`).
+- Client: on history tab open (and on window focus / visibilitychange while
+  it is open), fire ONE batch request for all stored public ids; merge
+  results into localStorage via updateShareInHistory; per-item spinners
+  replaced by a single desk-level "Refreshing…" strip. Reveal/revoke/create
+  actions keep their immediate local updates as today.
+- Efficiency notes: 1 request regardless of share count (vs N), reuses the
+  atomic per-share logic server-side, no polling loop, nothing runs while
+  the tab is hidden.
+
+## 9. Rubric-driven improvement backlog (planned candidates, not scheduled)
+
+Ordered by expected rubric payoff (clonefest weights: reliability/demo 20,
+problem-core 20, innovation 20, tech 15, UX/a11y 15, docs 10):
+
+1. **Prod-build e2e** — run Playwright against `next start` instead of dev
+   (closes the last green-but-broken class of bug; Reliability).
+2. **Secure Drop (stretch #1)** — request-a-secret links with contributor
+   encryption to a requester public key; strongest remaining Innovation item;
+   standard WebCrypto only (ECDH P-256 + HKDF), no home-grown crypto.
+3. **Recipient acknowledgment** (stretch #2) — explicit button after reveal;
+   sender manager shows release-time vs acknowledgment-time; never called a
+   read receipt. Small build, demos well next to discussions.
+4. **Self-host scripts early** — `pnpm local:setup/local/stop` wrappers exist
+   conceptually in Day 6 scope; pulling them forward makes the judge "runs
+   anywhere" story testable before freeze.
+5. **Axe coverage expansion** — factor gate, opened view, discussion thread,
+   mobile viewport scans (currently only landing + ready viewer).
+6. **Perf pass** — bundle analysis, LCP measurement, Worker decision for
+   large-file encryption based on real numbers (SPEC Day 5 requirement).
+7. **Docs/evidence** — architecture diagram refresh for attachments +
+   discussions nodes, recorded concurrency evidence file under docs/evidence/,
+   demo script rehearsal checklist.
+
+Explicitly not planned: moderation/bans, comment history/versions, WebSocket
+live threads, anonymous identity persistence.
