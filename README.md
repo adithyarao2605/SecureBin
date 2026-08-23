@@ -13,11 +13,11 @@ templates, or visual identity.
 
 ## Current status
 
-Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, Browser-Local Share History Desk with Reveal Tracking, and Quiet Proof Design System v1), and Day 3 (Multi-Mode Content for Notes, Sanitized Markdown & Syntax-Highlighted Code with SBCT Binary Framing, Single-File Encrypted Attachments up to 10 MiB, Storage URL Normalization, and Safe Local Attachment Previews) are **100% complete and fully verified**.
+Days 1 through 5 are implemented and fully verified. That covers the core cryptographic engine, lifecycle policy correctness with concurrency proofs, safe multi-mode content (plain notes, sanitized Markdown, syntax-highlighted code) with SBCT binary framing, encrypted attachments up to five files per share with drag-and-drop and Download-all ZIP, password factors (PBKDF2-HMAC-SHA-256, 600,000 iterations), two-channel unlock codes (Crockford Base32 with check symbol), custom reveal counts from 1 to 100, "Never" expiry, policy presets, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions, QR + native share + email actions, and the Privacy Receipt with a pre-flight "What will SecureBin see?" disclosure.
 
-All 113 unit tests, live concurrency/integration tests, 89 pgTAP database tests, 9 Playwright E2E tests (including a real-backend attachment round trip), and 2 Axe accessibility tests pass with zero critical violations. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)) and all forward database migrations are applied to production.
+All gates pass locally: 151 unit tests (21 files), 14 integration tests, 115 pgTAP database tests (7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)).
 
-CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request. Passwords (PBKDF2/Argon2id), two-channel unlock codes, QR generation, and the Privacy Receipt are scheduled for Day 4.
+Development happens on the `dev` branch, which deploys as a Vercel preview; `main` remains production. CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request.
 
 ## Product and UX direction
 
@@ -41,10 +41,10 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
   browser; infrastructure receives ciphertext and bounded lifecycle metadata.
 - Availability, expiry, revocation, and reveal limits are transactional policy,
   not client-side suggestions.
-- Two-channel shares will require both the URL fragment and an independently
-  shared unlock code (Day 4).
-- The Privacy Receipt will explain what was protected and what metadata
-  remains visible (Day 4).
+- Two-channel shares require both the URL fragment and an independently
+  shared unlock code; either component alone cannot decrypt.
+- The Privacy Receipt explains what was protected and what metadata remains
+  visible, before the share is created.
 - The design explicitly documents residual risks: browser compromise,
   recipient copying, and network metadata are not solved by zero-knowledge
   storage.
@@ -62,8 +62,11 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
   deployment checklist.
 - [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md) — resolved
   2026-08-21 create-failure incident record and investigation order.
-- [`docs/DAY-4-PLAN.md`](docs/DAY-4-PLAN.md) through
-  [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) — locked execution plans for the
+- [`docs/DAY-4-PLAN.md`](docs/DAY-4-PLAN.md) and
+  [`docs/DAY-5-PLAN.md`](docs/DAY-5-PLAN.md) — executed Day 4 and Day 5
+  plans, each with an appended outcome record.
+- [`docs/DAY-6-PLAN.md`](docs/DAY-6-PLAN.md) and
+  [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) — locked, gated plans for the
   remaining roadmap days.
 - [`docs/SPEC.md`](docs/SPEC.md) — five-day delivery schedule and the quiet-proof
   visual/copy direction.
@@ -150,12 +153,13 @@ password, unlock, fragment, or deletion secrets through chat. The complete
 owner deployment, production verification, and return-evidence checklist is in
 the deployment runbook.
 
-## Judge demo flow (target)
+## Judge demo flow
 
-Once the judged release is implemented and deployed, the rehearsed 60–90
-second path is:
+Every step of the rehearsed 60–90 second path is now implemented and covered
+by tests; only the production redeploy of the newest migrations is an owner
+step:
 
-1. Create a Markdown share with an encrypted file and a three-reveal policy.
+1. Create a Markdown share with encrypted files and a chosen reveal policy.
 2. Show the Privacy Receipt and ciphertext-only server record.
 3. Demonstrate that the URL fragment alone cannot decrypt a two-channel share.
 4. Provide the unlock code through a separate channel and reveal successfully.
@@ -163,18 +167,18 @@ second path is:
 6. Revoke a second share and show the uniform `unavailable` response.
 7. Finish with CI, accessibility, architecture, and limitation evidence.
 
-This flow is a target until the corresponding feature and test evidence are
-available.
+The concurrency step can cite the dedicated custom-limit test (exactly N of M
+authorized at a non-preset limit).
 
 ## Rubric evidence
 
 | Rubric area | Evidence location | Status |
 | --- | --- | --- |
 | Problem understanding | This README, local planning references, threat model | Foundation documented |
-| Innovation | Browser-only encryption and atomic reveal authorization | Text slice implemented; advanced factors pending |
-| Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented |
-| UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Text slice covered |
-| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Current `main` gates pass; production create/reveal verified live (incident closed) |
+| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions, Privacy Receipt | Implemented through Day 5; plan_v2 Days 6–7 gated |
+| Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented through discussions and multi-file model |
+| UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Composer, viewer, factor prompts, receipt, and discussions covered |
+| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local + CI gates green: 151 unit / 14 integration / 115 pgTAP / 10 E2E / 2 Axe |
 | Documentation | This README, threat model, architecture, runbook | Present |
 
 ## Security and limitations

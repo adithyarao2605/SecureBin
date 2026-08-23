@@ -39,7 +39,7 @@ contract, not optional decoration:
 - `package.json` scripts define executable validation commands.
 
 Update the documents in the same change whenever a public contract or security invariant changes.
-Day 4 (passwords, two-channel unlock, QR, Privacy Receipt) is the active milestone; `info/plan_v2.md` Days 5–7 stay gated until Day 5 of the five-day SPEC plan is done.
+The five-day SPEC plan (Days 1–5) is complete. Day 6 of `info/plan_v2.md` (reveal window, privacy veil, self-hosting, parcels, local manager, per `docs/DAY-6-PLAN.md`) is the active milestone, followed by the Day 7 release freeze; do not start Day 7 until the Day 6 exit gate is green.
 `info/plan.md` serves as product priorities reference; record any project decisions in `info/HANDOFF.md`.
 
 ## Reference Boundary

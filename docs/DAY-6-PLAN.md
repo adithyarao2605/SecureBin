@@ -1,6 +1,6 @@
 # Day 6 implementation plan: reveal window, privacy veil, self-host, parcels, local manager
 
-Status: **gated — do not start until the Day 5 exit gate is green**
+Status: **next up — Days 1–5 gates are green; run this plan's entry-gate commands before starting any slice**
 
 Audience: low-context implementation agents. Scope source: `info/plan_v2.md`
 §4 and §5 (stretch). This document locks execution detail.

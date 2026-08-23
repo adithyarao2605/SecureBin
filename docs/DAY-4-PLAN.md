@@ -1,6 +1,6 @@
 # Day 4 implementation plan: meaningful differentiation, UX completeness, and hardening
 
-Status: **approved for implementation — all Day 1–3 gates green**
+Status: **implemented and verified — see [Outcome](#outcome) at the end**
 
 Audience: low-context implementation agents; locked formats must not be improvised
 
@@ -44,7 +44,9 @@ link+password+unlock     securebin/v1|v2/link+password+unlock/content, /file
   *independent* HKDF key derived from `linkSecret ‖ passwordKey` material per
   the architecture labels — never the raw password alone.
 - **Unlock factor:** 16 random bytes rendered as Crockford Base32 plus one
-  check character (17 characters total). The unlock code travels **out of
+  check character (26 digits + check = 27 characters total; errata: the
+  originally drafted "17 characters" was wrong — see Outcome). The unlock code
+  travels **out of
   band** (separate channel); the URL fragment never contains it.
 - **Domain separation:** every factor combination changes the HKDF `info`
   label; the factor mask is bound into the canonical AAD. Tests must prove a
@@ -140,3 +142,35 @@ Stop for review if work would change envelope versions/fields, move counters
 outside RPCs, distinguish `unavailable` causes, weaken the uniform failure,
 log or persist any factor value, send factors to the server before lease
 minting, add remote assets to secret routes, or pull plan_v2 scope forward.
+
+## Outcome
+
+Day 4 shipped in full:
+
+- **Password factor:** PBKDF2-HMAC-SHA-256 with a fresh 16-byte salt and exactly
+  600,000 iterations; the derived 32-byte password key (never the raw password)
+  joins the HKDF input keying material.
+- **Two-channel unlock:** 128 random bits rendered as a 27-character Crockford
+  Base32 code (26 digits + check character, alphabet excluding `I L O U`);
+  wrong check symbols are rejected client-side before any network call.
+- **Four factor masks** (`link`, `link+password`, `link+unlock`,
+  `link+password+unlock`) with per-mask domain separation: IKM is exactly
+  `linkSecret(32) ‖ passwordKey(32) ‖ unlockBytes(16)` in mask order, bound into
+  versioned HKDF labels and canonical AAD.
+- **Viewer factor gates** collect factors before a reveal token exists, so
+  format-level mistakes never reach the server. Documented caveat: a
+  *plausible but wrong* client-only factor cannot be verified by the
+  zero-knowledge server — it authorizes (and consumes) a lease, then fails local
+  decryption. This is inherent to the protocol and recorded in HANDOFF.
+- **Share actions:** browser-only QR encoding the exact fragment URL, copy link,
+  native share where available, and email fallback — no secret leakage.
+- **Privacy Receipt:** local receipt with ciphertext fingerprint (SHA-256),
+  algorithm/iteration details, lifecycle policy, and an explicit note on which
+  metadata stays visible to infrastructure.
+- **Pre-flight disclosure:** "What will SecureBin see?" shown before creation.
+
+Evidence gate: all Day 4 slices green; current cumulative gates after the Day 5
+audit pass are 151 unit tests (21 files), 14 integration tests, 115 pgTAP tests
+(7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests. Deviation:
+the strength *meter* stayed out by design ("strength hint copy only"); no
+further deferrals were recorded for Day 4.

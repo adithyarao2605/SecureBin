@@ -1,6 +1,8 @@
 # Deployment and reproducibility
 
-The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md)). All Day 2 and Day 3 database migrations (including `20260823000000_day3_safe_content_and_attachments.sql`), atomic reveal procedures, storage URL normalization, CSP nonce handling, and clean hydration have been verified locally, in CI, and in production.
+The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md)). All database migrations through `20260829000000_encrypted_discussions.sql` are committed; migrations `20260826000000` (drop stale size constraints), `20260827000000` (custom reveal policies), `20260828000000` (multi-file attachments), and `20260829000000` (encrypted discussions) must be pushed to the remote database before a production deploy of the current code.
+
+Branch model: development happens on `dev`, which Vercel builds as a preview deployment; `main` is production. Verify features on the preview URL before promoting to `main`.
 
 
 ## Local prerequisites
@@ -45,9 +47,10 @@ dependency installation and runs the same Python repository check.
 - The GitHub repository URL: `https://github.com/adithyarao2605/SecureBin`.
 - The exact reviewed commit SHA from `git rev-parse HEAD`.
 - This runbook and the current [`../info/HANDOFF.md`](../info/HANDOFF.md).
-- A statement of scope: Days 1–3 are implemented, gated in CI, and verified
-  against the production deployment; Day 4 factors (passwords, two-channel
-  unlock, QR, Privacy Receipt) remain unimplemented.
+- A statement of scope: Days 1–5 are implemented and gated in CI with local
+  verification (151 unit, 14 integration, 115 pgTAP, 10 E2E, 2 Axe tests);
+  the newest migrations still require an owner `supabase db push` and a
+  production redeploy.
 
 Do **not** send `.env`/`.env.local`, Supabase service-role credentials,
 `RATE_LIMIT_HMAC_KEY`, `CRON_SECRET`, real share URLs or URL fragments,

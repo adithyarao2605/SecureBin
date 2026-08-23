@@ -7,15 +7,13 @@ This document is the technical source of truth for the judged SecureBin release.
 
 ### Current implementation status
 
-Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), and Day 3 (Multi-Mode Content for Notes, Sanitized Markdown & Syntax-Highlighted Code with SBCT Binary Framing, Single-File Encrypted Attachments up to 10 MiB, Storage URL Normalization, and Safe Local Attachment Previews) are **implemented and fully verified**.
+Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), Day 3 (Multi-Mode Content with SBCT Binary Framing, Encrypted Attachments, Storage URL Normalization, Safe Local Previews), Day 4 (Password Factor with PBKDF2-HMAC-SHA-256 at 600,000 iterations, Two-Channel Unlock Codes, QR + Native Share + Email Actions, Privacy Receipt, Pre-flight Disclosure, Complete Non-Happy-Path States), and Day 5 (Custom Reveal Counts 1–100, "Never" Expiry, Policy Presets, Markdown Edit/Split/Preview, Code Mode with Local Language Detection, Multi-File Encrypted Attachments ≤5 with Download-all ZIP, Drag-and-Drop Zone, and Encrypted Discussions) are **implemented and fully verified**: 151 unit tests (21 files), 14 integration tests, 115 pgTAP tests (7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests pass locally.
 
-The production environment at `https://secure-bin.vercel.app/` is live and verified with all forward database migrations applied (including migration 5 for Day 3 envelope validation and attachment size bounds). The previous production incident is closed (see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md)).
+Development happens on the `dev` branch (Vercel preview); `main` is production.
 
-Password factors (PBKDF2/Argon2id), two-channel unlock codes, QR generation, and the Privacy Receipt are scheduled for Day 4.
+SecureBin provides anonymous, browser-encrypted sharing with server-enforced availability, expiry (including "Never"), revocation, and reveal limits from 1 to unlimited. The server stores ciphertext, a discussion-capability digest, and lifecycle metadata but never receives content keys, passwords, unlock codes, discussion capabilities, filenames, plaintext MIME types, or plaintext content.
 
-SecureBin provides anonymous, browser-encrypted sharing with server-enforced availability, expiry, revocation, and reveal limits. The server stores ciphertext and lifecycle metadata but never receives content keys, passwords, unlock codes, filenames, plaintext MIME types, or plaintext content.
-
-The release boundary is intentionally narrow enough to harden thoroughly. Recipient-bound sharing, passkeys, Secure Rooms, encrypted discussions, richer previews, localization, Argon2id, size padding, alternate storage adapters, and SDKs remain compatible future phases.
+The release boundary is intentionally narrow enough to harden thoroughly. Recipient-bound sharing, passkeys, Secure Rooms, richer previews, localization, Argon2id, size padding, alternate storage adapters, and SDKs remain compatible future phases (`info/plan_v2.md` Days 6–7 cover the reveal window, privacy veil, self-hosting, parcels, and local manager).
 
 ## 2. Trust and Threat Model
 
@@ -96,7 +94,7 @@ The service-role credential is imported only from server-only modules. Browser c
 
 - `publicId`: 16 random bytes encoded as unpadded base64url, generated before encryption.
 - `linkSecret`: 32 random bytes encoded in the URL fragment.
-- `passwordMaterial`: optional 32-byte PBKDF2-HMAC-SHA-256 output.
+- `passwordKey`: optional 32-byte PBKDF2-HMAC-SHA-256 output.
 - `unlockSecret`: optional 16-byte random value encoded with Crockford Base32 plus a check symbol.
 - `passwordSalt`: optional 16-byte random PBKDF2 salt.
 - `hkdfSalt`: 16-byte random HKDF salt shared by the content and file envelopes.
@@ -106,12 +104,17 @@ Password input is encoded as UTF-8 without Unicode normalization, limited to 1,0
 
 ### Derivation
 
-1. When enabled, derive `passwordMaterial` with PBKDF2-HMAC-SHA-256 using `passwordSalt` and 600,000 iterations.
-2. Concatenate `linkSecret`, optional `passwordMaterial`, and optional `unlockSecret` in factor-mask order.
-3. Derive independent 32-byte AES keys directly with HKDF-SHA-256 and `hkdfSalt`:
-   - `securebin/v1/{factorMask}/content`
-   - `securebin/v1/{factorMask}/file`
+1. When enabled, derive `passwordKey` with PBKDF2-HMAC-SHA-256 using the 16-byte `passwordSalt` and exactly 600,000 iterations; the result is a 32-byte key.
+2. Build the HKDF input keying material by concatenation in factor-mask order: `linkSecret` (32 bytes) ‖ `passwordKey` (32 bytes, only when the mask includes password) ‖ `unlockBytes` (16 bytes, only when the mask includes unlock). The raw password and the printable unlock code are never used as HKDF input directly.
+3. Derive independent 32-byte AES keys from that IKM with HKDF-SHA-256 and `hkdfSalt`, using labels per envelope version:
+   - v1: `securebin/v1/{factorMask}/content` and `/file`
+   - v2: `securebin/v2/{factorMask}/content` and `/file`
+   - Discussions (v2 only): `securebin/v2/{factorMask}/discussion`, derived from the raw 32-byte discussion capability instead of the share IKM, with the comment thread's own random HKDF salt.
 4. Future object types receive new labels; a label is never repurposed.
+
+### Unlock code format
+
+Two-channel unlock codes encode 128 random bits as 26 Crockford Base32 characters plus one trailing check character computed over the digit sum modulo 27 — 27 characters total. The alphabet excludes `I L O U`. Codes are normalized to uppercase before validation; a wrong check symbol is rejected client-side before any network call. Only the 16 decoded bytes enter key derivation.
 
 ### Envelope
 
@@ -153,6 +156,10 @@ Version 2 content plaintext is canonically framed as:
 
 Legacy detection uses the authenticated envelope version: version 1 decodes its entire plaintext as a legacy note even when it starts with `SBCT`; version 2 requires valid `SBCT` framing. Unknown envelope versions are rejected before invoking Web Crypto.
 
+#### Content Payload v2 Discussion Trailer (payload version 0x02)
+
+A v2 content payload whose SBCT payload version byte is `0x02` appends a fixed 32-byte encrypted-discussion capability block after the framed text. The trailer carries the raw discussion capability sealed inside the already-encrypted share, so a recipient learns it only after successful local decryption and the public ID alone can never list or post comments. Payload version `0x01` remains valid without a trailer; any other value is rejected.
+
 #### File Envelope v2 Framing
 
 Version 2 file plaintext is canonically framed as:
@@ -182,7 +189,7 @@ A new forward migration replaces SQL validation and size constraints atomically 
 
 - Viewer: `/s/{publicId}#{base64url(linkSecret)}`.
 - The fragment remains in the address so refresh and copy-link behavior remain reliable. An explicit “hide key from address” action may remove it after warning that refresh will then require the original link.
-- Two-channel unlock codes encode 128 random bits using Crockford Base32 groups and a check symbol.
+- Two-channel unlock codes use the Crockford format specified under "Unlock code format" above.
 - The deletion capability is 32 random bytes. Its SHA-256 digest is sent at creation; the raw capability is shown once and supplied only for deletion.
 
 ## 6. Data Model
@@ -196,19 +203,25 @@ A new forward migration replaces SQL validation and size constraints atomically 
 | `content_envelope` | Validated v1 legacy-content or v2 framed-content envelope with base64url ciphertext |
 | `created_at` | Server UTC timestamp |
 | `available_at` | Optional UTC start time |
-| `expires_at` | Required UTC time, no more than 30 days after creation |
-| `max_reveals` | Nullable positive integer in the supported preset set |
+| `expires_at` | Nullable UTC time, no more than 30 days after creation when set; `NULL` means "Never" — the share never expires but stays revocable |
+| `max_reveals` | Nullable integer between 1 and 100; `NULL` means unlimited |
 | `reveal_count` | Non-negative server-controlled counter |
 | `revoked_at` | Nullable server UTC timestamp |
 | `delete_token_hash` | 32-byte digest; never returned |
 | `password_required` | Prompting metadata only |
 | `unlock_required` | Prompting metadata only |
-| `file_object_path` | Nullable random private Storage path |
-| `file_envelope` | Nullable validated v2 file envelope without ciphertext at the Day 3 release boundary |
-| `file_ciphertext_size` | Nullable bounded byte count |
+| `discussion_capability_hash` | Nullable SHA-256 digest of the discussion capability; `NULL` disables threads |
 | `idempotency_key_hash` | Unique digest for safe creation retry |
 
-Database constraints enforce supported reveal limits, timestamp ordering, size bounds, non-negative counters, and `reveal_count <= max_reveals` when limited. Envelope fields are validated in SQL by `securebin_valid_envelope` and its `securebin_b64url` / `securebin_b64url_range` helpers, whose canonical base64url comparison is newline-tolerant (forward migration `20260825000000`) because Postgres `encode(bytea,'base64')` wraps output every 76 characters.
+Database constraints enforce reveal limits (`max_reveals is null or max_reveals between 1 and 100`), timestamp ordering (`expires_at is null or expires_at > created_at`), size bounds, non-negative counters, and `reveal_count <= max_reveals` when limited. Envelope fields are validated in SQL by `securebin_valid_envelope` and its `securebin_b64url` / `securebin_b64url_range` helpers, whose canonical base64url comparison is newline-tolerant (forward migration `20260825000000`) because Postgres `encode(bytea,'base64')` wraps output every 76 characters.
+
+### `share_attachments`
+
+The Day 3 single-file triple (`file_object_path`, `file_envelope`, `file_ciphertext_size`) on `shares` was replaced by this child table in forward migration `20260828000000_multi_file_attachments.sql`. Each row holds the share ID, an `attachment_slot` (0–4, unique per share), a random private Storage object path, a metadata-only v2 file envelope, and the bounded ciphertext size. Legacy single-file rows were migrated into slot 0 and the old columns dropped. Reservations gain the same slot column with the tuple uniqueness `(reserved_public_id, idempotency_key_hash, attachment_slot)`, which supersedes the Day-2 pair constraint.
+
+### `share_comments`
+
+Append-only discussion thread table (forward migration `20260829000000_encrypted_discussions.sql`). Each row stores the share ID, an optional parent comment UUID for one-level replies, the pre-encrypted body envelope (≤4096 bytes), an optional encrypted nickname envelope (≤1024 bytes), and the server creation time. Rows are never updated or deleted except through share cleanup; lifecycle is inherited from the parent share — revoked, expired, reveal-exhausted, or scheduled shares raise a uniform discussion-unavailable rejection for both listing and posting.
 
 ### `upload_reservations`
 
@@ -234,17 +247,17 @@ field names/types and decoded lengths, never envelope values or ciphertext.
 
 ### `POST /api/uploads`
 
-Accept the future share public ID, idempotency digest, metadata-only file envelope, and expected ciphertext size. Store a reservation bound to that exact tuple and return a random object path plus a signed upload operation with overwrite disabled. No attachment bearer capability is created or sent. Rate-limit before issuing a reservation. Before attachment, verify the stored object's actual size; the 15-minute reservation expiry remains the server authorization boundary.
+Accept the future share public ID, idempotency digest, metadata-only file envelope, expected ciphertext size, and an `attachmentSlot` from 0 to 4 (0 for single-file shares). Store a reservation bound to that exact tuple and return a random object path plus a signed upload operation with overwrite disabled. No attachment bearer capability is created or sent. Rate-limit before issuing a reservation. Before attachment, verify the stored object's actual size; the 15-minute reservation expiry remains the server authorization boundary.
 
-The replacement RPC is `create_upload_reservation(text, bytea, jsonb, bigint)` for public ID, idempotency digest, exact metadata-only file envelope, and size. The table uniquely binds `(reserved_public_id, idempotency_key_hash)`. An identical live retry reuses the path and receives a fresh signed operation; changed envelope/size returns `409 reservation_conflict`; an expired unattached tuple is reinitialized with a fresh path while its old path is queued for cleanup; attached tuples cannot be uploaded again. File envelopes reject `ciphertext` and unknown fields. Cleanup removes abandoned reservation paths and queued rotation paths through Storage first, then finalizes only successful or already-missing objects.
+The replacement RPC is `create_upload_reservation(text, bytea, jsonb, bigint, integer)` for public ID, idempotency digest, exact metadata-only file envelope, size, and slot. The table uniquely binds `(reserved_public_id, idempotency_key_hash, attachment_slot)`. An identical live retry reuses the path and receives a fresh signed operation; changed envelope/size returns `409 reservation_conflict`; an expired unattached tuple is reinitialized with a fresh path while its old path is queued for cleanup; attached tuples cannot be uploaded again. File envelopes reject `ciphertext` and unknown fields. Cleanup removes abandoned reservation paths and queued rotation paths through Storage first, then finalizes only successful or already-missing objects.
 
 Cleanup uses exactly two service-role RPCs: `list_cleanup_candidates()` returns validated candidates (`share`, `upload`, `upload_rotation`), and `finalize_expired_securebin(uuid[], uuid[], uuid[])` is the single finalizer signature — the earlier two-array overload was dropped by forward migration `20260824000000` because ambiguous PostgREST overload resolution broke named-argument calls. All three parameters are accepted explicitly; absent groups are passed as SQL `NULL`.
 
 ### `POST /api/shares`
 
-Accept the client public ID, content envelope, lifecycle policy, deletion-token digest, idempotency-key digest, prompting flags, and optional metadata-only file envelope/size. Find and lock the unexpired unattached reservation matching public ID, idempotency digest, file envelope, and size; verify and attach transactionally. Return the public ID and normalized policy. Never accept an upload-reservation capability, plaintext content, or file metadata.
+Accept the client public ID, content envelope (optionally carrying the SBCT `0x02` discussion trailer), lifecycle policy (`expires_at` may be `null` for "Never"; `max_reveals` is an integer from 1 to 100 or null for unlimited), deletion-token digest, idempotency-key digest, prompting flags, and the optional SHA-256 digest of the discussion capability. Find and lock the unexpired unattached reservations matching public ID, idempotency digest, file envelope, size, and slots; verify and attach transactionally. Return the public ID and normalized policy. Never accept an upload-reservation capability, plaintext content, file metadata, or a raw discussion capability — only its digest.
 
-The replacement RPC is `create_share(text, jsonb, timestamptz, timestamptz, integer, bytea, boolean, boolean, bytea, jsonb, bigint)` in public-ID-through-file-size order. The old 12-argument reservation-token overload is dropped and revoked. An idempotency-key retry whose immutable request differs returns HTTP `409` with exactly `{"error":"idempotency_conflict"}` and no original ID, envelope, policy, or capability.
+The replacement RPC is the 10-argument `create_share(text, jsonb, timestamptz, timestamptz, integer, bytea, boolean, boolean, bytea, bytea)` in public-ID-through-discussion-capability-hash order (forward migration `20260829000000`; earlier overloads are dropped and revoked). An idempotency-key retry whose immutable request differs returns HTTP `409` with exactly `{"error":"idempotency_conflict"}` and no original ID, envelope, policy, or capability.
 
 ### `GET /api/shares/:publicId/status`
 
@@ -265,7 +278,15 @@ Accept a random reveal request token. An atomic RPC locks the share row and:
 3. Increments the counter and inserts a five-minute lease in the same transaction.
 4. Returns the content envelope and optional private object path to the server route.
 
-The route returns ciphertext and, when applicable, a 60-second signed file URL. If signed URL generation or response delivery fails, retrying with the same token regenerates the response without another increment. Known limitation: the reveal lease is consumed by the RPC before the server generates the signed URL, so a recipient who abandons the attempt and returns after the 5-minute lease window has expired consumes a second authorization on the next attempt.
+The route returns the content envelope and, when attachments exist, a `files` array — one entry per slot with `{ slot, envelope, ciphertextSize, downloadUrl }`, each download URL signed for 60 seconds. If signed URL generation or response delivery fails, retrying with the same token regenerates the response without another increment. Known limitation: the reveal lease is consumed by the RPC before the server generates the signed URLs, so a recipient who abandons the attempt and returns after the 5-minute lease window has expired consumes a second authorization on the next attempt.
+
+### `GET /api/shares/:publicId/comments`
+
+List a share's encrypted discussion thread. The raw discussion capability travels in the `x-discussion-capability` request header (kept out of proxy and access logs); it is hashed server-side and compared against the stored digest. The atomic function enforces lifecycle inheritance first: revoked, expired, reveal-exhausted, or scheduled shares are rejected uniformly before any comment row is read. Returns comment rows (id, parent id, encrypted envelopes, timestamps) in ascending order; never plaintext.
+
+### `POST /api/shares/:publicId/comments`
+
+Accept the raw discussion capability, an optional parent comment UUID, the pre-encrypted body envelope, and optional encrypted nickname envelope. The RPC re-checks lifecycle inheritance, verifies the capability digest against the share's stored digest, rate-limits per share (`discussion/{share_id}` discriminator, 60 per minute), and inserts append-only. Route-level buckets also apply to both endpoints via the HMACed network discriminator: 120 requests per fixed window for GET and 30 for POST. Comment bodies arrive only as ciphertext; no plaintext or capability value is logged.
 
 ### `DELETE /api/shares/:publicId`
 
@@ -355,7 +376,7 @@ The public API deliberately collapses expired, exhausted, revoked, and missing r
 - Syntax highlighting uses browser-only `lowlight@3.3.0` with fixed registered languages and no auto-detection. Its HAST is rebuilt as React from only text/root and `span` nodes with allowlisted `hljs-*` classes; any other node/property falls back to plaintext. No HTML serialization or `dangerouslySetInnerHTML` is allowed.
 - Server-only `@supabase/supabase-js@2.50.0` implements signed private Storage operations so credential/header details are not reimplemented. It is instantiated only in server modules with session persistence and refresh disabled; the dependency is advisory-checked before installation.
 - Preview only raster image formats decoded through Blob URLs and plain text rendered as text. Never inline SVG, HTML, or active documents.
-- Revoke Blob URLs when views unmount.
+- Revoke Blob URLs when views unmount, before replacing an existing URL, and immediately after a download click completes.
 - Use self-hosted fonts and assets. Secret routes load no third-party scripts, pixels, embeds, or remote media.
 - Apply nonce-based CSP, HSTS, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff`, restrictive Permissions Policy, frame denial, and `no-store`.
 - The CSP `connect-src` list is `'self'` plus exactly one configured origin: the Supabase project URL (`NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL`), because the browser uploads ciphertext to and downloads attachments from Storage via short-lived signed URLs. No other cross-origin connection is permitted; an unset or malformed URL leaves `connect-src 'self'`.
@@ -381,11 +402,12 @@ Reveal limits cannot prevent a recipient from copying already released ciphertex
 - **ADR-005:** Reveal leases trade a short retry window for correct idempotency and demo reliability.
 - **ADR-006:** Files use private encrypted-object storage to avoid serverless body limits.
 - **ADR-007:** Versioned envelopes and HKDF labels reserve clean extension points for recipient-bound sharing and Secure Rooms.
+- **ADR-008:** Discussions use a capability-digest model — only the SHA-256 of a random 32-byte capability is stored; the raw value is sealed inside the encrypted share and re-presented per request, so infrastructure can neither read threads nor grant access.
 
 ## 13. Required Verification
 
-- Golden crypto vectors and tamper tests for every factor/object combination.
-- SQL integration tests for constraints, RLS, idempotency, expiry, revocation, and cleanup.
-- Concurrent final-reveal tests proving exact limits.
-- Browser tests for creation, reveal, wrong factors, files, two-channel mode, mobile, keyboard, and failure recovery.
+- Golden crypto vectors and tamper tests for every factor/object combination, including all four factor masks, discussion envelopes, and wrong-capability rejection.
+- SQL integration tests for constraints, RLS, idempotency, expiry (including `NULL` "Never"), revocation, cleanup, attachment slots, and comment size bounds.
+- Concurrent final-reveal tests proving exact limits, including custom non-preset limits (e.g., exactly 7 of M authorized).
+- Browser tests for creation, reveal, wrong factors, single- and multi-file attachments, ZIP download, discussions, two-channel mode, mobile, keyboard, and failure recovery.
 - Manual production smoke test plus automated lint, typecheck, unit, integration, E2E, accessibility, and build gates.

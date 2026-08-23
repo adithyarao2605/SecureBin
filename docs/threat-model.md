@@ -4,12 +4,13 @@ This document turns the protocol in [`architecture.md`](architecture.md)
 into an operational security boundary. It describes what the judged release
 protects, what it intentionally exposes, and what it cannot protect.
 
-The implemented evidence covers the Day 1–3 surface: encrypted plain-text,
-Markdown, and code content with v2 SBCT framing; single-file encrypted
-attachments through private Storage; safe local rendering boundaries; and
-scheduled cleanup. Day 4 factors (passwords, two-channel unlock) and QR or
-Privacy Receipt outputs remain unimplemented scope even where this threat
-model defines their required controls.
+The implemented evidence covers the Day 1–5 surface: encrypted plain-text,
+Markdown, and code content with v2 SBCT framing (including the `0x02`
+discussion-capability trailer); password and two-channel unlock factors;
+multi-file encrypted attachments (up to five) through private Storage with
+staged reservations and Download-all ZIP; append-only encrypted discussions;
+safe local rendering boundaries; custom reveal counts; "Never" expiry; and
+scheduled cleanup.
 
 The 2026-08-21 production create incident is resolved and closed; the record
 lives in [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Temporary
@@ -19,8 +20,8 @@ ciphertext, plaintext, capabilities, or credentials.
 ## Security objectives
 
 1. Infrastructure must not learn plaintext content, filenames, plaintext MIME
-   types, passwords, unlock codes, URL-fragment secrets, or raw deletion
-   capabilities.
+   types, passwords, unlock codes, URL-fragment secrets, raw deletion
+   capabilities, or raw discussion capabilities (only their digests).
 2. Only the browser performs key generation, derivation, encryption,
    decryption, QR generation, and decrypted rendering.
 3. Availability, expiry, revocation, and reveal limits are enforced atomically
@@ -58,10 +59,10 @@ third-party observation channel.
 
 ## Protected assets and residual metadata
 
-Protected assets include plaintext, content/file keys, passwords, unlock codes,
-fragment secrets, deletion capabilities, plaintext filenames and MIME types,
+Protected assets include plaintext, content/file/discussion keys, passwords, unlock codes,
+fragment secrets, deletion and discussion capabilities, plaintext filenames and MIME types,
 and unreleased client drafts. Infrastructure may retain ciphertext, opaque
-public IDs, reveal/policy fields needed for enforcement, ciphertext sizes,
+public IDs, reveal/policy fields needed for enforcement, capability digests, ciphertext sizes,
 timestamps, request IDs, coarse size buckets, and network/access metadata.
 
 The threat model does not promise traffic-analysis resistance, sender/recipient
@@ -82,6 +83,9 @@ anonymity, or deletion of content that was already decrypted or downloaded.
 | Secret leakage in logs | Structured redacted logs; no fragments, tokens, plaintext, filenames, MIME types, or ciphertext bodies | Provider-level operational metadata remains visible. |
 | Unauthorized Storage access | Private bucket, random paths, signed short-lived operations, server-side size checks, RLS | A signed URL is usable until its short expiry. |
 | Credential exposure | Server-only environment variables; public variables explicitly prefixed; no secrets in client imports | Misconfigured hosting or dependency supply-chain compromise can bypass boundaries. |
+| Discussion capability leaks to a third party | Only the SHA-256 digest is stored; the raw capability is sealed inside the encrypted share and re-presented per request via header, never a URL query | The capability is a bearer secret: anyone who holds it (e.g., a recipient who forwards it) can post or read the thread until the share's lifecycle closes it. |
+| Thread metadata survives revocation | Lifecycle inheritance gates listing and posting in the same atomic functions that gate reveals — revoked, expired, exhausted, and scheduled shares reject uniformly | Comment rows remain in the database until cleanup removes the share's records; ciphertext-at-rest exposure follows the same residual-risk story as share bodies. |
+| Discussion rate abuse / thread flooding | Route-level buckets (120 GET / 30 POST per fixed window) plus an atomic database-side 60-per-minute limit keyed by `discussion/{share_id}` | Determined distributed abuse can still consume storage until the share expires or is revoked. |
 
 ## Out of scope for the judged release
 

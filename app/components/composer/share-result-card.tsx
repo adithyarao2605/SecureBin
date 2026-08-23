@@ -54,7 +54,18 @@ export function ShareResultCard({
           <p className="unlock-heading">Second-channel unlock code</p>
           <p className="unlock-code">{unlockCodeShown}</p>
           <p className="policy-hint">
-            Deliver this code over a different channel. It is shown once and is not stored on the server.
+            This share needs <strong>two things</strong> to open: the link above (which carries the decryption
+            key) and this code. Send them separately — for example the link by email and the code by text
+            message — so no single channel can unlock it.
+          </p>
+          <ul className="policy-hint">
+            <li>The link alone: shows a locked prompt.</li>
+            <li>This code alone: useless without the link.</li>
+            <li>Both together, in the same browser: content decrypts locally.</li>
+          </ul>
+          <p className="policy-hint">
+            The code is shown only once and is never stored on the server. Copy it somewhere safe before
+            leaving this page.
           </p>
         </div>
       )}

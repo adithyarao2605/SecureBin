@@ -501,3 +501,77 @@
   cursor: pointer;
   transition: all 150ms ease;
 }
+
+/* Markdown typography (restored from main deployment) */
+.decrypted-markdown-content {
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.5rem;
+  line-height: 1.7;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.decrypted-markdown-content h1,
+.decrypted-markdown-content h2,
+.decrypted-markdown-content h3,
+.decrypted-markdown-content h4,
+.decrypted-markdown-content h5,
+.decrypted-markdown-content h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.decrypted-markdown-content h1:first-child,
+.decrypted-markdown-content h2:first-child,
+.decrypted-markdown-content h3:first-child {
+  margin-top: 0;
+}
+
+.decrypted-markdown-content p {
+  margin: 0.5rem 0;
+}
+
+.decrypted-markdown-content ul,
+.decrypted-markdown-content ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.decrypted-markdown-content code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
+
+.decrypted-markdown-content pre code {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.decrypted-markdown-content blockquote {
+  border-left: 3px solid var(--mineral);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: var(--muted-ink);
+}
+
+.markdown-link {
+  color: var(--mineral);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 150ms ease;
+}
+
+.markdown-link:hover {
+  color: var(--mineral-hover);
+}
+
+/* File Attachment & Preview */

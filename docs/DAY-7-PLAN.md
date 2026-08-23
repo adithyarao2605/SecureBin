@@ -1,6 +1,6 @@
 # Day 7 implementation plan: freeze, validation, evidence, demo, submission
 
-Status: **gated — do not start until the Day 6 exit gate is green**
+Status: **gated — do not start until the Day 6 exit gate is green (Day 6 is the active milestone)**
 
 Audience: low-context implementation agents. Scope source: `info/plan_v2.md`
 §6. Day 7 adds **no new product capability**; unfinished required work is

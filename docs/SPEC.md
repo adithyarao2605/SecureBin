@@ -22,11 +22,12 @@ clearly marked as future work.
 
 ## Progress snapshot
 
-Days 1, 2, and 3 are implemented and fully green across local and GitHub Actions CI gates: reproducible tooling, multi-mode browser encryption (plain note, sanitized Markdown, and syntax-highlighted code with binary `SBCT` framing), independent encrypted file attachments up to 10 MiB, storage URL normalization, atomic database lifecycle policy, upload reservations and rotation queue, clean local history desk, production build, 106 unit tests, live concurrency/integration tests, 82 pgTAP database tests, 8 Playwright E2E tests, and 2 Axe accessibility tests.
+Days 1 through 5 are implemented and fully green across local gates: reproducible tooling, multi-mode browser encryption (plain note, sanitized Markdown, and syntax-highlighted code with binary `SBCT` framing), encrypted attachments up to five files per share with staged reservations, drag-and-drop, safe previews, and Download-all ZIP, atomic database lifecycle policy with upload reservations and a rotation cleanup queue, clean local history desk, password factors (PBKDF2-HMAC-SHA-256 at 600,000 iterations), two-channel unlock codes (27-character Crockford codes with check symbol), custom reveal counts (1–100), "Never" expiry, policy presets, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions with lifecycle inheritance, QR + native share + email actions, the Privacy Receipt with ciphertext fingerprint, the pre-flight "What will SecureBin see?" disclosure, production build, 151 unit tests (21 files), 14 live concurrency/integration tests, 115 pgTAP database tests (7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests.
 
-The production incident is closed, and remote Supabase has been migrated with all forward schema changes (`20260823000000_day3_safe_content_and_attachments.sql`).
+The production incident is closed.
 
-Day 4 (Passwords, Two-Channel Unlock Codes, QR Code Generation, and the Privacy Receipt) is the active next milestone.
+Scope reconciliation: SPEC Day 4 shipped exactly as planned. Where this SPEC's Day 5 called only for polish, validation, deployment, and demo evidence, the implementation also deliberately delivered `info/plan_v2.md` §3 (custom reveal counts, "Never" expiry, presets, rich Markdown authoring, code detection, multi-file attachments, encrypted discussions) after the Day 4 factors were green. That decision is recorded in `info/HANDOFF.md`, and this SPEC's former
+preset-only restriction is retired with it. `info/plan_v2.md` Days 6–7 remain gated future work behind the Day 6 entry gate in [`DAY-6-PLAN.md`](DAY-6-PLAN.md).
 
 When another maintainer or friend continues the schedule, hand them the exact commit and [`docs/deployment.md`](deployment.md), have them reproduce the gates from a fresh clone, and exchange provider access through team membership rather than copied secrets.
 
@@ -316,21 +317,11 @@ rehearsed, all rubric evidence is linked, and all known limitations are honest.
 If a required feature or deployment is still incomplete, document it in the
 handoff and README rather than silently presenting roadmap work as shipped.
 
-## Explicitly deferred beyond this five-day release
+## Explicitly deferred
 
-Recipient-bound accounts/passkeys, Secure Rooms, encrypted discussions,
-device-key management, localization, service-worker caching, alternate
-storage adapters, SDKs/extensions, interoperability import, Argon2id, padding,
-key transparency, sender signatures, and richer traffic-analysis defenses are
-future roadmap work. They must not destabilize the five-day judged release and
-must never be represented as implemented in the demo or submission evidence.
+Recipient-bound accounts/passkeys, Secure Rooms, device-key management, localization, service-worker caching, alternate storage adapters, SDKs/extensions, interoperability import, Argon2id, padding, key transparency, sender signatures, and richer traffic-analysis defenses are future roadmap work. They must not destabilize the judged release and must never be represented as implemented in the demo or submission evidence. Encrypted discussions, custom reveal counts, "Never" expiry, multi-file attachments, code auto-detection, and the Day 4 factor work are no longer deferred: they are implemented and tested as recorded above.
 
-`info/plan_v2.md` extends the product after this release with its own Days 4–7
-(discussions, reveal window, parcels, self-hosting). That plan is a read-only
-roadmap source: none of its scope may start before Day 5 of this five-day plan
-is complete, and where it conflicts with this SPEC (custom reveal counts,
-"Never" expiry, multi-file attachments, code auto-detection), this SPEC's
-preset-only contract wins until the five-day release is done.
+`info/plan_v2.md` continues past this point with its Days 4–7 (§3 shipped deliberately; §4–§6 remain). That plan is a read-only roadmap source: its remaining scope starts only through [`DAY-6-PLAN.md`](DAY-6-PLAN.md) once the Day 5 exit gate is green, followed by the Day 7 freeze.
 
 ## Per-day handoff checklist
 

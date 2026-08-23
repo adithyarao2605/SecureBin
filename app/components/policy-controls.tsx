@@ -14,6 +14,17 @@ export interface PolicyControlsProps {
   readonly disabled?: boolean;
 }
 
+const PRESET_EXPLANATIONS: Record<string, string> = {
+  "quick-share":
+    "Everything unlocked right now, stays open for a day, and can be viewed as many times as needed — the everyday default.",
+  "one-time-secret":
+    "Burn-after-reading: the first person to open it consumes the only reveal, then the link stops working.",
+  "controlled-share":
+    "Stays available for a week and tolerates up to three separate views — good for small groups.",
+  "timed-handoff":
+    "Nothing is visible until tomorrow morning; content releases on schedule even if you are offline.",
+};
+
 export function PolicyControls({ draft, onChange, disabled = false }: PolicyControlsProps) {
   // Preset wins when set; otherwise infer from maxReveals, falling through to
   // "custom" for a non-preset count so the custom input reflects its value.
@@ -58,6 +69,14 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
           <option value="controlled-share">Controlled Share</option>
           <option value="timed-handoff">Timed Handoff</option>
         </select>
+        {(() => {
+          const current = policyPresetForDraft(draft);
+          return current !== "custom" ? (
+            <p className="policy-hint" role="note">
+              {PRESET_EXPLANATIONS[current]}
+            </p>
+          ) : null;
+        })()}
       </div>
 
       {/* Availability Fieldset */}

@@ -7,23 +7,17 @@ evidence that an unimplemented component has shipped.
 
 ## Current implementation coverage
 
-The Day 1–3 surface is implemented and tested: browser-encrypted text plus
-Markdown/code modes with SBCT v2 framing, single-file encrypted attachments
-through private Storage (reservation, signed upload, size verification, signed
-60-second reveal download, safe local preview), scheduled cleanup of expired
-shares, abandoned reservations, and rotated upload paths. The production host
-has the forward migrations applied and live create/status/reveal were verified;
-see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md) for the closed incident
-record.
+The Day 1–5 surface is implemented and tested: browser-encrypted text plus Markdown/code modes with SBCT v2 framing (including the SBCT `0x02` discussion-capability trailer), password and two-channel unlock factors, up to five encrypted attachments per share through private Storage (slot-staged reservations, signed uploads, size verification, signed 60-second reveal downloads, safe local previews, Download-all ZIP), custom reveal counts, "Never" expiry, append-only encrypted discussions gated by a capability digest and share lifecycle, scheduled cleanup of expired shares, abandoned reservations, and rotated upload paths. The production host redeploy of the newest migrations remains an owner step; see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md) for the closed incident record.
 
 ## System context and data boundary
 
 ```mermaid
 flowchart LR
-  S[Sender browser\nplaintext + factors] -->|encrypted envelope + policy| A[Next.js API]
+  S[Sender browser\nplaintext + factors] -->|encrypted envelope + policy + capability digest| A[Next.js API]
   R[Recipient browser\nfragment + optional code] -->|status / reveal token| A
-  S -->|encrypted file bytes| ST[(Private Storage)]
-  A -->|atomic lifecycle RPC| DB[(Supabase Postgres)]
+  R -->|comments capability header| A
+  S -->|encrypted file bytes per slot| ST[(Private Storage)]
+  A -->|atomic lifecycle RPC| DB[(Supabase Postgres\nattachments + comments)]
   A -->|signed operation| ST
   C[Hourly cleanup] --> DB
   C --> ST
@@ -31,9 +25,7 @@ flowchart LR
   R -. decrypts and renders locally .-> R
 ```
 
-The fragment secret never becomes an HTTP request field. The API sees only the
-public ID, ciphertext/envelope data, and the minimum policy metadata required
-to enforce availability and reveal authorization.
+The fragment secret never becomes an HTTP request field, and the raw discussion capability reaches the server only as a digest at creation or inside a request header thereafter; the API sees only public IDs, ciphertext/envelope data, digests, and the minimum policy metadata required to enforce availability and reveal authorization.
 
 The UI explains this boundary with a restrained proofline: browser → sealed
 parcel → recipient. In the diagrams below that visual language is explanatory
@@ -50,20 +42,24 @@ sequenceDiagram
   participant D as Atomic database function
   participant S as Private Storage
   B->>B: Generate ID, link secret, factors, nonce, envelope
-  opt Encrypted attachment
-    B->>A: Reserve random object path
-    A->>D: Store reservation digest and size
+  opt Encrypted attachments (up to 5 slots)
+    B->>A: Reserve random object path per slot
+    A->>D: Store reservation digest, size, slot
     A-->>B: Signed upload operation
     B->>S: Upload encrypted bytes
   end
-  B->>A: Create share with ciphertext and policy
-  A->>D: Validate and insert idempotently
+  B->>A: Create share with ciphertext and policy (+ capability digest)
+  A->>D: Validate and insert idempotently; attach slots
   A-->>B: Public ID and normalized policy
   B->>A: Status, then explicit reveal confirmation
   A->>D: Lock, validate lifecycle, create/reuse reveal lease
-  D-->>A: Ciphertext and optional object path
-  A-->>B: Ciphertext and short-lived file operation
+  D-->>A: Ciphertext and attachment paths
+  A-->>B: Ciphertext and short-lived file operations (files[])
   B->>B: Derive, authenticate, decrypt, sanitize/render
+  opt Discussion enabled
+    B->>A: Post/list comments with capability header
+    A->>D: Verify digest + lifecycle, rate-limit, append/read
+  end
 ```
 
 ## Trust boundaries

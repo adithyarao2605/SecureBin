@@ -1,6 +1,6 @@
 # Day 5 implementation plan: content breadth, multi-file, custom policies, discussions
 
-Status: **gated — do not start until the Day 4 exit gate in `DAY-4-PLAN.md` is green**
+Status: **implemented and verified — see [Outcome](#outcome) at the end**
 
 Audience: low-context implementation agents. Source of truth for scope:
 `info/plan_v2.md` §3; where that file and this document differ, this document
@@ -80,3 +80,46 @@ a11y green; production create/reveal verified including factors.
 Stop for review if work would break Day 4 factors, weaken uniform
 `unavailable`, store any discussion key material server-side, allow public-ID-
 only thread scraping, or pull Day 6 features forward.
+
+## Outcome
+
+Day 5 shipped in full:
+
+- **Custom reveal counts:** integer range 1–100 enforced by a new constraint
+  (`max_reveals between 1 and 100`), bounded numeric UI, and a concurrency test
+  proving exactly N of M authorized at a custom limit.
+- **Never expiry:** `expires_at` is now nullable; `NULL` shares never expire but
+  stay revocable; cleanup skips them; receipt and status print "Never".
+- **Policy presets:** Quick Share, One-Time Secret, Controlled Share, Timed
+  Handoff, plus Custom — all mapping onto one policy model with a summary line.
+- **Markdown Edit/Split/Preview** authoring (toggle on mobile), sanitizer
+  unchanged; **code mode** with local language detection (never sent as server
+  metadata), line numbers, and download.
+- **Multi-file attachments:** up to 5 via the new `share_attachments` child table
+  (slot 0–4), slot-staged reservations with per-slot uniqueness, reveal
+  `files[]` array, drag-and-drop zone, and Download-all as a locally built ZIP
+  (`fflate`). The single-file columns were migrated into slot 0 and dropped;
+  a stale Day-2 reservation-pair constraint that blocked second slots was
+  dropped during the audit pass.
+- **Encrypted discussions:** append-only `share_comments` table, capability
+  digest model (raw capability sealed in the SBCT `0x02` content trailer,
+  digest stored server-side), separate HKDF label
+  `securebin/v2/{mask}/discussion`, lifecycle inheritance gated inside the
+  atomic RPCs, and rate limiting: route buckets of 120 GET / 30 POST per fixed
+  window plus a database-side 60-per-minute limit keyed by
+  `discussion/{share_id}`. The GET capability moved from query string to the
+  `x-discussion-capability` header during the audit pass.
+
+Deviations from this plan as written:
+
+- Burn-policy shares needed no special "disable discussion" handling:
+  discussions are opt-in via a nullable capability, so burn-style shares simply
+  do not enable threads — no assert was required.
+- The composer and viewer were refactored during implementation into module
+  shells plus focused components (`app/components/composer/*`,
+  `app/s/[publicId]/viewer-parts/*`, shared styles under `app/styles/`);
+  behavior contracts were unchanged.
+
+Evidence gate: `pnpm supabase:reset` + `pnpm supabase:test` → 7 files, 115
+tests PASS; unit suite 21 files / 151 tests; integration 14; E2E 10; Axe 2 —
+all green. Migrations through `20260829000000_encrypted_discussions.sql`.
