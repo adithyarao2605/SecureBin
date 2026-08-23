@@ -1,0 +1,113 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { DiscussionThread } from "../../app/components/discussion-thread";
+import { deriveDiscussionKey, openDiscussionText, sealDiscussionText } from "../../lib/crypto/discussion";
+import { bytesToBase64Url } from "../../lib/crypto/encoding";
+
+const capability = new Uint8Array(32).fill(0x33);
+const hkdfSalt = new Uint8Array(16).fill(0x44);
+const threadProps = {
+  publicId: bytesToBase64Url(new Uint8Array(16).fill(0x11)),
+  capability,
+  hkdfSalt,
+  mask: "link" as const,
+};
+
+const topLevelId = "11111111-1111-4111-8111-111111111111";
+
+let key: CryptoKey;
+
+async function commentsResponse(): Promise<Response> {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => ({
+      comments: [
+        {
+          comment_id: topLevelId,
+          parent_comment_id: null,
+          body_envelope: await sealDiscussionText(key, "First sealed note"),
+          nickname_envelope: await sealDiscussionText(key, "Ada"),
+          created_at: "2026-08-20T10:00:00.000Z",
+        },
+        {
+          comment_id: "22222222-2222-4222-8222-222222222222",
+          parent_comment_id: null,
+          body_envelope: await sealDiscussionText(key, "Second sealed note"),
+          nickname_envelope: null,
+          created_at: "2026-08-20T11:00:00.000Z",
+        },
+      ],
+    }),
+  } as unknown as Response;
+}
+
+describe("DiscussionThread", () => {
+  beforeAll(async () => {
+    key = await deriveDiscussionKey(threadProps);
+  });
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/comments")) {
+        return Promise.resolve(commentsResponse());
+      }
+      return Promise.reject(new Error(`unexpected fetch: ${url}`));
+    }));
+  });
+
+  it("decrypts and renders sealed comments with nicknames", async () => {
+    render(<DiscussionThread {...threadProps} />);
+
+    expect(await screen.findByText("First sealed note")).toBeInTheDocument();
+    expect(screen.getByText("Second sealed note")).toBeInTheDocument();
+    expect(screen.getByText("Ada")).toBeInTheDocument();
+    expect(screen.getAllByText("Anonymous")).toHaveLength(1);
+    expect(screen.getByRole("heading", { name: "Encrypted discussion" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/Comments are encrypted locally; the server stores opaque ciphertext/)
+    ).toBeInTheDocument();
+
+    const [getUrl] = vi.mocked(fetch).mock.calls[0] as [string];
+    expect(getUrl).toContain(`capability=${encodeURIComponent(bytesToBase64Url(capability))}`);
+  });
+
+  it("posts a sealed reply bound to the capability and refetches", async () => {
+    render(<DiscussionThread {...threadProps} />);
+    await screen.findByText("First sealed note");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Reply" })[0]);
+    fireEvent.change(screen.getByLabelText("Reply"), {
+      target: { value: "A sealed reply" },
+    });
+    fireEvent.change(screen.getByLabelText("Nickname (optional)"), {
+      target: { value: "Grace" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Post" }));
+
+    await waitFor(() => {
+      const postCall = vi.mocked(fetch).mock.calls.find(([, init]) =>
+        (init as RequestInit | undefined)?.method === "POST"
+      );
+      expect(postCall).toBeDefined();
+    });
+
+    const [, postInit] = vi.mocked(fetch).mock.calls.find(
+      ([, init]) => (init as RequestInit | undefined)?.method === "POST"
+    ) as [string, RequestInit];
+    const payload = JSON.parse(String(postInit.body)) as {
+      capability: unknown;
+      parentCommentId: unknown;
+      bodyEnvelope: unknown;
+      nicknameEnvelope: unknown;
+    };
+
+    expect(payload.capability).toBe(bytesToBase64Url(capability));
+    expect(payload.parentCommentId).toBe(topLevelId);
+    await expect(openDiscussionText(key, payload.bodyEnvelope)).resolves.toBe("A sealed reply");
+    await expect(openDiscussionText(key, payload.nicknameEnvelope)).resolves.toBe("Grace");
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+});

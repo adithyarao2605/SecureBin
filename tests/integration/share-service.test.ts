@@ -39,6 +39,7 @@ const createInput: CreateShareInput = {
   passwordRequired: false,
   unlockRequired: false,
   idempotencyKeyHash: digest,
+  discussionCapabilityHash: null,
 };
 
 type RpcCall = { readonly functionName: string; readonly args: Record<string, unknown> };

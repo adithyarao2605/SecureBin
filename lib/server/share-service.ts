@@ -24,10 +24,15 @@ export interface ShareService {
   createShare(input: CreateShareInput): Promise<CreatedShare>;
   getStatus(publicId: string): Promise<ShareStatus>;
   reveal(publicId: string, requestToken: string): Promise<RevealResult>;
+  addComment(
+    publicId: string,
+    payload: Record<string, unknown>
+  ): Promise<{ commentId: string; createdAt: string }>;
+  listComments(publicId: string, capability: string): Promise<Array<Record<string, unknown>>>;
   revoke(publicId: string, deleteCapability: string): Promise<boolean>;
 }
 
-export type RateLimitAction = "upload" | "create" | "status" | "reveal" | "delete";
+export type RateLimitAction = "upload" | "create" | "status" | "reveal" | "delete" | "discussion";
 
 export class ShareServiceError extends Error {
   readonly kind: "dependency" | "invalid" | "conflict";
@@ -91,6 +96,9 @@ export function createShareService(
           p_password_required: input.passwordRequired,
           p_unlock_required: input.unlockRequired,
           p_idempotency_key_hash: bytesHex(input.idempotencyKeyHash),
+          p_discussion_capability_hash: input.discussionCapabilityHash
+            ? bytesHex(input.discussionCapabilityHash)
+            : null,
         });;
         const row = firstRow(value);
         if (!row || typeof row.public_id !== "string" || typeof row.created !== "boolean") throw new ShareServiceError("dependency");
@@ -183,6 +191,55 @@ export function createShareService(
         };
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
+        throw dependencyError();
+      }
+    },
+
+    async addComment(publicId, payload) {
+      const capability = typeof payload.capability === "string" ? payload.capability : "";
+      const parentCommentId = typeof payload.parentCommentId === "string" && payload.parentCommentId.length === 36
+        ? payload.parentCommentId
+        : null;
+      if (!capability || typeof payload.bodyEnvelope !== "object" || payload.bodyEnvelope === null) {
+        throw new ShareServiceError("invalid");
+      }
+      try {
+        const value = await rpc.call("add_share_comment", {
+          p_public_id: publicId,
+          p_discussion_capability: bytesHex(capability),
+          p_parent_comment_id: parentCommentId,
+          p_body_envelope: payload.bodyEnvelope,
+          p_nickname_envelope: payload.nicknameEnvelope ?? null,
+        });
+        const row = firstRow(value);
+        if (!row || typeof row.comment_id !== "string") throw new ShareServiceError("dependency");
+        return {
+          commentId: row.comment_id,
+          createdAt: typeof row.created_at === "string" ? row.created_at : new Date().toISOString(),
+        };
+      } catch (error) {
+        if (error instanceof ShareServiceError) throw error;
+        if (error instanceof RpcRequestError && (error.code === "22023" || error.code === "P0001")) {
+          throw new ShareServiceError(error.errorDetails?.includes("rate_limited") ? "dependency" : "invalid");
+        }
+        throw dependencyError();
+      }
+    },
+
+    async listComments(publicId, capability) {
+      if (!capability) throw new ShareServiceError("invalid");
+      try {
+        const value = await rpc.call("list_share_comments", {
+          p_public_id: publicId,
+          p_discussion_capability: bytesHex(capability),
+        });
+        return Array.isArray(value) && value.every(isRecord)
+          ? (value as Array<Record<string, unknown>>)
+          : [];
+      } catch (error) {
+        if (error instanceof RpcRequestError && error.code === "22023") {
+          throw new ShareServiceError("invalid");
+        }
         throw dependencyError();
       }
     },

@@ -3,6 +3,14 @@ import { MAX_CONTENT_BYTES } from "./envelope";
 
 export const CONTENT_PAYLOAD_MAGIC = new Uint8Array([0x53, 0x42, 0x43, 0x54]); // "SBCT"
 export const CONTENT_PAYLOAD_VERSION = 0x01;
+/**
+ * Version 0x02 appends a fixed 32-byte encrypted-discussion capability block
+ * after the text. All-zero bytes mean the share has discussions disabled.
+ * The server never parses plaintext frames - this is a browser-only contract.
+ */
+export const CONTENT_PAYLOAD_VERSION_DISCUSSION = 0x02;
+export const DISCUSSION_CAPABILITY_BYTES = 32;
+export const NO_DISCUSSION_CAPABILITY = new Uint8Array(DISCUSSION_CAPABILITY_BYTES);
 
 export const CONTENT_MODE_NOTE = 0x00;
 export const CONTENT_MODE_MARKDOWN = 0x01;
@@ -60,7 +68,10 @@ export class PayloadCodecError extends Error {
   }
 }
 
-export function encodeContentPayload(payload: ContentPayload): Uint8Array {
+export function encodeContentPayload(
+  payload: ContentPayload,
+  options?: { readonly discussionCapability?: Uint8Array }
+): Uint8Array {
   const textBytes = utf8Encode(payload.text);
   if (textBytes.length > MAX_CONTENT_BYTES) {
     throw new PayloadCodecError("Text exceeds the 512 KiB limit.");
@@ -89,16 +100,23 @@ export function encodeContentPayload(payload: ContentPayload): Uint8Array {
       throw new PayloadCodecError("Unsupported content mode.");
   }
 
+  const capability =
+    options?.discussionCapability &&
+    options.discussionCapability.length === DISCUSSION_CAPABILITY_BYTES &&
+    options.discussionCapability.some((byte) => byte !== 0)
+      ? options.discussionCapability
+      : null;
+
   // 4 (magic) + 1 (version) + 1 (mode) + 1 (langId) + 4 (text length) = 11 header bytes
   const headerLength = 11;
-  const totalLength = headerLength + textBytes.length;
+  const totalLength = headerLength + textBytes.length + (capability ? DISCUSSION_CAPABILITY_BYTES : 0);
   const result = new Uint8Array(totalLength);
   const view = new DataView(result.buffer, result.byteOffset, result.byteLength);
 
   // Magic
   result.set(CONTENT_PAYLOAD_MAGIC, 0);
   // Version
-  result[4] = CONTENT_PAYLOAD_VERSION;
+  result[4] = capability ? CONTENT_PAYLOAD_VERSION_DISCUSSION : CONTENT_PAYLOAD_VERSION;
   // Mode
   result[5] = modeByte;
   // Language ID
@@ -107,11 +125,24 @@ export function encodeContentPayload(payload: ContentPayload): Uint8Array {
   view.setUint32(7, textBytes.length, false); // big-endian
   // Text bytes
   result.set(textBytes, headerLength);
+  if (capability) {
+    result.set(capability, headerLength + textBytes.length);
+  }
 
   return result;
 }
 
+export interface DecodedContent {
+  readonly payload: ContentPayload;
+  /** Raw discussion capability when present; otherwise null. */
+  readonly discussionCapability: Uint8Array | null;
+}
+
 export function decodeContentPayload(bytes: Uint8Array): ContentPayload {
+  return decodeContentPayloadWithCapability(bytes).payload;
+}
+
+export function decodeContentPayloadWithCapability(bytes: Uint8Array): DecodedContent {
   if (bytes.length < 11) {
     throw new PayloadCodecError("Payload frame is shorter than the 11-byte header.");
   }
@@ -141,11 +172,18 @@ export function decodeContentPayload(bytes: Uint8Array): ContentPayload {
     throw new PayloadCodecError("Declared text length exceeds 512 KiB limit.");
   }
 
-  const expectedTotal = 11 + textLength;
+  const hasCapabilityBlock = version >= CONTENT_PAYLOAD_VERSION_DISCUSSION;
+  const expectedTotal = 11 + textLength + (hasCapabilityBlock ? DISCUSSION_CAPABILITY_BYTES : 0);
   if (bytes.length !== expectedTotal) {
     throw new PayloadCodecError(
       `Payload frame length mismatch: expected ${expectedTotal} bytes, got ${bytes.length} bytes.`
     );
+  }
+
+  let discussionCapability: Uint8Array | null = null;
+  if (hasCapabilityBlock) {
+    const cap = bytes.slice(11 + textLength);
+    discussionCapability = cap.some((byte) => byte !== 0) ? cap : null;
   }
 
   const textBytes = bytes.subarray(11, 11 + textLength);
@@ -160,21 +198,21 @@ export function decodeContentPayload(bytes: Uint8Array): ContentPayload {
     if (langId !== 0) {
       throw new PayloadCodecError("Note mode must have language ID 0.");
     }
-    return { mode: "note", text };
+    return { payload: { mode: "note", text }, discussionCapability };
   }
 
   if (modeByte === CONTENT_MODE_MARKDOWN) {
     if (langId !== 0) {
       throw new PayloadCodecError("Markdown mode must have language ID 0.");
     }
-    return { mode: "markdown", text };
+    return { payload: { mode: "markdown", text }, discussionCapability };
   }
 
   if (modeByte === CONTENT_MODE_CODE) {
     if (!(langId in ID_TO_LANGUAGE)) {
       throw new PayloadCodecError(`Unknown code language ID: ${langId}`);
     }
-    return { mode: "code", text, language: ID_TO_LANGUAGE[langId] };
+    return { payload: { mode: "code", text, language: ID_TO_LANGUAGE[langId] }, discussionCapability };
   }
 
   throw new PayloadCodecError(`Unsupported mode byte: ${modeByte}`);

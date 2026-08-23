@@ -43,6 +43,8 @@ function uploadDependencies(
       createShare: vi.fn(),
       getStatus: vi.fn(),
       reveal: vi.fn(),
+      addComment: vi.fn(),
+      listComments: vi.fn(),
       revoke: vi.fn(),
     },
     uploadService: {

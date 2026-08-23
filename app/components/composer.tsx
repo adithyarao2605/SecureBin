@@ -2,7 +2,7 @@
 
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { digestCapability, sealContent, type SealedContent } from "../../lib/crypto/content";
-import { bytesToArrayBuffer } from "../../lib/crypto/encoding";
+import { bytesToBase64Url, bytesToArrayBuffer, randomBytes } from "../../lib/crypto/encoding";
 import {
   MAX_FILE_PLAINTEXT_BYTES,
   sealFile,
@@ -76,6 +76,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   const [protection, setProtection] = useState<ProtectionState>(EMPTY_PROTECTION);
   const [protectionError, setProtectionError] = useState("");
+  const [enableDiscussion, setEnableDiscussion] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const [unlockCodeShown, setUnlockCodeShown] = useState("");
   const [receiptData, setReceiptData] = useState<{
     publicId: string;
@@ -131,6 +133,11 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
   function handleRemoveFile(index: number) {
     setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
     if (fileInputRef.current) fileInputRef.current.value = "";
+    resetPrepared();
+  }
+
+  function handleDiscussionToggle(next: boolean) {
+    setEnableDiscussion(next);
     resetPrepared();
   }
 
@@ -206,7 +213,10 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
             : {}),
           unlockCode: preparedFactors.unlockCode ?? undefined,
         };
-        const sealedContent = await sealContent(contentPayload, context, factorArgs);
+        const discussionCapability = enableDiscussion ? randomBytes(32) : null;
+        const sealedContent = await sealContent(contentPayload, context, factorArgs, {
+          discussionCapability: discussionCapability ?? undefined,
+        });
 
         const stagedFiles: PreparedAttemptFile[] = [];
         for (const file of attachedFiles) {
@@ -636,7 +646,28 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           )}
         </div>
 
-        <div className="file-attachment-section">
+        <div
+          className={`file-attachment-section${dragOver ? " drag-over" : ""}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const dropped = Array.from(e.dataTransfer.files);
+            if (dropped.length === 0) return;
+            for (const file of dropped) {
+              if (file.size > MAX_FILE_PLAINTEXT_BYTES) {
+                setErrorMessage(`"${file.name}" is too large. Maximum size per file is 10 MB.`);
+                return;
+              }
+            }
+            setAttachedFiles((prev) => [...prev, ...dropped].slice(0, 5));
+            resetPrepared();
+          }}
+        >
           <label htmlFor="file-attachment-input" className="sr-only">
             Attach file (max 10 MB)
           </label>
@@ -649,6 +680,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
             disabled={isPending}
             onChange={handleFileSelect}
           />
+          <p className="file-drop-hint">Drag files here or use the button below</p>
           {attachedFiles.length === 0 && (
             <button
               type="button"

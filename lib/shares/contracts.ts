@@ -60,6 +60,8 @@ export interface CreateShareInput {
   readonly passwordRequired: boolean;
   readonly unlockRequired: boolean;
   readonly idempotencyKeyHash: string;
+  /** SHA-256 digest of the raw discussion capability; null disables threads. */
+  readonly discussionCapabilityHash: string | null;
 }
 
 export type FileEnvelopeV2 = Envelope & {
@@ -242,7 +244,7 @@ export function parseFileEnvelope(value: unknown): FileEnvelopeV2 | null {
 export function parseCreateShareInput(value: unknown, nowMillis: number = Date.now()): CreateShareInput | null {
   if (!isRecord(value) || !hasOnlyKeys(value,
     ["contentEnvelope", "deleteTokenHash", "idempotencyKeyHash", "passwordRequired", "policy", "publicId", "unlockRequired"],
-    []
+    ["discussionCapabilityHash"]
   )) return null;
   if (!isRecord(value.policy) || !hasExactKeys(value.policy, ["availableAt", "expiresAt", "maxReveals"])) return null;
   if (!isBase64Url(value.publicId, PUBLIC_ID_BYTES)) return null;
@@ -279,6 +281,10 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
     passwordRequired: value.passwordRequired,
     unlockRequired: value.unlockRequired,
     idempotencyKeyHash: value.idempotencyKeyHash,
+    discussionCapabilityHash:
+      typeof value.discussionCapabilityHash === "string" && isDigest(value.discussionCapabilityHash)
+        ? value.discussionCapabilityHash
+        : null,
   };
 }
 

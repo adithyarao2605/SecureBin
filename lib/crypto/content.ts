@@ -20,6 +20,7 @@ import {
 } from "./envelope";
 import {
   decodeContentPayload,
+  decodeContentPayloadWithCapability,
   encodeContentPayload,
   type ContentPayload,
 } from "./payload";
@@ -101,12 +102,15 @@ export type SealedFactorArgs = ContentFactorOptions & { mask: FactorMask };
 export async function sealContent(
   input: string | ContentPayload,
   customContext?: ShareCryptoContext,
-  factors?: SealedFactorArgs
+  factors?: SealedFactorArgs,
+  options?: { readonly discussionCapability?: Uint8Array }
 ): Promise<SealedContent> {
   const payload: ContentPayload =
     typeof input === "string" ? { mode: "note", text: input } : input;
 
-  const framedBytes = encodeContentPayload(payload);
+  const framedBytes = encodeContentPayload(payload, {
+    discussionCapability: options?.discussionCapability,
+  });
   const context = customContext ?? generateShareContext();
 
   const nonce = randomBytes(12);
@@ -165,7 +169,7 @@ export async function openContent(
   publicId: string,
   linkSecret: string,
   factors?: ContentFactorOptions
-): Promise<ContentPayload> {
+): Promise<ContentPayload & { readonly discussionCapability?: Uint8Array | null }> {
   const envelope = validateContentEnvelope(envelopeValue);
   validatePublicId(publicId);
   validateLinkSecret(linkSecret);
@@ -191,6 +195,15 @@ export async function openContent(
     plaintextBytes = new Uint8Array(decrypted);
   } catch {
     throw new ContentCryptoError("wrong_key", "The link key could not open this share.");
+  }
+  void plaintextBytes;
+
+  // v2 frames may carry a discussion capability block (SBCT payload 0x02).
+  if (envelope.version === 2) {
+    const decoded = decodeContentPayloadWithCapability(plaintextBytes);
+    return decoded.discussionCapability
+      ? { ...decoded.payload, discussionCapability: decoded.discussionCapability }
+      : decoded.payload;
   }
 
   // Version 1 is legacy whole-note UTF-8 plaintext

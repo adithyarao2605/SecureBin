@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { openContent } from "../../../lib/crypto/content";
-import { bytesToBase64Url, randomBytes } from "../../../lib/crypto/encoding";
+import { bytesToBase64Url, bytesToArrayBuffer, base64UrlToBytes, randomBytes } from "../../../lib/crypto/encoding";
 import {
   type ContentEnvelope,
   type FileEnvelope,
@@ -16,9 +16,11 @@ import type { ContentPayload } from "../../../lib/crypto/payload";
 import { isMaxReveals, type MaxReveals } from "../../../lib/shares/contracts";
 import { formatLocalizedDateTime, type ProoflinePhase } from "../../../lib/shares/policy-ui";
 import { CodeView } from "../../components/code-view";
+import { DiscussionThread } from "../../components/discussion-thread";
 import { FilePreview } from "../../components/file-preview";
 import { MarkdownView } from "../../components/markdown-view";
 import { Proofline } from "../../components/proofline";
+import { sanitizeFilename } from "../../../lib/render/file-safety";
 
 type ActiveStatus = {
   status: "active";
@@ -222,6 +224,9 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [unlockInput, setUnlockInput] = useState("");
   const [factorsProvided, setFactorsProvided] = useState(false);
   const [factorError, setFactorError] = useState("");
+  const [discussionCapability, setDiscussionCapability] = useState<Uint8Array | null>(null);
+  const [discussionSalt, setDiscussionSalt] = useState<Uint8Array | null>(null);
+  const [zipPending, setZipPending] = useState(false);
   const requestTokenRef = useRef<string | null>(null);
   const revealInFlightRef = useRef(false);
 
@@ -292,6 +297,7 @@ export function Viewer({ publicId }: { publicId: string }) {
         if (response.status === 404) {
           setState("unavailable");
           setShareStatus({ status: "unavailable" });
+          setDiscussionCapability(null);
           return;
         }
         setState("network_error");
@@ -376,6 +382,7 @@ export function Viewer({ publicId }: { publicId: string }) {
         if (response.status === 404) {
           setState("unavailable");
           clearRequestToken();
+          setDiscussionCapability(null);
           return;
         }
         setNotice("The reveal could not be completed. Retrying with the same authorization…");
@@ -410,6 +417,12 @@ export function Viewer({ publicId }: { publicId: string }) {
 
       setContent(plaintext);
       setAttachments(decryptedFiles);
+      if (plaintext.discussionCapability) {
+        setDiscussionCapability(plaintext.discussionCapability);
+        setDiscussionSalt(base64UrlToBytes(revealPayload.contentEnvelope.hkdfSalt));
+      } else {
+        setDiscussionCapability(null);
+      }
       setState("opened");
       clearRequestToken();
       setPasswordInput("");
@@ -432,6 +445,36 @@ export function Viewer({ publicId }: { publicId: string }) {
       void checkShare(true);
     } finally {
       revealInFlightRef.current = false;
+    }
+  }
+
+  async function handleDownloadAll() {
+    if (zipPending || attachments.length === 0) return;
+    setZipPending(true);
+    try {
+      const { zipSync } = await import("fflate");
+      const entries: Record<string, Uint8Array> = {};
+      for (const attachment of attachments) {
+        const base = sanitizeFilename(attachment.payload.filename);
+        let name = base;
+        let suffix = 2;
+        while (name in entries) {
+          name = `${base}-${suffix}`;
+          suffix += 1;
+        }
+        entries[name] = attachment.payload.data;
+      }
+      const blob = new Blob([bytesToArrayBuffer(zipSync(entries))], { type: "application/zip" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "securebin-files.zip";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setZipPending(false);
     }
   }
 
@@ -661,9 +704,29 @@ export function Viewer({ publicId }: { publicId: string }) {
               </div>
             )}
 
+            {attachments.length > 1 && (
+              <button
+                type="button"
+                className="action-button secondary-button download-all-button"
+                disabled={zipPending}
+                onClick={() => void handleDownloadAll()}
+              >
+                {zipPending ? "Preparing ZIP…" : "Download all (ZIP)"}
+              </button>
+            )}
+
             {attachments.map((attachment, index) => (
               <FilePreview key={`${attachment.name}-${index}`} file={attachment.payload} />
             ))}
+
+            {discussionCapability && discussionSalt && (
+              <DiscussionThread
+                publicId={publicId}
+                capability={discussionCapability}
+                hkdfSalt={discussionSalt}
+                mask={currentFactorOptions()?.mask ?? "link"}
+              />
+            )}
           </div>
         )}
 

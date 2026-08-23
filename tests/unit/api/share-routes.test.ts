@@ -46,6 +46,8 @@ function dependencies(service: Partial<ShareService> = {}): ShareRouteDependenci
         remainingReveals: null,
       })),
       reveal: vi.fn(async () => ({ status: "authorized" as const, contentEnvelope: envelope, files: [], retryExpiresAt: "2099-01-01T00:05:00.000Z" })),
+      addComment: vi.fn(async () => ({ commentId: "c1", createdAt: new Date().toISOString() })),
+      listComments: vi.fn(async () => []),
       revoke: vi.fn(async () => true),
       ...service,
     },

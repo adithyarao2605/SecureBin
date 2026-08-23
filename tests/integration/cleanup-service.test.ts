@@ -68,6 +68,7 @@ describe("cleanup service integration", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash: randomDigest(),
+      discussionCapabilityHash: null,
     });
 
     // 2. Run cleanup

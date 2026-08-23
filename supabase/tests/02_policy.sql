@@ -4,7 +4,7 @@ select plan(29);
 
 -- 1. Check function signatures
 select has_function('public', 'create_upload_reservation', array['text','bytea','jsonb','bigint','integer'], 'tuple upload reservation RPC exists');
-select has_function('public', 'create_share', array['text','jsonb','timestamp with time zone','timestamp with time zone','integer','bytea','boolean','boolean','bytea'], '9-arg create_share RPC exists');
+select has_function('public', 'create_share', array['text','jsonb','timestamp with time zone','timestamp with time zone','integer','bytea','boolean','boolean','bytea','bytea'], '10-arg create_share RPC exists');
 
 -- Verify old overloads are dropped
 select ok(
