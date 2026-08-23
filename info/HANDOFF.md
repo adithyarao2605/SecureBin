@@ -76,6 +76,7 @@ Day 4 is planned in `docs/DAY-4-PLAN.md` and ready to implement: PBKDF2 password
 
 ## Recent Commits
 
+- `1735dbf` feat(ui): match code dropdown theme and align decrypted viewer
 - `d245b32` fix(db): drop stale Day-3 size constraints; review fixes; Day 5-7 plans
 - `93faf76` docs(ci): finish key-material purge, DAY-2-UI numbering, record day-6 UI decision
 - `0d4cb15` fix(ci): read service key from repository secret; drop unused anon key
