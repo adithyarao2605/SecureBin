@@ -79,3 +79,66 @@ test("creates a share with an encrypted attachment and reveals both", async ({ p
   const downloadButton = attachmentCard.getByRole("link", { name: /Download probe\.png/u });
   await expect(downloadButton).toBeVisible();
 });
+
+test("accepts drag-dropped multi-file uploads and downloads them as one ZIP", async ({ page }) => {
+  test.setTimeout(90_000);
+
+  const capturedSlots: unknown[] = [];
+  page.on("request", (request) => {
+    if (request.method() !== "POST" || new URL(request.url()).pathname !== "/api/uploads") return;
+    try {
+      capturedSlots.push((JSON.parse(request.postData() ?? "{}") as { attachmentSlot?: unknown }).attachmentSlot);
+    } catch {
+      // ignore non-JSON probes
+    }
+  });
+
+  await page.goto("/new");
+  await page.getByLabel("Note content").fill("Multi-file round trip through drag and drop.");
+
+  const files = [
+    { name: "alpha.png", mime: "image/png", b64: PNG_BASE64 },
+    { name: "beta.txt", mime: "text/plain", b64: Buffer.from("beta plaintext body").toString("base64") },
+    { name: "gamma.md", mime: "text/markdown", b64: Buffer.from("# gamma\nbody").toString("base64") },
+  ];
+  const dropZone = page.locator(".file-attachment-section");
+  for (const file of files) {
+    await dropZone.evaluate(
+      (element, { name, mime, b64 }) => {
+        const bytes = Uint8Array.from(atob(b64), (character) => character.charCodeAt(0));
+        const transfer = new DataTransfer();
+        transfer.items.add(new File([bytes], name, { type: mime }));
+        element.dispatchEvent(new DragEvent("drop", { dataTransfer: transfer, bubbles: true }));
+      },
+      file
+    );
+  }
+  for (const file of files) {
+    await expect(page.getByText(file.name)).toBeVisible();
+  }
+
+  await page.getByRole("button", { name: "Create share" }).click();
+  const shareLinkInput = page.getByRole("textbox", { name: "Share link" });
+  await expect(shareLinkInput).toBeVisible({ timeout: 30_000 });
+
+  // Each staged file must reserve its own slot — this is the server-side
+  // multi-file contract (slot forwarded to the reservation RPC).
+  expect(capturedSlots.sort()).toEqual([0, 1, 2]);
+
+  const shareHref = await shareLinkInput.inputValue();
+  await page.goto(shareHref);
+  const revealButton = page.getByRole("button", { name: "Reveal" });
+  await expect(revealButton).toBeVisible({ timeout: 20_000 });
+  await revealButton.click();
+
+  for (const file of files) {
+    await expect(page.getByLabel("Decrypted file attachment").getByRole("heading", { name: new RegExp(file.name, "u") })).toBeVisible();
+  }
+
+  const zipButton = page.getByRole("button", { name: /Download all \(ZIP\)/u });
+  await expect(zipButton).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await zipButton.click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.zip$/u);
+});

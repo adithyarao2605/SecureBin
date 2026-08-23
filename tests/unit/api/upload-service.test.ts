@@ -32,7 +32,7 @@ describe("upload reservation service", () => {
   it("maps reservation_conflict to a conflict error", async () => {
     const rpc = {
       call: vi.fn(async () => {
-        throw new RpcRequestError("conflict", "23505", "reservation_conflict");
+          throw new RpcRequestError(409, "23505", "reservation_conflict");
       }),
     };
     const service = createUploadService(rpc as never, { createSignedUpload: vi.fn() } as never);
