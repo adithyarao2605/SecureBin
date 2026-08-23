@@ -16,6 +16,7 @@
     "test": "vitest run --config vitest.config.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts --passWithNoTests",
     "test:e2e": "playwright test --config=playwright.config.ts",
+    "test:e2e:prod": "playwright test --config=playwright.prod.config.ts",
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
     "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "supabase:start": "supabase start",

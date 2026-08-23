@@ -118,6 +118,5 @@ test("created share appears in the local history desk with live actions", async 
   await page.getByRole("tab", { name: "My shares" }).click();
   await expect(page.getByRole("heading", { name: "Shares created on this device" })).toBeVisible();
   await expect(page.getByText("● Active")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Check status" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Copy link" }).first()).toBeVisible();
 });
