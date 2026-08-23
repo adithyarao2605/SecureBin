@@ -1,12 +1,12 @@
 # SecureBin Handoff
 
-Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
+Updated: 2026-08-24 (Asia/Kolkata) — **handoff to the next agent**
 
 ## Read this first
 
 - Active roadmap: **`info/plan_v3.md`** (Phases A–G, in order, green gates
-  between phases). **Phase A is complete.** Your first task is Phase B: the
-  selector, QR, Markdown preview, and Privacy Receipt fixes.
+  between phases). **Phases A–D are complete.** The next agent starts with
+  Phase E pre-Day-6 hardening.
 - Day 6/7 detail: `docs/DAY-6-PLAN.md` / `docs/DAY-7-PLAN.md` (referenced by
   plan_v3 Phases F/G). Historical day plans and the resolved incident:
   `docs/archive/`.
@@ -18,7 +18,7 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
   landing-screen generation attempt hit a service "entity not found" error —
   retry, or create a fresh project if it persists.
 
-## Current state (Phase A complete at `60aa696`)
+## Current state (Phases A–D complete; Phase E production slice complete; latest code is uncommitted)
 
 - `/` is now the screenshot-led landing page: black/teal two-column hero,
   three-tab header (`New share`, `My shares`, `How it works`), right-aligned
@@ -29,6 +29,17 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
 - The old root composer was extracted to `app/components/app-workspace.tsx`;
   route-specific tests now use `/new`. Duplicate `public/icon.svg` was
   removed because `app/icon.svg` already owns that route.
+- Phase B is complete: Code language selector is grouped directly beside Code,
+  QR content is centered, Markdown preview styles are scoped, and Privacy
+  Receipt is a native collapsible disclosure directly under Copy link.
+- Phase C is complete: comment edit/delete uses random client-held proof tokens,
+  SHA-256 digests server-side, `edited_at`, and orphan reply markers.
+- Phase D is complete: `POST /api/shares/status-batch` and
+  `get_share_status_batch(text[])` refresh the visible history desk in one
+  capped request with localStorage merge and one refreshing indicator.
+- Phase E production slice is complete: `pnpm test:e2e:prod` runs all 12
+  Playwright flows against `next start`; the remaining Phase E backlog is not
+  yet a green Day 6 entry gate.
 
 ## Previous shipped state (before Phase A)
 
@@ -50,15 +61,17 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
   markdown typography blocks — both restored; if styles ever "vanish", diff
   partials against the pre-split monolith).
 - **UI decisions**: three-tab layout restored (owner preference); language
-  selector themed next to the Code tab; Privacy Receipt currently a card —
-  plan_v3 Phase B converts it to a dropdown under Copy link.
+  selector is grouped next to the Code tab; Privacy Receipt is a native
+  collapsible disclosure directly below Copy link.
 
 ## Validation (rerun these; numbers recorded at last green)
 
-`pnpm validate` (lint, typecheck, 145 unit tests, build) · `pnpm test:integration`
-(14) · `pnpm supabase:test` (115 pgTAP, 7 files) · `pnpm test:e2e` (11,
+`pnpm validate` (lint, typecheck, 151 unit tests, build) · `pnpm test:integration`
+(16) · `pnpm supabase:test` (131 pgTAP, 8 files) · `pnpm test:e2e` (12,
 **workers: 1 — do not raise**, dev-server compile races flake parallel runs)
-· `pnpm test:a11y` (2) · reproducibility script · `pnpm audit` clean.
+· `pnpm test:e2e:prod` (12) · `pnpm test:a11y` (3) · reproducibility script ·
+`pnpm audit --audit-level=high` clean. Final rerun: all listed gates green on
+2026-08-24.
 
 ## Known limitations (accepted, documented)
 
@@ -67,8 +80,27 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
 - Reveal lease is consumed before the signed URL is minted; after the 5-minute
   lease window a retry spends a second authorization.
 - Rate limiting trusts client-forwarded headers off Vercel.
-- E2E runs against `next dev`, not the production build (plan_v3 Phase E #1).
+- The default E2E suite runs against `next dev`; `pnpm test:e2e:prod` now
+  covers the same flow against `next start`.
 - Discussion capability is a bearer secret held by revealed recipients.
+
+## Phase E decision blocker
+
+- Secure Drop has not been implemented. It needs an explicit protocol decision
+  before code changes because recipient-bound sharing is currently deferred in
+  `docs/architecture.md`.
+- The proposed shape is a separate ECDH P-256 + HKDF-SHA-256 drop envelope,
+  requester private key retained in IndexedDB, one response per request,
+  bounded request expiry, and atomic request/response lifecycle RPCs. It must
+  not extend the existing share envelope.
+- Owner decisions required: IndexedDB-only private key persistence versus an
+  encrypted recovery export; one response versus multiple responses; request
+  expiry/revocation policy; and whether the public key is carried in the URL
+  versus trusted from the server record.
+
+Delegated exploration on 2026-08-24 confirmed the above boundary and listed
+the required crypto, API, database, storage, UI, test, and documentation
+surfaces. No files were edited by the delegate.
 
 ## Gotchas
 
@@ -84,8 +116,10 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
 
 ## Next steps (in order)
 
-1. Implement `info/plan_v3.md` Phase B UI fixes, then C/D/E with green gates.
-2. Phases F/G per `docs/DAY-6-PLAN.md` / `DAY-7-PLAN.md` (Day 6 exit gate
+1. Continue `info/plan_v3.md` Phase E: Secure Drop, recipient acknowledgment,
+   self-host commands, expanded Axe/perf coverage, and evidence pack.
+2. Start Phase F / Day 6 only after the pre-Day-6 entry gate is green; then
+   follow `docs/DAY-6-PLAN.md` and `docs/DAY-7-PLAN.md` (Day 6 exit gate
    before Day 7; freeze means freeze).
 3. Keep `info/HANDOFF.md` updated at the end of every run.
 
@@ -93,6 +127,7 @@ Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
 
 - `b4947a4` docs(day6): plan comment edit/delete, my-shares batch status sync, rubric backlog
 - `60aa696` feat: add landing route and app split
+- `029833c` docs: record landing handoff
 - `1961f79` docs(handoff): production migrations applied and live flow verified
 - `c730535` fix(ui): restore three-tab layout, markdown preview typography, preset/unlock explanations
 - `4658c5e` fix(day5): audit remediation batch

@@ -1,9 +1,9 @@
 # Day 7 implementation plan: freeze, validation, evidence, demo, submission
 
-Status: **gated — do not start until the Day 6 exit gate is green (Day 6 is the active milestone)**
+Status: **gated future work — do not start until the Day 6 exit gate is green**
 
-Audience: low-context implementation agents. Scope source: `info/plan_v2.md`
-§6. Day 7 adds **no new product capability**; unfinished required work is
+Audience: low-context implementation agents. Scope authority: `info/plan_v3.md`
+Phase G. Day 7 adds **no new product capability**; unfinished required work is
 stabilized first.
 
 ## Outcome and non-goals
@@ -81,7 +81,7 @@ table mapping every criterion to docs, tests, and evidence files.
 
 ## 9. Demo script + submission
 
-Rehearse the 60–90s flow from `info/plan_v2.md` §6.13 (trim to fit time).
+Rehearse the 60–90s flow from `info/plan_v3.md` and this document (trim to fit time).
 Before submit: live URL green; repo clean; no secrets; screenshots current;
 every claimed feature exists; submit with deadline buffer.
 

@@ -5,7 +5,7 @@ Status: **implemented and verified — see [Outcome](#outcome) at the end**
 Audience: low-context implementation agents; locked formats must not be improvised
 
 This plan implements SPEC Day 4. It requires the Day 1–3 evidence recorded in
-[`../info/HANDOFF.md`](../info/HANDOFF.md) and the production fixes shipped
+[`../../info/HANDOFF.md`](../../info/HANDOFF.md) and the production fixes shipped
 2026-08-22 (CSP storage origin, base64url canonical newline fix) to be deployed.
 
 ## Outcome and non-goals

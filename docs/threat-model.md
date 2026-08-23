@@ -13,7 +13,7 @@ safe local rendering boundaries; custom reveal counts; "Never" expiry; and
 scheduled cleanup.
 
 The 2026-08-21 production create incident is resolved and closed; the record
-lives in [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Temporary
+lives in [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md). Temporary
 diagnostics may record envelope shape and lengths only—never values,
 ciphertext, plaintext, capabilities, or credentials.
 

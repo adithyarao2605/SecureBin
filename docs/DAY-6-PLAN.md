@@ -1,9 +1,9 @@
 # Day 6 implementation plan: reveal window, privacy veil, self-host, parcels, local manager
 
-Status: **next up — Days 1–5 gates are green; run this plan's entry-gate commands before starting any slice**
+Status: **gated future work — plan_v3 Phases B–E must finish before Day 6**
 
-Audience: low-context implementation agents. Scope source: `info/plan_v2.md`
-§4 and §5 (stretch). This document locks execution detail.
+Audience: low-context implementation agents. Scope authority: `info/plan_v3.md`
+Phase F; this document locks execution detail.
 
 ## Outcome and non-goals
 
@@ -62,7 +62,8 @@ not); full gates green at the starting commit.
    UI → tests (window start, inside/outside, retry-token, × max-reveals,
    × expiry, × revoke).
 3. Privacy veil + visibility auto-hide.
-4. Self-host scripts + fresh-clone doc pass (`docs/self-hosting.md`).
+4. Self-host scripts + fresh-clone doc pass; create the self-host runbook as
+   part of this slice before linking it from this document.
 5. `.securebin` export/import + offline decrypt demo path.
 6. Local sender manager upgrades.
 7. Expanded receipt fields (content type, file count, discussion state,

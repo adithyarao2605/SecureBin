@@ -3,17 +3,17 @@
 ## 1. Status and Goals
 
 This document is the technical source of truth for the judged SecureBin release.
-`info/plan.md` provides product priorities and the retained roadmap. Project implementation decisions and validation records are maintained in `info/HANDOFF.md`.
+`info/plan_v3.md` is the active implementation roadmap. `info/plan.md` provides historical product priorities. Project implementation decisions and validation records are maintained in `info/HANDOFF.md`.
 
 ### Current implementation status
 
-Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), Day 3 (Multi-Mode Content with SBCT Binary Framing, Encrypted Attachments, Storage URL Normalization, Safe Local Previews), Day 4 (Password Factor with PBKDF2-HMAC-SHA-256 at 600,000 iterations, Two-Channel Unlock Codes, QR + Native Share + Email Actions, Privacy Receipt, Pre-flight Disclosure, Complete Non-Happy-Path States), and Day 5 (Custom Reveal Counts 1–100, "Never" Expiry, Policy Presets, Markdown Edit/Split/Preview, Code Mode with Local Language Detection, Multi-File Encrypted Attachments ≤5 with Download-all ZIP, Drag-and-Drop Zone, and Encrypted Discussions) are **implemented and fully verified**: 151 unit tests (21 files), 14 integration tests, 115 pgTAP tests (7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests pass locally.
+Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), Day 3 (Multi-Mode Content with SBCT Binary Framing, Encrypted Attachments, Storage URL Normalization, Safe Local Previews), Day 4 (Password Factor with PBKDF2-HMAC-SHA-256 at 600,000 iterations, Two-Channel Unlock Codes, QR + Native Share + Email Actions, Privacy Receipt, Pre-flight Disclosure, Complete Non-Happy-Path States), and Day 5 (Custom Reveal Counts 1–100, "Never" Expiry, Markdown Edit/Split/Preview, Code Mode with Local Language Detection, Multi-File Encrypted Attachments ≤5 with Download-all ZIP, Drag-and-Drop Zone, and Encrypted Discussions) are **implemented and fully verified**: 151 unit tests (22 files), 16 integration tests, 131 pgTAP tests (8 files), 12 Playwright E2E tests, and 3 Axe accessibility tests pass locally. The public landing is `/`; the sharing app is `/new`. Phases B–D of plan_v3 are also complete.
 
 Development happens on the `dev` branch (Vercel preview); `main` is production.
 
 SecureBin provides anonymous, browser-encrypted sharing with server-enforced availability, expiry (including "Never"), revocation, and reveal limits from 1 to unlimited. The server stores ciphertext, a discussion-capability digest, and lifecycle metadata but never receives content keys, passwords, unlock codes, discussion capabilities, filenames, plaintext MIME types, or plaintext content.
 
-The release boundary is intentionally narrow enough to harden thoroughly. Recipient-bound sharing, passkeys, Secure Rooms, richer previews, localization, Argon2id, size padding, alternate storage adapters, and SDKs remain compatible future phases (`info/plan_v2.md` Days 6–7 cover the reveal window, privacy veil, self-hosting, parcels, and local manager).
+The release boundary is intentionally narrow enough to harden thoroughly. Recipient-bound sharing, passkeys, Secure Rooms, richer previews, localization, Argon2id, size padding, alternate storage adapters, and SDKs remain compatible future phases (`info/plan_v3.md` Phases F–G cover the reveal window, privacy veil, self-hosting, parcels, and local manager).
 
 ## 2. Trust and Threat Model
 
@@ -63,7 +63,7 @@ The browser owns key generation, derivation, encryption, decryption, content ren
 ### Experience layer (non-authoritative)
 
 The browser surface follows the quiet-proof direction in
-[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof), [`docs/DAY-2-UI.md`](/docs/archive/DAY-2-UI.md), and the Stitch MCP project **`SecureBin Quiet Proof Design System v1`** (`projects/12991627127209989717`): a light-first
+[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof), [`archive/DAY-2-UI.md`](archive/DAY-2-UI.md), and the Stitch MCP project **`SecureBin Quiet Proof Design System v1`** (`projects/12991627127209989717`): a light-first
 Linen/Ink/Mineral/Copper palette, a single compose or reveal surface, and one
 proofline connecting the browser, sealed parcel, and recipient. The proofline is
 only an explanation of the client flow. It must never be used as evidence that
@@ -79,7 +79,7 @@ change the cryptographic or trust boundaries above.
 
 ## 4. Deployment Components
 
-- **Next.js App Router:** public composer, share viewer, security page, and server-only route handlers.
+- **Next.js App Router:** public landing (`/`), sharing app (`/new`), share viewer, and server-only route handlers.
 - **Client crypto module:** Web Crypto wrappers, canonical encoding, envelopes, and golden-vector compatibility.
 - **Supabase Postgres:** lifecycle metadata, ciphertext for textual content, upload reservations, reveal leases, and atomic functions.
 - **Supabase Storage:** encrypted file bytes under random paths in a private bucket.
@@ -242,7 +242,7 @@ All APIs use strict shared schemas, size limits, JSON error codes, request IDs, 
 Supabase SQLSTATE `22023` validation failures surface from PostgREST as `400`;
 the server dependency boundary deliberately maps them to a uniform public
 failure. The current production example is documented in
-[`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md). Diagnostics may compare
+[`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md). Diagnostics may compare
 field names/types and decoded lengths, never envelope values or ciphertext.
 
 ### `POST /api/uploads`

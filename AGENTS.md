@@ -32,9 +32,10 @@ contract, not optional decoration:
 
 ## Sources of Truth
 
-- `info/plan.md` defines product priorities, delivery order, and the future roadmap.
+- `info/plan.md` defines product priorities and delivery order; `info/plan_v3.md`
+  is the active implementation roadmap.
 - `docs/architecture.md` defines protocol, trust boundaries, schemas, APIs, and lifecycle semantics.
-- `docs/PRODUCTION-INCIDENT.md` records the resolved 2026-08-21 production create incident and its investigation order; it is history, not an open blocker.
+- `docs/archive/PRODUCTION-INCIDENT.md` records the resolved 2026-08-21 production create incident and its investigation order; it is history, not an open blocker.
 - Supabase migrations define the deployed database contract.
 - `package.json` scripts define executable validation commands.
 
@@ -64,6 +65,7 @@ pnpm typecheck
 pnpm test
 pnpm test:integration
 pnpm test:e2e
+pnpm test:e2e:prod
 pnpm test:a11y
 pnpm build
 pnpm validate

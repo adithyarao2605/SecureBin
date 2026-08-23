@@ -1,6 +1,6 @@
 # Deployment and reproducibility
 
-The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md)). All database migrations through `20260829000000_encrypted_discussions.sql` are committed; migrations `20260826000000` (drop stale size constraints), `20260827000000` (custom reveal policies), `20260828000000` (multi-file attachments), and `20260829000000` (encrypted discussions) must be pushed to the remote database before a production deploy of the current code.
+The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md)). All database migrations through `20260829000000_encrypted_discussions.sql` are committed and applied to the hosted database. The current Phase A landing/app route split still needs the owner-operated production redeploy.
 
 Branch model: development happens on `dev`, which Vercel builds as a preview deployment; `main` is production. Verify features on the preview URL before promoting to `main`.
 
@@ -48,9 +48,9 @@ dependency installation and runs the same Python repository check.
 - The exact reviewed commit SHA from `git rev-parse HEAD`.
 - This runbook and the current [`../info/HANDOFF.md`](../info/HANDOFF.md).
 - A statement of scope: Days 1–5 are implemented and gated in CI with local
-  verification (151 unit, 14 integration, 115 pgTAP, 10 E2E, 2 Axe tests);
-  the newest migrations still require an owner `supabase db push` and a
-  production redeploy.
+  verification (151 unit, 16 integration, 131 pgTAP, 12 E2E, 3 Axe tests);
+  the newest migrations are already applied; the current landing/app code
+  still requires an owner production redeploy.
 
 Do **not** send `.env`/`.env.local`, Supabase service-role credentials,
 `RATE_LIMIT_HMAC_KEY`, `CRON_SECRET`, real share URLs or URL fragments,

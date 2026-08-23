@@ -103,7 +103,7 @@ Give the maintainer:
 
 - repository URL;
 - exact starting commit `65f8353` or a descendant on the rewritten main line;
-- this document and [`deployment.md`](deployment.md);
+- this document and [`deployment.md`](../deployment.md);
 - least-privilege GitHub, Vercel, and Supabase team access.
 
 Never send `.env`, service-role/secret keys, database passwords, fragment URLs,

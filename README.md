@@ -15,13 +15,14 @@ templates, or visual identity.
 
 Days 1 through 5 are implemented and fully verified. That covers the core cryptographic engine, lifecycle policy correctness with concurrency proofs, safe multi-mode content (plain notes, sanitized Markdown, syntax-highlighted code) with SBCT binary framing, encrypted attachments up to five files per share with drag-and-drop and Download-all ZIP, password factors (PBKDF2-HMAC-SHA-256, 600,000 iterations), two-channel unlock codes (Crockford Base32 with check symbol), custom reveal counts from 1 to 100, "Never" expiry, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions, QR + native share + email actions, and the Privacy Receipt with a pre-flight "What will SecureBin see?" disclosure.
 
-All gates pass locally: 145 unit tests (21 files), 14 integration tests, 115 pgTAP database tests (7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md)).
+All gates pass locally: 151 unit tests (22 files), 16 integration tests, 131 pgTAP database tests (8 files), 12 Playwright E2E tests, and 3 Axe accessibility tests. The production-build E2E gate also passes. The previous production incident is closed (see [`docs/archive/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md)). The current route split is `/` for the landing page and `/new` for the sharing app.
 
 Development happens on the `dev` branch, which deploys as a Vercel preview; `main` remains production. CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request.
 
 ## Product and UX direction
 
-SecureBin uses a light-first **quiet proof** visual language: a warm Linen
+SecureBin uses a light-first **quiet proof** visual language for the app and a
+dark OLED landing variant: a warm Linen
 canvas, Ink typography, Mineral actions, a restrained Copper accent, and an
 asymmetrical single-surface layout. A small “proofline” connects browser,
 sealed parcel, and recipient as a visual explanation of the flow. It is not a
@@ -60,7 +61,7 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
 - [`docs/policy-state.md`](docs/policy-state.md) — atomic lifecycle state model.
 - [`docs/deployment.md`](docs/deployment.md) — fresh-clone, environment, and
   deployment checklist.
-- [`docs/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md) — resolved
+- [`docs/archive/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md) — resolved
   2026-08-21 create-failure incident record and investigation order.
 - [`docs/DAY-4-PLAN.md`](docs/archive/DAY-4-PLAN.md) and
   [`docs/DAY-5-PLAN.md`](docs/archive/DAY-5-PLAN.md) — executed Day 4 and Day 5
@@ -76,8 +77,10 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
   contract for Day 2.
 - [`docs/DAY-3-PLAN.md`](docs/archive/DAY-3-PLAN.md) — detailed safe-content and encrypted
   attachment sequence.
-- [`info/plan.md`](info/plan.md) — product priorities, delivery order, and
-  future roadmap (read-only planning source).
+- [`info/plan_v3.md`](info/plan_v3.md) — active implementation roadmap, phases,
+  gates, and Day 6/7 handoff.
+- [`info/plan.md`](info/plan.md) — product priorities and historical delivery
+  order (read-only planning source).
 
 ## Reproducible setup
 
@@ -104,6 +107,7 @@ pnpm validate
 pnpm test:integration
 pnpm exec playwright install chromium
 pnpm test:e2e
+pnpm test:e2e:prod
 pnpm test:a11y
 ```
 
@@ -143,6 +147,7 @@ pnpm install --frozen-lockfile
 pnpm validate
 pnpm test:integration
 pnpm test:e2e
+pnpm test:e2e:prod
 pnpm test:a11y
 ```
 
@@ -175,10 +180,10 @@ authorized at a non-preset limit).
 | Rubric area | Evidence location | Status |
 | --- | --- | --- |
 | Problem understanding | This README, local planning references, threat model | Foundation documented |
-| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions, custom policies, Privacy Receipt | Phase A landing shipped; plan_v3 Phases B–G in flight |
+| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions with edit/delete, custom policies, Privacy Receipt | plan_v3 Phases A–D shipped; Phase E–G gated |
 | Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented through discussions and multi-file model |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Composer, viewer, factor prompts, receipt, and discussions covered |
-| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local + CI gates green: 145 unit / 14 integration / 115 pgTAP / 10 E2E / 2 Axe |
+| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local gates green: 151 unit / 16 integration / 131 pgTAP / 12 E2E / 3 Axe / production E2E |
 | Documentation | This README, threat model, architecture, runbook | Present |
 
 ## Security and limitations
