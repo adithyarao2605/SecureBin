@@ -649,3 +649,19 @@
   letter-spacing: 0.05em;
   margin: 0;
 }
+
+/* Privacy veil (local hide; not screenshot prevention) */
+.privacy-veil[data-veiled="true"] .veil-content {
+  filter: blur(18px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.privacy-veil .veil-toggle {
+  margin-bottom: 0.5rem;
+}
+
+.veil-copy {
+  margin-top: -0.25rem;
+  margin-bottom: 0.75rem;
+}

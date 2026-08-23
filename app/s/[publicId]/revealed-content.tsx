@@ -8,6 +8,7 @@ import { sanitizeFilename } from "../../../lib/render/file-safety";
 import { CodeView } from "../../components/code-view";
 import { FilePreview } from "../../components/file-preview";
 import { MarkdownView } from "../../components/markdown-view";
+import { PrivacyVeil } from "./viewer-parts/privacy-veil";
 
 export interface DecryptedAttachment {
   readonly name: string;
@@ -59,34 +60,36 @@ export function RevealedContent({ content, attachments, children }: RevealedCont
         Opened locally. The server released ciphertext; this browser did the decryption.
       </p>
 
-      {content.text && (
-        <div className="decrypted-content-container">
-          {content.mode === "note" && (
-            <article className="decrypted-content-box" aria-label="Decrypted note">
-              <pre className="decrypted-text">{content.text}</pre>
-            </article>
-          )}
+      <PrivacyVeil>
+        {content.text && (
+          <div className="decrypted-content-container">
+            {content.mode === "note" && (
+              <article className="decrypted-content-box" aria-label="Decrypted note">
+                <pre className="decrypted-text">{content.text}</pre>
+              </article>
+            )}
 
-          {content.mode === "markdown" && <MarkdownView markdown={content.text} />}
+            {content.mode === "markdown" && <MarkdownView markdown={content.text} />}
 
-          {content.mode === "code" && <CodeView code={content.text} language={content.language} />}
-        </div>
-      )}
+            {content.mode === "code" && <CodeView code={content.text} language={content.language} />}
+          </div>
+        )}
 
-      {attachments.length > 1 && (
-        <button
-          type="button"
-          className="action-button secondary-button download-all-button"
-          disabled={zipPending}
-          onClick={() => void handleDownloadAll()}
-        >
-          {zipPending ? "Preparing ZIP…" : "Download all (ZIP)"}
-        </button>
-      )}
+        {attachments.length > 1 && (
+          <button
+            type="button"
+            className="action-button secondary-button download-all-button"
+            disabled={zipPending}
+            onClick={() => void handleDownloadAll()}
+          >
+            {zipPending ? "Preparing ZIP…" : "Download all (ZIP)"}
+          </button>
+        )}
 
-      {attachments.map((attachment, index) => (
-        <FilePreview key={`${attachment.name}-${index}`} file={attachment.payload} />
-      ))}
+        {attachments.map((attachment, index) => (
+          <FilePreview key={`${attachment.name}-${index}`} file={attachment.payload} />
+        ))}
+      </PrivacyVeil>
 
       {children}
     </div>
