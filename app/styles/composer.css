@@ -558,3 +558,25 @@
 }
 
 /* File Attachment & Preview */
+
+/* .securebin parcel export + offline restore */
+.parcel-export-box {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.parcel-import {
+  margin-top: 1.25rem;
+}
+
+.parcel-import .policy-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.parcel-result {
+  margin-top: 0.75rem;
+}

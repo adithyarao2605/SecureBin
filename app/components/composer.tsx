@@ -56,6 +56,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   const [enableDiscussion, setEnableDiscussion] = useState(false);
   const [unlockCodeShown, setUnlockCodeShown] = useState("");
   const [receiptData, setReceiptData] = useState<PrivacyReceiptData | null>(null);
+  const [parcel, setParcel] = useState<Uint8Array | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Discussion capability minted once per share attempt so a staged retry
@@ -179,6 +180,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
       // Show the code that sealed the share, not a freshly minted one.
       setUnlockCodeShown(outcome.unlockCode);
       setReceiptData(outcome.receipt);
+      setParcel(outcome.parcel);
 
       discard();
       lastAttemptRef.current = null;
@@ -227,6 +229,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   function handleReset() {
     setUnlockCodeShown("");
     setReceiptData(null);
+    setParcel(null);
     setDraft("");
     setAttachedFiles([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -249,6 +252,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
         shareUrl={shareUrl}
         unlockCodeShown={unlockCodeShown}
         receiptData={receiptData}
+        parcel={parcel}
         activeDeleteCapability={activeDeleteCapability}
         revokedMessage={revokedMessage}
         showRevokeConfirm={showRevokeConfirm}

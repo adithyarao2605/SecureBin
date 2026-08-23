@@ -1,5 +1,6 @@
 "use client";
 
+import { bytesToArrayBuffer } from "../../../lib/crypto/encoding";
 import { PrivacyReceipt, type PrivacyReceiptData } from "../privacy-receipt";
 import { ShareActions } from "../share-actions";
 
@@ -12,10 +13,22 @@ interface ShareResultCardProps {
   readonly showRevokeConfirm: boolean;
   readonly copyStatus: "idle" | "copied";
   readonly isRevoking: boolean;
+  readonly parcel: Uint8Array | null;
   setShowRevokeConfirm: (show: boolean) => void;
   onCopyLink: () => void;
   onRevoke: () => void;
   onReset: () => void;
+}
+
+function downloadParcel(parcel: Uint8Array, publicId: string): void {
+  const blob = new Blob([bytesToArrayBuffer(parcel)], { type: "application/octet-stream" });
+  const anchor = document.createElement("a");
+  anchor.href = URL.createObjectURL(blob);
+  anchor.download = `${publicId}.securebin`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(anchor.href);
 }
 
 export function ShareResultCard({
@@ -27,6 +40,7 @@ export function ShareResultCard({
   showRevokeConfirm,
   copyStatus,
   isRevoking,
+  parcel,
   setShowRevokeConfirm,
   onCopyLink,
   onRevoke,
@@ -48,6 +62,23 @@ export function ShareResultCard({
       <p className="share-hint">
         The key stays in the link fragment. Keep the full link.
       </p>
+
+      {parcel && receiptData && (
+        <div className="parcel-export-box">
+          <button
+            type="button"
+            className="action-button secondary-button"
+            onClick={() => downloadParcel(parcel, receiptData.publicId)}
+          >
+            Download .securebin parcel
+          </button>
+          <p className="policy-hint">
+            A portable copy of the encrypted material only — it holds no key,
+            password, unlock code, or revoke ability. Open it offline via
+            “Restore a .securebin parcel” plus the link’s fragment.
+          </p>
+        </div>
+      )}
 
       {unlockCodeShown && (
         <div className="unlock-code-box" role="status">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Composer } from "./composer";
+import { ParcelImport } from "./parcel-import";
 import { EvidenceRail } from "./evidence-rail";
 import { ShareHistoryDesk } from "./share-history";
 import { ThemeToggle } from "./theme-toggle";
@@ -135,6 +136,7 @@ export function AppWorkspace() {
                 onPolicyChange={setPolicy}
                 onShareChange={() => setHistorySignal((prev) => prev + 1)}
               />
+              <ParcelImport />
             </div>
             <div className="evidence-rail-container">
               <EvidenceRail phase={phase} policy={policy} />

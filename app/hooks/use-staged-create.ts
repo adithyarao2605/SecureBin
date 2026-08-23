@@ -19,6 +19,7 @@ import {
   type ValidatedPolicy,
 } from "../../lib/shares/policy-ui";
 import { saveShareToHistory } from "../../lib/shares/share-history";
+import { encodeParcel } from "../../lib/shares/parcel";
 import type { PrivacyReceiptData } from "../components/privacy-receipt";
 import type { ProtectionState } from "../components/protection-controls";
 import type { ComposerMode } from "../components/composer/mode-tabs";
@@ -61,6 +62,8 @@ export interface StagedCreateOutcome {
   /** The unlock code that actually sealed this share; "" when unused. */
   readonly unlockCode: string;
   readonly receipt: PrivacyReceiptData;
+  /** Portable .securebin parcel of the encrypted material (no secrets). */
+  readonly parcel: Uint8Array | null;
 }
 
 export type CreateAttempt =
@@ -308,6 +311,28 @@ export function useStagedCreate() {
       remainingReveals: request.policy.maxReveals,
     });
 
+    let parcel: Uint8Array | null = null;
+    try {
+      parcel = encodeParcel({
+        publicId: prepared.context.publicId,
+        policy: {
+          availableAt: request.policy.availableAt,
+          expiresAt: request.policy.expiresAt,
+          maxReveals: request.policy.maxReveals,
+          revealWindowSeconds: request.policy.revealWindowSeconds ?? null,
+          createdAt: new Date().toISOString(),
+        },
+        contentEnvelope: prepared.sealedContent.envelope,
+        attachments: prepared.files.map((entry, index) => ({
+          slot: index,
+          envelope: entry.sealed.envelope,
+          ciphertext: entry.sealed.ciphertext,
+        })),
+      });
+    } catch {
+      // Parcel export is best-effort; the share itself is unaffected.
+    }
+
     return {
       publicId: returnedPublicId,
       shareUrl: fullUrl,
@@ -325,6 +350,7 @@ export function useStagedCreate() {
         kdf: prepared.sealedContent.envelope.kdf,
         envelopeVersion: prepared.sealedContent.envelope.version,
       },
+      parcel,
     };
   }
 
