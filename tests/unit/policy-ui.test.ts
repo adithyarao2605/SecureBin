@@ -59,7 +59,8 @@ describe("policy-ui helper functions", () => {
     expect(result.valid).toBe(true);
     if (result.valid) {
       expect(result.availableAt).toBeNull();
-      expect(Date.parse(result.expiresAt)).toBe(fixedNow + 24 * 60 * 60 * 1000);
+      expect(result.expiresAt).not.toBeNull();
+      expect(Date.parse(result.expiresAt as string)).toBe(fixedNow + 24 * 60 * 60 * 1000);
       expect(result.maxReveals).toBeNull();
     }
   });
@@ -77,7 +78,8 @@ describe("policy-ui helper functions", () => {
     const validRes = validatePolicyDraft(validDraft, fixedNow);
     expect(validRes.valid).toBe(true);
     if (validRes.valid) {
-      expect(Date.parse(validRes.expiresAt)).toBe(fixedNow + 48 * 60 * 60 * 1000);
+      expect(validRes.expiresAt).not.toBeNull();
+      expect(Date.parse(validRes.expiresAt as string)).toBe(fixedNow + 48 * 60 * 60 * 1000);
     }
 
     const overMaxDraft = {
@@ -119,6 +121,31 @@ describe("policy-ui helper functions", () => {
     };
     const mismatchedResult = validatePolicyDraft(mismatchedDraft, fixedNow);
     expect(mismatchedResult.valid).toBe(false);
+
+    // Day 5: custom reveal counts between 1 and 100.
+    const customDraft = {
+      ...defaultPolicyDraft(),
+      revealPreset: "custom" as const,
+      customMaxReveals: 42,
+      maxReveals: 42,
+    };
+    const customResult = validatePolicyDraft(customDraft, fixedNow);
+    expect(customResult.valid).toBe(true);
+    if (customResult.valid) expect(customResult.maxReveals).toBe(42);
+
+    for (const bad of [0, -3, 101, 2.5]) {
+      const badResult = validatePolicyDraft(
+        { ...defaultPolicyDraft(), revealPreset: "custom" as const, customMaxReveals: bad, maxReveals: bad },
+        fixedNow,
+      );
+      expect(badResult.valid).toBe(false);
+    }
+
+    // Never expiry produces a null expiresAt while remaining revocable.
+    const neverDraft = { ...defaultPolicyDraft(), expiryPreset: "never" as const };
+    const neverResult = validatePolicyDraft(neverDraft, fixedNow);
+    expect(neverResult.valid).toBe(true);
+    if (neverResult.valid) expect(neverResult.expiresAt).toBeNull();
   });
 
   it("rejects scheduled availability in the past", () => {

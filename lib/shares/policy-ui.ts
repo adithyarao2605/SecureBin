@@ -1,4 +1,4 @@
-import { isMaxReveals, type MaxReveals } from "./contracts";
+import { MAX_MAX_REVEALS, MIN_MAX_REVEALS, isMaxReveals, type MaxReveals } from "./contracts";
 
 export type ProoflinePhase =
   | "draft"
@@ -10,9 +10,9 @@ export type ProoflinePhase =
   | "opened"
   | "unavailable";
 
-export type ExpiryPreset = "24h" | "7d" | "30d" | "custom";
+export type ExpiryPreset = "24h" | "7d" | "30d" | "custom" | "never";
 export type ExpiryUnit = "hours" | "days";
-export type RevealPreset = "burn" | "3" | "5" | "10" | "unlimited";
+export type RevealPreset = "burn" | "3" | "5" | "10" | "custom" | "unlimited";
 
 export interface PolicyDraft {
   readonly availability: "now" | "scheduled";
@@ -22,6 +22,7 @@ export interface PolicyDraft {
   readonly customExpiryValue?: number;
   readonly customExpiryUnit?: ExpiryUnit;
   readonly revealPreset?: RevealPreset;
+  readonly customMaxReveals?: number;
   readonly maxReveals: MaxReveals;
 }
 
@@ -46,7 +47,7 @@ export function defaultPolicyDraft(): PolicyDraft {
 }
 
 export function computeExpiryDate(
-  preset: ExpiryPreset,
+  preset: Exclude<ExpiryPreset, "never">,
   customValue = 24,
   customUnit: ExpiryUnit = "hours",
   nowMillis: number = Date.now()
@@ -107,6 +108,8 @@ export function formatLocalizedDateTime(isoUtc: string | null): string {
 
 export function formatExpiryLabel(preset: ExpiryPreset, customValue = 24, customUnit: ExpiryUnit = "hours"): string {
   switch (preset) {
+    case "never":
+      return "Never expires";
     case "24h":
       return "24 hours";
     case "7d":
@@ -128,7 +131,7 @@ export function formatRevealLimitLabel(maxReveals: MaxReveals): string {
   return `${maxReveals} reveals`;
 }
 
-function maxRevealsForPreset(preset: RevealPreset): MaxReveals | undefined {
+function maxRevealsForPreset(preset: Exclude<RevealPreset, "custom">): MaxReveals | undefined {
   switch (preset) {
     case "burn":
       return 1;
@@ -149,7 +152,8 @@ export type ValidatedPolicy =
   | {
       readonly valid: true;
       readonly availableAt: string | null;
-      readonly expiresAt: string;
+      /** Null means the share never expires (still revocable). */
+      readonly expiresAt: string | null;
       readonly maxReveals: MaxReveals;
     }
   | {
@@ -173,8 +177,10 @@ export function validatePolicyDraft(
     }
   }
 
-  let expiresAt: string;
-  if (draft.expiryPreset === "custom") {
+  let expiresAt: string | null = null;
+  if (draft.expiryPreset === "never") {
+    expiresAt = null;
+  } else if (draft.expiryPreset === "custom") {
     const val = draft.customExpiryValue ?? 24;
     const unit = draft.customExpiryUnit ?? "hours";
     if (!Number.isInteger(val) || val <= 0) {
@@ -189,20 +195,42 @@ export function validatePolicyDraft(
     expiresAt = computeExpiryDate(draft.expiryPreset, 24, "hours", nowMillis);
   }
 
-  if (availableAt && Date.parse(availableAt) >= Date.parse(expiresAt)) {
+  if (expiresAt !== null && availableAt && Date.parse(availableAt) >= Date.parse(expiresAt)) {
     return {
       valid: false,
       error: "Scheduled availability must be before the expiration date.",
     };
   }
 
-  if (!isMaxReveals(draft.maxReveals)) {
-    return { valid: false, error: "Please choose a supported reveal limit." };
-  }
-
-  const maxReveals = draft.maxReveals;
-  if (draft.revealPreset !== undefined && maxRevealsForPreset(draft.revealPreset) !== maxReveals) {
-    return { valid: false, error: "Please choose a supported reveal limit." };
+  // Resolve the requested limit: presets carry their own value; a custom
+  // preset validates the bounded numeric input; programmatic drafts (no
+  // preset) use the value as-is.
+  let maxReveals: MaxReveals;
+  if (draft.revealPreset === "custom") {
+    const val = draft.customMaxReveals;
+    if (
+      typeof val !== "number" ||
+      !Number.isInteger(val) ||
+      val < MIN_MAX_REVEALS ||
+      val > MAX_MAX_REVEALS
+    ) {
+      return {
+        valid: false,
+        error: `Custom reveal limit must be a whole number between ${MIN_MAX_REVEALS} and ${MAX_MAX_REVEALS}.`,
+      };
+    }
+    maxReveals = val;
+  } else if (draft.revealPreset !== undefined) {
+    const fromPreset = maxRevealsForPreset(draft.revealPreset);
+    if (fromPreset === undefined || fromPreset !== draft.maxReveals) {
+      return { valid: false, error: "Please choose a supported reveal limit." };
+    }
+    maxReveals = fromPreset;
+  } else {
+    if (!isMaxReveals(draft.maxReveals)) {
+      return { valid: false, error: "Please choose a supported reveal limit." };
+    }
+    maxReveals = draft.maxReveals;
   }
 
   return {

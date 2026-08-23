@@ -12,7 +12,7 @@ export interface ShareHistoryItem {
   readonly publicId: string;
   readonly shareUrl: string;
   readonly createdAt: string;
-  readonly expiresAt: string;
+  readonly expiresAt: string | null;
   readonly availableAt: string | null;
   readonly maxReveals: MaxReveals;
   readonly deleteCapability: string | null;
@@ -34,7 +34,7 @@ function parseHistoryItem(item: unknown): ShareHistoryItem | null {
     typeof item.publicId !== "string" ||
     typeof item.shareUrl !== "string" ||
     typeof item.createdAt !== "string" ||
-    typeof item.expiresAt !== "string"
+    (typeof item.expiresAt !== "string" && item.expiresAt !== null)
   ) {
     return null;
   }

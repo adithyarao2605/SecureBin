@@ -44,14 +44,17 @@ export interface Envelope {
   readonly ciphertext?: string;
 }
 
-export type MaxReveals = 1 | 3 | 5 | 10 | null;
+export type MaxReveals = number | null;
 export const VALID_MAX_REVEALS = [1, 3, 5, 10, null] as const;
+export const MIN_MAX_REVEALS = 1;
+export const MAX_MAX_REVEALS = 100;
 
 export interface CreateShareInput {
   readonly publicId: string;
   readonly contentEnvelope: Envelope & { readonly objectType: "content"; readonly ciphertext: string };
   readonly availableAt: string | null;
-  readonly expiresAt: string;
+  /** Null means the share never expires (it remains revocable). */
+  readonly expiresAt: string | null;
   readonly maxReveals: MaxReveals;
   readonly deleteTokenHash: string;
   readonly passwordRequired: boolean;
@@ -78,7 +81,7 @@ export interface DeleteInput {
 
 export interface SharePolicy {
   readonly availableAt: string | null;
-  readonly expiresAt: string;
+  readonly expiresAt: string | null;
   readonly maxReveals: MaxReveals;
   readonly passwordRequired: boolean;
   readonly unlockRequired: boolean;
@@ -167,7 +170,10 @@ function parseFactorMask(value: unknown): value is FactorMask {
 }
 
 export function isMaxReveals(value: unknown): value is MaxReveals {
-  return value === null || value === 1 || value === 3 || value === 5 || value === 10;
+  return (
+    value === null ||
+    (typeof value === "number" && Number.isInteger(value) && value >= MIN_MAX_REVEALS && value <= MAX_MAX_REVEALS)
+  );
 }
 
 function isNonNegativeInteger(value: unknown): value is number {
@@ -243,11 +249,17 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
   const maxReveals = value.policy.maxReveals;
   if (!isMaxReveals(maxReveals)) return null;
   const availableAt = value.policy.availableAt === null ? null : parseIsoUtc(value.policy.availableAt);
-  const expiresAt = parseIsoUtc(value.policy.expiresAt);
-  if ((value.policy.availableAt !== null && availableAt === null) || expiresAt === null) return null;
-  const expiryMillis = Date.parse(expiresAt);
-  if (expiryMillis <= nowMillis || expiryMillis > nowMillis + MAX_EXPIRY_DAYS * 86_400_000) return null;
-  if (availableAt !== null && Date.parse(availableAt) >= expiryMillis) return null;
+  // Never expiry: the client signals it with an explicit null expiresAt.
+  const expiresAt =
+    value.policy.expiresAt === null ? null : parseIsoUtc(value.policy.expiresAt);
+  if ((value.policy.availableAt !== null && availableAt === null) || (value.policy.expiresAt !== null && expiresAt === null)) {
+    return null;
+  }
+  if (expiresAt !== null) {
+    const expiryMillis = Date.parse(expiresAt);
+    if (expiryMillis <= nowMillis || expiryMillis > nowMillis + MAX_EXPIRY_DAYS * 86_400_000) return null;
+    if (availableAt !== null && Date.parse(availableAt) >= expiryMillis) return null;
+  }
   const fileEnvelope = value.fileEnvelope === undefined || value.fileEnvelope === null ? null : parseFileEnvelope(value.fileEnvelope);
   const fileCiphertextSize = value.fileCiphertextSize === undefined || value.fileCiphertextSize === null ? null : value.fileCiphertextSize;
   const normalizedFileCiphertextSize = fileCiphertextSize === null || !isNonNegativeInteger(fileCiphertextSize) ? null : fileCiphertextSize;
@@ -314,11 +326,11 @@ export function parseStatus(value: unknown): ShareStatus | null {
   if (!isRecord(value) || typeof value.status !== "string") return null;
   if (value.status === "unavailable") return { status: "unavailable" };
   if (value.status !== "active" && value.status !== "scheduled") return null;
-  const expiresAt = parseIsoUtc(value.expires_at);
+  const expiresAt = value.expires_at === null ? null : parseIsoUtc(value.expires_at);
   const availableAt = value.available_at === null ? null : parseIsoUtc(value.available_at);
   const remainingReveals = value.remaining_reveals === null ? null : value.remaining_reveals;
   const maxReveals = value.max_reveals === null ? null : value.max_reveals;
-  if (!expiresAt || (value.available_at !== null && !availableAt) ||
+  if ((value.expires_at !== null && !expiresAt) || (value.available_at !== null && !availableAt) ||
       (value.password_required !== true && value.password_required !== false) ||
       (value.unlock_required !== true && value.unlock_required !== false) ||
       !isMaxReveals(maxReveals) ||

@@ -164,6 +164,77 @@ describe("reveal concurrency and race conditions", () => {
     expect(status.status).toBe("unavailable");
   });
 
+  it("enforces exact 7 authorizations among 20 concurrent reveals on a custom limit=7 share", async () => {
+    const publicId = randomPublicId();
+    const contentEnvelope = validEnvelope();
+    const deleteTokenHash = randomDigest();
+    const idempotencyKeyHash = randomDigest();
+
+    await service.createShare({
+      publicId,
+      contentEnvelope,
+      availableAt: null,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      maxReveals: 7,
+      deleteTokenHash,
+      passwordRequired: false,
+      unlockRequired: false,
+      idempotencyKeyHash,
+      fileEnvelope: null,
+      fileCiphertextSize: null,
+    });
+
+    const tokens = Array.from({ length: 20 }, () => randomBytes(32).toString("base64url"));
+    const results = await Promise.allSettled(tokens.map((token) => service.reveal(publicId, token)));
+
+    let authorized = 0;
+    let unavailable = 0;
+    for (const res of results) {
+      if (res.status !== "fulfilled") throw new Error(`Unexpected rejection: ${res.reason}`);
+      if (res.value.status === "authorized") authorized += 1;
+      else if (res.value.status === "unavailable") unavailable += 1;
+      else throw new Error(`Unexpected status: ${res.value.status}`);
+    }
+    expect(authorized).toBe(7);
+    expect(unavailable).toBe(13);
+
+    const status = await service.getStatus(publicId);
+    expect(status.status).toBe("unavailable");
+  });
+
+  it("treats a Never-expiry share as active past any expiry and still revocable", async () => {
+    const publicId = randomPublicId();
+    const rawDeleteCapability = randomBytes(32).toString("base64url");
+    const deleteTokenHash = sha256Base64Url(rawDeleteCapability);
+    const idempotencyKeyHash = randomDigest();
+
+    await service.createShare({
+      publicId,
+      contentEnvelope: validEnvelope(),
+      availableAt: null,
+      expiresAt: null,
+      maxReveals: null,
+      deleteTokenHash,
+      passwordRequired: false,
+      unlockRequired: false,
+      idempotencyKeyHash,
+      fileEnvelope: null,
+      fileCiphertextSize: null,
+    });
+
+    const status = await service.getStatus(publicId);
+    expect(status.status).toBe("active");
+    if (status.status === "active") expect(status.expiresAt).toBeNull();
+
+    const reveal = await service.reveal(publicId, randomBytes(32).toString("base64url"));
+    expect(reveal.status).toBe("authorized");
+
+    const revoked = await service.revoke(publicId, rawDeleteCapability);
+    expect(revoked).toBe(true);
+    const afterRevoke = await service.getStatus(publicId);
+    expect(afterRevoke.status).toBe("unavailable");
+  });
+
   it("handles race between concurrent reveal and revoke safely", async () => {
     const publicId = randomPublicId();
     const contentEnvelope = validEnvelope();

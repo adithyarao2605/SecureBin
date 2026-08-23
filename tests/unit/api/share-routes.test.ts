@@ -83,7 +83,7 @@ describe("share policy and contract freezing", () => {
       expect(parsed?.maxReveals).toBe(valid);
     }
 
-    const invalidMaxReveals = [0, 2, 7, 11, 100, -1, -5, 1.5, 3.14, "1", "3", "5", "10", "burn", true, false, {}, []];
+    const invalidMaxReveals = [0, 101, 102, -1, -5, 1.5, 3.14, "1", "3", "5", "10", "burn", true, false, {}, []];
     for (const invalid of invalidMaxReveals) {
       expect(isMaxReveals(invalid)).toBe(false);
       const input = validPayload({ policy: { availableAt: null, expiresAt: new Date(fixedNow + 86400000).toISOString(), maxReveals: invalid } });
@@ -170,6 +170,7 @@ describe("share policy and contract freezing", () => {
     });
 
     expect(parseStatus({ status: "unavailable" })).toEqual({ status: "unavailable" });
+    // Day 5: custom limits like 7 are now valid.
     expect(parseStatus({
       status: "active",
       available_at: null,
@@ -178,7 +179,17 @@ describe("share policy and contract freezing", () => {
       unlock_required: false,
       max_reveals: 7,
       remaining_reveals: 7,
-    })).toBeNull();
+    })).toMatchObject({ maxReveals: 7, remainingReveals: 7 });
+    // Never expiry parses to null.
+    expect(parseStatus({
+      status: "active",
+      available_at: null,
+      expires_at: null,
+      password_required: false,
+      unlock_required: false,
+      max_reveals: null,
+      remaining_reveals: null,
+    })).toMatchObject({ expiresAt: null });
     expect(parseStatus({
       status: "active",
       available_at: null,
@@ -188,13 +199,22 @@ describe("share policy and contract freezing", () => {
       max_reveals: 3,
       remaining_reveals: 4,
     })).toBeNull();
+    expect(parseStatus({
+      status: "active",
+      available_at: null,
+      expires_at: "2099-01-01T00:00:00.000Z",
+      password_required: false,
+      unlock_required: false,
+      max_reveals: 101,
+      remaining_reveals: 101,
+    })).toBeNull();
     expect(parseStatus({ status: "unknown" })).toBeNull();
   });
 });
 
 describe("share route handlers", () => {
   it("rejects unsupported reveal limits before calling the create RPC", async () => {
-    for (const maxReveals of [2, 7, 100]) {
+    for (const maxReveals of [0, 101]) {
       const deps = dependencies();
       const handler = createPostShareHandler(deps);
       const response = await handler(new Request("http://localhost/api/shares", {

@@ -75,7 +75,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
     fingerprint: string;
     mask: string;
     hasFile: boolean;
-    expiresAt: string;
+    expiresAt: string | null;
     availableAt: string | null;
     maxReveals: number | null;
     algorithm: string;

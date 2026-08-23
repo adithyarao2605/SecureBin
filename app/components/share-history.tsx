@@ -159,7 +159,7 @@ export function ShareHistoryDesk({ refreshSignal, onSwitchToCreate }: ShareHisto
 
       <div className="history-list" role="list">
         {history.map((item) => {
-          const isExpired = new Date(item.expiresAt).getTime() < Date.now();
+          const isExpired = item.expiresAt !== null && new Date(item.expiresAt).getTime() < Date.now();
           const displayStatus = item.status ?? (isExpired ? "unavailable" : "active");
 
           return (

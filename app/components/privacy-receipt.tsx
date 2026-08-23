@@ -8,7 +8,7 @@ export interface PrivacyReceiptData {
   readonly mask: string;
   readonly hasFile: boolean;
   readonly availableAt: string | null;
-  readonly expiresAt: string;
+  readonly expiresAt: string | null;
   readonly maxReveals: number | null;
   readonly algorithm: string;
   readonly kdf: string;

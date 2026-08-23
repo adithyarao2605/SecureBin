@@ -99,6 +99,7 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
           <option value="24h">24 hours</option>
           <option value="7d">7 days</option>
           <option value="30d">30 days</option>
+          <option value="never">Never (revocable anytime)</option>
           <option value="custom">Custom duration</option>
         </select>
 
@@ -238,7 +239,51 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
             />
             <span>Unlimited</span>
           </label>
+          <label className="policy-radio-label">
+            <input
+              type="radio"
+              name="maxReveals"
+              value="custom"
+              checked={currentRevealPreset === "custom"}
+              disabled={disabled}
+              onChange={() =>
+                onChange({
+                  ...draft,
+                  revealPreset: "custom",
+                  customMaxReveals: draft.customMaxReveals ?? 5,
+                  maxReveals: draft.customMaxReveals ?? 5,
+                })
+              }
+            />
+            <span>Custom</span>
+          </label>
         </div>
+
+        {currentRevealPreset === "custom" && (
+          <div className="policy-input-group">
+            <label htmlFor="custom-reveal-count" className="policy-input-label">
+              Exact number of ciphertext releases
+            </label>
+            <input
+              id="custom-reveal-count"
+              type="number"
+              min={1}
+              max={100}
+              className="policy-number-input"
+              value={draft.customMaxReveals ?? 5}
+              disabled={disabled}
+              onChange={(e) => {
+                const val = Number.parseInt(e.target.value, 10);
+                onChange({
+                  ...draft,
+                  customMaxReveals: Number.isNaN(val) ? undefined : val,
+                  // Invalid intermediate states fail validation on submit.
+                  maxReveals: Number.isNaN(val) ? null : val,
+                });
+              }}
+            />
+          </div>
+        )}
 
         <p className="policy-hint">
           A reveal authorizes one ciphertext release. It does not know whether the recipient read it.
