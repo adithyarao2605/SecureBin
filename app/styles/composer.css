@@ -331,3 +331,76 @@
   font-size: 0.82rem;
   color: var(--muted-ink);
 }
+
+/* Day 5 additions (ported from UI polish): themed code language dropdown */
+.composer-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.language-selector-wrapper {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.language-select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.35rem 2rem 0.35rem 0.75rem;
+  background-color: var(--surface-bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 500;
+  min-height: 36px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232F7071' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 12px 12px;
+  transition: all 150ms ease;
+}
+
+:root[data-theme="dark"] .language-select,
+.dark .language-select {
+  background-color: var(--surface-bg);
+  color: var(--ink);
+  border-color: var(--line);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2379B8B0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+.dark .language-select {
+  background-color: var(--surface-bg);
+  color: var(--ink);
+  border-color: var(--line);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2379B8B0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+.language-select:hover:not(:disabled) {
+  border-color: var(--mineral);
+  background-color: var(--surface-subtle);
+}
+
+.language-select:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-color: var(--mineral);
+}
+
+.language-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.language-select option {
+  background-color: var(--surface-bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  padding: 0.4rem;
+}

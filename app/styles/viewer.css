@@ -435,3 +435,69 @@
 .discussion-nickname-input {
   max-width: 16rem;
 }
+
+/* Viewer alignment polish (ported from friend's UI commit) */
+.confirm-actions-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.decrypted-content-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.decrypted-content-box {
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.decrypted-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.decrypted-code-wrapper {
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.code-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.code-language-tag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--mineral);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.code-copy-button {
+  font-size: 0.8rem;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.25rem 0.65rem;
+  color: var(--muted-ink);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
