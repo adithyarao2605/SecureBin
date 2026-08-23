@@ -26,6 +26,98 @@ export interface PolicyDraft {
   readonly maxReveals: MaxReveals;
 }
 
+export type PolicyPresetId =
+  | "custom"
+  | "quick-share"
+  | "one-time-secret"
+  | "controlled-share"
+  | "timed-handoff";
+
+export interface ScheduledPresetWindow {
+  readonly date: string;
+  readonly time: string;
+}
+
+/**
+ * Maps a named policy preset onto the same underlying draft fields the
+ * individual controls edit. Pure: callers supply the scheduled date/time
+ * (e.g. tomorrow 09:00 local). "custom" returns the draft unchanged.
+ */
+export function applyPolicyPreset(
+  preset: PolicyPresetId,
+  draft: PolicyDraft,
+  scheduled: ScheduledPresetWindow
+): PolicyDraft {
+  switch (preset) {
+    case "custom":
+      return draft;
+    case "quick-share":
+      return {
+        ...draft,
+        availability: "now",
+        expiryPreset: "24h",
+        revealPreset: "unlimited",
+        maxReveals: null,
+      };
+    case "one-time-secret":
+      return {
+        ...draft,
+        availability: "now",
+        expiryPreset: "24h",
+        revealPreset: "burn",
+        maxReveals: 1,
+      };
+    case "controlled-share":
+      return {
+        ...draft,
+        availability: "now",
+        expiryPreset: "7d",
+        revealPreset: "3",
+        maxReveals: 3,
+      };
+    case "timed-handoff":
+      return {
+        ...draft,
+        availability: "scheduled",
+        availableLocalDate: scheduled.date,
+        availableLocalTime: scheduled.time,
+        expiryPreset: "custom",
+        customExpiryValue: 7,
+        customExpiryUnit: "days",
+      };
+  }
+}
+
+/** Detects which preset a draft currently matches, for select display. */
+export function policyPresetForDraft(draft: PolicyDraft): PolicyPresetId {
+  if (draft.availability === "now") {
+    if (draft.expiryPreset === "24h") {
+      if (draft.maxReveals === null) return "quick-share";
+      if (draft.maxReveals === 1) return "one-time-secret";
+    }
+    if (draft.expiryPreset === "7d" && draft.maxReveals === 3) {
+      return "controlled-share";
+    }
+  }
+  if (
+    draft.availability === "scheduled" &&
+    draft.expiryPreset === "custom" &&
+    draft.customExpiryUnit === "days" &&
+    draft.customExpiryValue === 7
+  ) {
+    return "timed-handoff";
+  }
+  return "custom";
+}
+
+/** Local calendar date (YYYY-MM-DD) one day from nowMillis. */
+export function tomorrowLocalDate(nowMillis: number = Date.now()): string {
+  const tomorrow = new Date(nowMillis + 86_400_000);
+  const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+  const day = String(tomorrow.getDate()).padStart(2, "0");
+  return `${tomorrow.getFullYear()}-${month}-${day}`;
+}
+
 export function defaultPolicyDraft(): PolicyDraft {
   const tomorrow = new Date(Date.now() + 86_400_000);
   const year = tomorrow.getFullYear();

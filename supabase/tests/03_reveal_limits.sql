@@ -27,7 +27,10 @@ insert into public.shares (
   decode(repeat('25', 32), 'hex')
 );
 select is(
-  (select count(*)::integer from public.shares where max_reveals = 7),
+  (
+    select count(*)::integer from public.shares
+    where max_reveals = 7 and public_id = 'BQEBAQEBAQEBAQEBAQEBAQ'
+  ),
   1,
   'custom reveal limit 7 is accepted'
 );

@@ -1,0 +1,95 @@
+/* Results & Revoke Box */
+.share-link-box {
+  display: flex;
+  width: 100%;
+}
+
+.share-link-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.share-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.revoke-confirmation-box {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--copper);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--copper) 8%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.revoke-warning {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--copper);
+}
+
+.revoke-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.revoked-status-box {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+}
+
+.revoked-status-text {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.unlock-code-box {
+  border: 1px dashed var(--copper);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-top: 0.9rem;
+}
+.unlock-heading { margin: 0 0 0.35rem; font-weight: 700; }
+.unlock-code {
+  font-family: monospace;
+  font-size: 1.15em;
+  letter-spacing: 0.08em;
+  word-break: break-all;
+  margin: 0 0 0.4rem;
+}
+
+.privacy-receipt {
+  border-top: 1px solid var(--line);
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+}
+.receipt-heading { margin: 0 0 0.5rem; }
+.receipt-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0 0 0.6rem;
+}
+.receipt-grid dt { color: var(--slate); }
+.receipt-grid dd { margin: 0; overflow-wrap: anywhere; }
+.receipt-fingerprint { font-size: 0.9em; }
+.receipt-note { font-size: 0.88em; color: var(--slate); }
+
+.share-actions-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+.qr-panel { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; }

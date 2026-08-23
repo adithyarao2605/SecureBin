@@ -36,10 +36,13 @@ test("the user can navigate between application tabs", async ({ page }) => {
   await expect(page.getByRole("tab", { name: "New share" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("heading", { name: "Create a private share" })).toBeVisible();
 
-  // Switch to How it works tab
-  await page.getByRole("tab", { name: "How it works" }).click();
-  await expect(page.getByRole("tab", { name: "How it works" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("heading", { name: "A share should reveal as little as possible." })).toBeVisible();
+  // Day 5 landing reorder: product explanation lives inside the create panel.
+  await expect(
+    page.getByText("Share something private. Control when it can be released.")
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "A share should reveal as little as possible." })
+  ).toBeVisible();
 
   // Switch to My shares tab (empty state)
   await page.getByRole("tab", { name: "My shares" }).click();

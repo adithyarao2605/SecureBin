@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyPolicyPreset,
   computeExpiryDate,
   defaultPolicyDraft,
   formatExpiryLabel,
   formatRevealLimitLabel,
   localDateTimeToIsoUtc,
+  policyPresetForDraft,
   validatePolicyDraft,
 } from "@/lib/shares/policy-ui";
 
@@ -178,5 +180,69 @@ describe("policy-ui helper functions", () => {
     if (!result.valid) {
       expect(result.error).toContain("must be before the expiration date");
     }
+  });
+});
+
+describe("policy presets", () => {
+  // fixedNow ≈ 2026-02-02 UTC, so a date within the following week stays valid.
+  const fixedNow = 1_770_000_000_000;
+  const scheduledWindow = { date: "2026-02-05", time: "09:00" };
+  const base = defaultPolicyDraft();
+
+  it("leaves the draft unchanged for the Custom preset", () => {
+    expect(applyPolicyPreset("custom", base, scheduledWindow)).toBe(base);
+  });
+
+  it("maps Quick Share to now / 24h / unlimited", () => {
+    const next = applyPolicyPreset(
+      "quick-share",
+      { ...base, availability: "scheduled", expiryPreset: "7d", revealPreset: "burn", maxReveals: 1 },
+      scheduledWindow
+    );
+    expect(next.availability).toBe("now");
+    expect(next.expiryPreset).toBe("24h");
+    expect(next.revealPreset).toBe("unlimited");
+    expect(next.maxReveals).toBeNull();
+    expect(validatePolicyDraft(next, fixedNow).valid).toBe(true);
+  });
+
+  it("maps One-Time Secret to now / 24h / one reveal", () => {
+    const next = applyPolicyPreset("one-time-secret", base, scheduledWindow);
+    expect(next.availability).toBe("now");
+    expect(next.expiryPreset).toBe("24h");
+    expect(next.revealPreset).toBe("burn");
+    expect(next.maxReveals).toBe(1);
+    const validated = validatePolicyDraft(next, fixedNow);
+    expect(validated.valid).toBe(true);
+    if (validated.valid) expect(validated.maxReveals).toBe(1);
+  });
+
+  it("maps Controlled Share to now / 7d / 3 reveals", () => {
+    const next = applyPolicyPreset("controlled-share", base, scheduledWindow);
+    expect(next.availability).toBe("now");
+    expect(next.expiryPreset).toBe("7d");
+    expect(next.revealPreset).toBe("3");
+    expect(next.maxReveals).toBe(3);
+    expect(validatePolicyDraft(next, fixedNow).valid).toBe(true);
+  });
+
+  it("maps Timed Handoff to tomorrow-morning scheduling with a 7-day custom expiry", () => {
+    const next = applyPolicyPreset("timed-handoff", base, scheduledWindow);
+    expect(next.availability).toBe("scheduled");
+    expect(next.availableLocalDate).toBe("2026-02-05");
+    expect(next.availableLocalTime).toBe("09:00");
+    expect(next.expiryPreset).toBe("custom");
+    expect(next.customExpiryValue).toBe(7);
+    expect(next.customExpiryUnit).toBe("days");
+    expect(validatePolicyDraft(next, fixedNow).valid).toBe(true);
+  });
+
+  it("detects the matching preset from a draft and falls back to Custom", () => {
+    expect(policyPresetForDraft(base)).toBe("quick-share");
+    for (const preset of ["one-time-secret", "controlled-share", "timed-handoff"] as const) {
+      expect(policyPresetForDraft(applyPolicyPreset(preset, base, scheduledWindow))).toBe(preset);
+    }
+    expect(policyPresetForDraft({ ...base, expiryPreset: "30d" })).toBe("custom");
+    expect(policyPresetForDraft({ ...base, maxReveals: 5, revealPreset: "5" })).toBe("custom");
   });
 });

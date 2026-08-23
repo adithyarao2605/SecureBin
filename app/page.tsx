@@ -13,7 +13,7 @@ import {
 } from "../lib/shares/policy-ui";
 import { loadShareHistory } from "../lib/shares/share-history";
 
-type AppTab = "create" | "history" | "how-it-works";
+type AppTab = "create" | "history";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<AppTab>("create");
@@ -103,34 +103,6 @@ export default function HomePage() {
                 </span>
               )}
             </button>
-
-            <button
-              type="button"
-              role="tab"
-              id="tab-how-it-works"
-              aria-selected={activeTab === "how-it-works"}
-              aria-controls="panel-how-it-works"
-              className={`tab-pill-btn ${activeTab === "how-it-works" ? "active" : ""}`}
-              onClick={() => setActiveTab("how-it-works")}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                className="tab-icon"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <span>How it works</span>
-            </button>
           </div>
         </nav>
 
@@ -150,6 +122,9 @@ export default function HomePage() {
         >
           <div className="workspace-grid">
             <div className="primary-surface-container">
+              <h1 className="surface-heading">
+                Share something private. Control when it can be released.
+              </h1>
               <Composer
                 onPhaseChange={setPhase}
                 onPolicyChange={setPolicy}
@@ -160,30 +135,8 @@ export default function HomePage() {
               <EvidenceRail phase={phase} policy={policy} />
             </div>
           </div>
-        </div>
 
-        {/* Tab 2: My Shares History */}
-        <div
-          id="panel-history"
-          role="tabpanel"
-          aria-labelledby="tab-history"
-          hidden={activeTab !== "history"}
-          className="tab-panel"
-        >
-          <ShareHistoryDesk
-            refreshSignal={historySignal}
-            onSwitchToCreate={() => setActiveTab("create")}
-          />
-        </div>
-
-        {/* Tab 3: How It Works */}
-        <div
-          id="panel-how-it-works"
-          role="tabpanel"
-          aria-labelledby="tab-how-it-works"
-          hidden={activeTab !== "how-it-works"}
-          className="tab-panel"
-        >
+          {/* Product explanation */}
           <section className="how-section" aria-labelledby="how-heading">
             <div className="how-header-block">
               <p className="eyebrow">
@@ -239,6 +192,20 @@ export default function HomePage() {
               </article>
             </div>
           </section>
+        </div>
+
+        {/* Tab 2: My Shares History */}
+        <div
+          id="panel-history"
+          role="tabpanel"
+          aria-labelledby="tab-history"
+          hidden={activeTab !== "history"}
+          className="tab-panel"
+        >
+          <ShareHistoryDesk
+            refreshSignal={historySignal}
+            onSwitchToCreate={() => setActiveTab("create")}
+          />
         </div>
       </main>
 

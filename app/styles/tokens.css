@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --linen: #f4f0e8;
+  --ink: #17242d;
+  --deep-slate: #2d4148;
+  --mineral: #2f7071;
+  --mineral-hover: #0d5759;
+  --on-primary: #ffffff;
+  --copper: #b86848;
+  --mist: #dce9e3;
+  --line: color-mix(in srgb, var(--ink) 18%, transparent);
+  --muted-ink: color-mix(in srgb, var(--ink) 64%, transparent);
+  --surface-bg: #ffffff;
+  --surface-subtle: #f6faff;
+  --focus-ring: #2f7071;
+
+  --font-display: "Bricolage Grotesque", ui-rounded, "Arial Rounded MT Bold", sans-serif;
+  --font-sans: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"],
+.dark {
+  --linen: #000000;
+  --ink: #f4f4f4;
+  --deep-slate: #262626;
+  --mineral: #79b8b0;
+  --mineral-hover: #94d4cb;
+  --on-primary: #000000;
+  --copper: #e29b85;
+  --mist: #161616;
+  --line: #242424;
+  --muted-ink: #8e8e8e;
+  --surface-bg: #0d0d0d;
+  --surface-subtle: #141414;
+  --focus-ring: #79b8b0;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --linen: #000000;
+    --ink: #f4f4f4;
+    --deep-slate: #262626;
+    --mineral: #79b8b0;
+    --mineral-hover: #94d4cb;
+    --on-primary: #000000;
+    --copper: #e29b85;
+    --mist: #161616;
+    --line: #242424;
+    --muted-ink: #8e8e8e;
+    --surface-bg: #0d0d0d;
+    --surface-subtle: #141414;
+    --focus-ring: #79b8b0;
+
+    color-scheme: dark;
+  }
+}
