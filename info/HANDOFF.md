@@ -38,9 +38,15 @@ All green locally against Docker-backed Supabase at `4658c5e30e3f`:
 - 2026-08-22 (owner): zero key material policy — no credentials anywhere in tracked files or history; CI extracts the local service key at runtime from `supabase status -o env`.
 - 2026-08-22 (owner): scoped UI redesign remains in-scope at Day 6 if real usage shows the interface itself is insufficient; quiet-proof direction and all gates stay the safety net.
 
+## Production Status (end of run)
+
+- All four Day 4–5 migrations (`20260826000000`–`20260829000000`) were applied to the hosted Supabase project via `supabase db push` from the linked CLI (verified via `migration list`).
+- Production verified live on https://secure-bin.vercel.app with browser automation: three-tab layout, Markdown create → reveal with styled headings/bullets, health 200, CI success on the deployed commit.
+- `dev` mirrors production and receives Vercel preview deployments for continued work.
+
 ## Next Steps
 
-Start `docs/DAY-6-PLAN.md` (plan_v2 §4–§5): reveal window, privacy veil, one-command self-hosting, `.securebin` parcels, local sender manager, expanded Privacy Receipt — entry gate is green at the current commit. The Day 7 release freeze follows and stays gated until the Day 6 exit gate is green. Production still requires the owner to push migrations `20260826000000`–`20260829000000` and redeploy.
+Start `docs/DAY-6-PLAN.md` (plan_v2 §4–§5): reveal window, privacy veil, one-command self-hosting, `.securebin` parcels, local sender manager, expanded Privacy Receipt — entry gate is green at the current commit. The Day 7 release freeze follows and stays gated until the Day 6 exit gate is green.
 
 ## Recent Commits
 
