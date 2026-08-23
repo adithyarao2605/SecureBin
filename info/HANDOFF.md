@@ -66,8 +66,8 @@ Updated: 2026-08-24 (Asia/Kolkata) — **handoff to the next agent**
 
 ## Validation (rerun these; numbers recorded at last green)
 
-`pnpm validate` (lint, typecheck, 159 unit tests, build) · `pnpm test:integration`
-(16) · `pnpm supabase:test` (131 pgTAP, 8 files) · `pnpm test:e2e` (12,
+`pnpm validate` (lint, typecheck, 170 unit tests, build) · `pnpm test:integration`
+(16) · `pnpm supabase:test` (145 pgTAP, 9 files) · `pnpm test:e2e` (12,
 **workers: 1 — do not raise**, dev-server compile races flake parallel runs)
 · `pnpm test:e2e:prod` (12) · `pnpm test:a11y` (3) · reproducibility script ·
 `pnpm audit --audit-level=high` clean. Final rerun: all listed gates green on

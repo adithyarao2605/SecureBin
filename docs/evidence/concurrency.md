@@ -31,7 +31,7 @@ converge on one live reservation; conflicting envelope/size reuse returns
 
 ## Database-level proofs
 
-The pgTAP suite (`pnpm supabase:test`, 131 tests across 8 files) additionally
+The pgTAP suite (`pnpm supabase:test`, 145 tests across 9 files) additionally
 covers row-lock ordering, `reveal_count <= max_reveals` constraints,
 lease-window idempotency, and anonymous-deny RLS on every table.
 

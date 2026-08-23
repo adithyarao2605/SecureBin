@@ -254,7 +254,7 @@ export function useStagedCreate() {
 
       if (!uploadRes.ok) {
         const errText = await uploadRes.text().catch(() => "");
-        console.error("[SecureBin] Upload reservation failed:", uploadRes.status, errText);
+        console.error("[SecureBin] Upload reservation failed:", uploadRes.status);
         throw new Error("upload_reservation_failed");
       }
 
@@ -272,7 +272,7 @@ export function useStagedCreate() {
 
       if (!putRes.ok) {
         const putErr = await putRes.text().catch(() => "");
-        console.error("[SecureBin] Storage upload failed:", putRes.status, putErr);
+        console.error("[SecureBin] Storage upload failed:", putRes.status);
         throw new Error("storage_upload_failed");
       }
 
@@ -288,8 +288,7 @@ export function useStagedCreate() {
     });
 
     if (!response.ok) {
-      const createErr = await response.text().catch(() => "");
-      console.error("[SecureBin] Create share RPC failed:", response.status, createErr);
+      console.error("[SecureBin] Create share RPC failed:", response.status);
       throw new Error("create_failed");
     }
 

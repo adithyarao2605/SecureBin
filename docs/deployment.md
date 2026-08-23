@@ -1,6 +1,8 @@
 # Deployment and reproducibility
 
-The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md)). All database migrations through `20260830000000_discussion_comment_edit_delete.sql` are committed; those through `20260829000000_encrypted_discussions.sql` are verified applied to the hosted database, and the newest one must be confirmed by the owner (`supabase migration list`, then `supabase db push`) before discussion edit/delete works in production. The current Phase A landing/app route split also needs the owner-operated production redeploy.
+The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md)). All database migrations through `20260831000000_reveal_window.sql` are committed; those through `20260829000000_encrypted_discussions.sql` are verified applied to the hosted database, and the two newest (`20260830000000_discussion_comment_edit_delete.sql`, `20260831000000_reveal_window.sql`) must be confirmed by the owner (`supabase migration list`, then `supabase db push`) before discussion edit/delete and the reveal window work in production. The current Phase A landing/app route split also needs the owner-operated production redeploy.
+
+For a fully local stack see [`self-hosting.md`](self-hosting.md): `pnpm local:setup | local | local:stop`.
 
 Branch model: development happens on `dev`, which Vercel builds as a preview deployment; `main` is production. Verify features on the preview URL before promoting to `main`.
 
@@ -48,7 +50,7 @@ dependency installation and runs the same Python repository check.
 - The exact reviewed commit SHA from `git rev-parse HEAD`.
 - This runbook and the current [`../info/HANDOFF.md`](../info/HANDOFF.md).
 - A statement of scope: Days 1–5 are implemented and gated in CI with local
-  verification (159 unit, 16 integration, 131 pgTAP, 12 E2E, 3 Axe tests);
+  verification (170 unit, 16 integration, 145 pgTAP, 17 E2E, 7 Axe tests);
   the newest migrations are already applied; the current landing/app code
   still requires an owner production redeploy.
 

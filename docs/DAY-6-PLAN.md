@@ -1,6 +1,11 @@
 # Day 6 implementation plan: reveal window, privacy veil, self-host, parcels, local manager
 
-Status: **gated future work — plan_v3 Phases B–E must finish before Day 6**
+Status: **implemented 2026-08-24** — §1 discussions completion sweep, §2 reveal
+window, §3 privacy veil, §4 self-host scripts + [self-hosting.md](self-hosting.md)
+runbook, §5 `.securebin` parcels, §6 manager upgrades, and §7 expanded receipt
+are shipped with tests (pgTAP 08_reveal_window.sql, unit, e2e, a11y). The §3.8
+ciphertext-padding slice is deferred by explicit HANDOFF decision. Stretch
+items (Secure Drop, acknowledgment) stay deferred by owner decision.
 
 Audience: low-context implementation agents. Scope authority: `info/plan_v3.md`
 Phase F; this document locks execution detail.

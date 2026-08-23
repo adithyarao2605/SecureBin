@@ -48,7 +48,7 @@ export function PrivacyVeil({ children }: { children: ReactNode }) {
         Veiling is local to this screen only; it is not screenshot prevention.
         Esc or leaving this tab hides it again.
       </p>
-      <div className="veil-content" aria-hidden={veiled}>
+      <div className="veil-content" aria-hidden={veiled} inert={veiled}>
         {children}
       </div>
     </div>

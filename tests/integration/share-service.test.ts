@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
 
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import type { CreateShareInput } from "../../lib/shares/contracts";
@@ -84,6 +85,7 @@ class FakeRpcClient implements RpcClient {
           reveal_count: 1,
           max_reveals: null,
           retry_expires_at: "2099-01-01T00:05:00.000Z",
+          window_ends_at: args.p_request_token_hash === SECOND_TOKEN_HASH ? "2099-01-01T01:00:00.000Z" : null,
         }];
       case "revoke_share":
         return [{ valid_capability: true, revoked: true }];
@@ -102,6 +104,8 @@ class FakeRpcClient implements RpcClient {
 function bytea(base64UrlValue: string): string {
   return `\\x${Buffer.from(base64UrlValue, "base64url").toString("hex")}`;
 }
+
+const SECOND_TOKEN_HASH = `\\x${createHash("sha256").update("second").digest("hex")}`;
 
 describe("share service RPC mapping", () => {
   it("maps create arguments without exposing plaintext and matches 9-arg signature without file parameters", async () => {
@@ -155,6 +159,11 @@ describe("share service RPC mapping", () => {
     expect(revealCall?.args.p_request_token_hash).toBe("\\xe8936f412865d7835b0bb970fe780f4740eb0c49b16ab9bd82d8bc938e3f272a");
     const revokeCall = rpc.calls.find(({ functionName }) => functionName === "revoke_share");
     expect(revokeCall?.args.p_delete_token_hash).toBe("\\xa8e46592d861df319356a462b76a2a16d3e7f3218811a1cd74349d6998955cee");
+
+    // A set window maps through to the recipient response.
+    await expect(service.reveal(publicId, "second")).resolves.toMatchObject({
+      releaseWindowEndsAt: "2099-01-01T01:00:00.000Z",
+    });
   });
 
   it("maps a batch RPC response in request order", async () => {

@@ -7,7 +7,7 @@ This document is the technical source of truth for the judged SecureBin release.
 
 ### Current implementation status
 
-Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), Day 3 (Multi-Mode Content with SBCT Binary Framing, Encrypted Attachments, Storage URL Normalization, Safe Local Previews), Day 4 (Password Factor with PBKDF2-HMAC-SHA-256 at 600,000 iterations, Two-Channel Unlock Codes, QR + Native Share + Email Actions, Privacy Receipt, Pre-flight Disclosure, Complete Non-Happy-Path States), and Day 5 (Custom Reveal Counts 1–100, "Never" Expiry, Markdown Edit/Split/Preview, Code Mode with Local Language Detection, Multi-File Encrypted Attachments ≤5 with Download-all ZIP, Drag-and-Drop Zone, and Encrypted Discussions) are **implemented and fully verified**: 159 unit tests (24 files), 16 integration tests, 131 pgTAP tests (8 files), 12 Playwright E2E tests, and 3 Axe accessibility tests pass locally. The public landing is `/`; the sharing app is `/new`. Phases B–D of plan_v3 are also complete.
+Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), Day 3 (Multi-Mode Content with SBCT Binary Framing, Encrypted Attachments, Storage URL Normalization, Safe Local Previews), Day 4 (Password Factor with PBKDF2-HMAC-SHA-256 at 600,000 iterations, Two-Channel Unlock Codes, QR + Native Share + Email Actions, Privacy Receipt, Pre-flight Disclosure, Complete Non-Happy-Path States), and Day 5 (Custom Reveal Counts 1–100, "Never" Expiry, Markdown Edit/Split/Preview, Code Mode with Local Language Detection, Multi-File Encrypted Attachments ≤5 with Download-all ZIP, Drag-and-Drop Zone, and Encrypted Discussions) are **implemented and fully verified**: 170 unit tests (27 files), 16 integration tests, 145 pgTAP tests (9 files), 17 Playwright E2E tests, and 7 Axe accessibility tests pass locally. The public landing is `/`; the sharing app is `/new`. Phases B–D of plan_v3 are also complete.
 
 Development happens on the `dev` branch (Vercel preview); `main` is production.
 
@@ -355,6 +355,8 @@ sequenceDiagram
 ```
 
 ## 9. Policy State Machine
+
+A sender-chosen **release window** adds one edge: an active share with remaining reveals becomes effectively unavailable once `window_ends_at` (stamped at first release) passes; the original request token keeps its five-minute retry lease.
 
 ```mermaid
 stateDiagram-v2

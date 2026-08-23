@@ -60,6 +60,7 @@ Supported repository scripts:
 ```bash
 pnpm install --frozen-lockfile
 pnpm dev
+pnpm start
 pnpm lint
 pnpm typecheck
 pnpm test

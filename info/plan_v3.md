@@ -1,6 +1,6 @@
 # SecureBin — Plan v3 (active roadmap)
 
-Status: **Phases A–D complete — Phase E pre-Day-6 hardening next**
+Status: **Phases A–F complete (Day 6 shipped) — Phase G freeze next. Secure Drop and recipient acknowledgment deferred by owner decision; ciphertext-size padding deferred by explicit HANDOFF decision.**
 
 This document replaces `info/plan_v2.md` and the per-day plan files as the
 single active roadmap. Days 1–5 of the original five-day delivery are
@@ -98,14 +98,13 @@ replaces per-item polling.
 7. Evidence pack: concurrency run records under `docs/evidence/`, diagram
    refresh, demo-script rehearsal checklist.
 
-Pre-Day-6 gate status: Phases B–D and the production-build E2E slice are
-complete. Secure Drop, recipient acknowledgment, self-host commands, and the
-evidence/performance backlog remain deferred until this gate is recorded green
-and Day 6 is started.
+Phase E outcome: the production-build E2E gate, self-host scripts, expanded
+Axe coverage, perf baseline, and evidence pack all landed before Day 6.
+Secure Drop and recipient acknowledgment remain deferred by owner decision.
 
 ## Phase F — Day 6 scope (reveal window, veil, self-host, parcels)
 
-Detail: `docs/DAY-6-PLAN.md` §1–6. In order: finish any discussion residue →
+Status: **complete** (padding slice deferred, see HANDOFF). Detail: `docs/DAY-6-PLAN.md` §1–6. In order: finish any discussion residue →
 reveal window (server-recorded first-release window + local hide timer, honest
 copy) → privacy veil (local hide/Esc/auto-blur; never "screenshot prevention")
 → self-host scripts (`pnpm local:setup | local | local:stop`, fresh-clone
@@ -141,7 +140,7 @@ submit early with buffer.
 Each phase lands green: typecheck, unit, lint; full `pnpm validate`,
 integration, pgTAP, e2e, a11y, reproducibility before push; Playwright
 behavior pass against production; secrets audit before final push.
-Phase F exit = Day 6 exit gate (docs/DAY-6-PLAN.md §"Day 6 exit gate").
+Phase F exit = Day 6 evidence gate (docs/DAY-6-PLAN.md §4) plus full local gates.
 Phase G exit = submission checklist complete (docs/DAY-7-PLAN.md).
 
 ## Explicit non-goals (unchanged from plan_v2 §9)

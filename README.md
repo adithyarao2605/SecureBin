@@ -13,9 +13,9 @@ templates, or visual identity.
 
 ## Current status
 
-Days 1 through 5 are implemented and fully verified. That covers the core cryptographic engine, lifecycle policy correctness with concurrency proofs, safe multi-mode content (plain notes, sanitized Markdown, syntax-highlighted code) with SBCT binary framing, encrypted attachments up to five files per share with drag-and-drop and Download-all ZIP, password factors (PBKDF2-HMAC-SHA-256, 600,000 iterations), two-channel unlock codes (Crockford Base32 with check symbol), custom reveal counts from 1 to 100, "Never" expiry, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions, QR + native share + email actions, and the Privacy Receipt with a pre-flight "What will SecureBin see?" disclosure.
+Days 1–5 plus the Day 6 batch (encrypted discussions end-to-end from the composer, a reveal window counted from the first opening, a local privacy veil on the opened view, portable `.securebin` parcels with fully offline restore, one-command self-hosting, history-desk labels and policy view, and an expanded privacy receipt) are implemented and fully verified. That covers the core cryptographic engine, lifecycle policy correctness with concurrency proofs, safe multi-mode content (plain notes, sanitized Markdown, syntax-highlighted code) with SBCT binary framing, encrypted attachments up to five files per share with drag-and-drop and Download-all ZIP, password factors (PBKDF2-HMAC-SHA-256, 600,000 iterations), two-channel unlock codes (Crockford Base32 with check symbol), custom reveal counts from 1 to 100, "Never" expiry, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions, QR + native share + email actions, and the Privacy Receipt with a pre-flight "What will SecureBin see?" disclosure.
 
-All gates pass locally: 159 unit tests (24 files), 16 integration tests, 131 pgTAP database tests (8 files), 12 Playwright E2E tests, and 3 Axe accessibility tests. The production-build E2E gate also passes. The previous production incident is closed (see [`docs/archive/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md)). The current route split is `/` for the landing page and `/new` for the sharing app.
+All gates pass locally: 170 unit tests (27 files), 16 integration tests, 145 pgTAP database tests (9 files), 17 Playwright E2E tests, and 7 Axe accessibility tests. The production-build E2E gate also passes. The previous production incident is closed (see [`docs/archive/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md)). The current route split is `/` for the landing page and `/new` for the sharing app.
 
 Development happens on the `dev` branch, which deploys as a Vercel preview; `main` remains production. CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request.
 
@@ -180,10 +180,10 @@ authorized at a non-preset limit).
 | Rubric area | Evidence location | Status |
 | --- | --- | --- |
 | Problem understanding | This README, local planning references, threat model | Foundation documented |
-| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions with edit/delete, custom policies, Privacy Receipt | plan_v3 Phases A–D shipped; Phase E–G gated |
+| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions with edit/delete, custom policies, Privacy Receipt | plan_v3 Phases A–F shipped (Secure Drop + recipient acknowledgment deferred by owner decision); Phase G freeze pending |
 | Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented through discussions and multi-file model |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Composer, viewer, factor prompts, receipt, and discussions covered |
-| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local gates green: 159 unit / 16 integration / 131 pgTAP / 12 E2E / 3 Axe / production E2E |
+| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local gates green: 170 unit / 16 integration / 145 pgTAP / 17 E2E / 7 Axe / production E2E |
 | Documentation | This README, threat model, architecture, runbook | Present |
 
 ## Security and limitations

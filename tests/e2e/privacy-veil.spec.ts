@@ -1,8 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-// Privacy veil (Day 6 §3): decrypted content is veiled by default on the
-// opened view; showing it is a purely local action (no network traffic), and
-// Esc re-hides. Requires `pnpm supabase:start`.
+// Privacy veil (Day 6 §3): the opened view can hide decrypted content locally;
+// toggling is pure client-side (no network traffic) and Esc re-hides. Requires `pnpm supabase:start`.
 
 const NOTE = "Privacy veil probe: only this browser can read me.";
 

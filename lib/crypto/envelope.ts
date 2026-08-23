@@ -215,17 +215,37 @@ export function validateFileEnvelope(value: unknown, requireCiphertext = false):
     value.version !== 2 ||
     value.objectType !== FILE_OBJECT_TYPE ||
     value.algorithm !== CONTENT_ALGORITHM ||
-    value.passwordSalt !== null ||
-    value.kdf !== CONTENT_KDF ||
-    !isRecord(value.kdfParameters) ||
-    Object.keys(value.kdfParameters).length !== 0 ||
-    value.factorMask !== CONTENT_FACTOR_MASK
+    (value.factorMask !== "link" && value.factorMask !== "link+password" && value.factorMask !== "link+unlock" && value.factorMask !== "link+password+unlock")
   ) {
     throw new EnvelopeValidationError("Invalid file envelope metadata.");
   }
 
   const nonce = requireBytes(value.nonce, 12, "nonce");
   const hkdfSalt = requireBytes(value.hkdfSalt, 16, "HKDF salt");
+
+  // Masked file envelopes carry a PBKDF2 block exactly like the server and
+  // sealFile produce; link-masked ones must not.
+  const expectsKdf = value.factorMask === "link+password" || value.factorMask === "link+password+unlock";
+  if (value.kdf !== (expectsKdf ? "PBKDF2-HMAC-SHA-256" : "none")) {
+    throw new EnvelopeValidationError("Invalid file envelope KDF.");
+  }
+  if (!isRecord(value.kdfParameters)) throw new EnvelopeValidationError("Invalid file envelope KDF parameters.");
+  if (expectsKdf) {
+    const kdfKeys = Object.keys(value.kdfParameters).sort();
+    if (
+      kdfKeys.length !== 1 ||
+      kdfKeys[0] !== "iterations" ||
+      (value.kdfParameters as Record<string, unknown>).iterations !== 600000 ||
+      typeof value.passwordSalt !== "string"
+    ) {
+      throw new EnvelopeValidationError("Invalid file envelope PBKDF2 block.");
+    }
+    decodeBytes(value.passwordSalt, "password salt");
+  } else {
+    if (Object.keys(value.kdfParameters).length !== 0 || value.passwordSalt !== null) {
+      throw new EnvelopeValidationError("Invalid file envelope factor metadata.");
+    }
+  }
 
   const ciphertext = requireCiphertext ? decodeBytes(value.ciphertext, "ciphertext") : null;
   if (ciphertext && (ciphertext.length > MAX_FILE_CIPHERTEXT_BYTES || ciphertext.length < 16)) {
@@ -238,10 +258,13 @@ export function validateFileEnvelope(value: unknown, requireCiphertext = false):
     algorithm: CONTENT_ALGORITHM,
     nonce: bytesToBase64Url(nonce),
     hkdfSalt: bytesToBase64Url(hkdfSalt),
-    passwordSalt: null,
-    kdf: CONTENT_KDF,
-    kdfParameters: {},
-    factorMask: CONTENT_FACTOR_MASK,
+    // Preserve the masked factor block exactly as sealed — the AAD binds to
+    // it, and openFile derives its IKM from it.
+    passwordSalt:
+      expectsKdf ? bytesToBase64Url(decodeBytes(value.passwordSalt, "password salt")) : null,
+    kdf: expectsKdf ? "PBKDF2-HMAC-SHA-256" : "none",
+    kdfParameters: expectsKdf ? { iterations: 600000 } : {},
+    factorMask: value.factorMask,
   };
 
   if (ciphertext) {

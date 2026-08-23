@@ -1,6 +1,6 @@
 begin;
 
-select plan(10);
+select plan(14);
 
 -- Reveal window (Day 6 §2): a sender-chosen window starts at the FIRST
 -- successful release and closes reveal_window_seconds later. New
@@ -129,6 +129,47 @@ select lives_ok(
     )
   $$,
   'create_share accepts a share without a reveal window'
+);
+
+-- 9-12. Window × lifecycle interactions on a dedicated 2-reveal share.
+insert into public.shares (
+  public_id, content_envelope, expires_at, max_reveals,
+  delete_token_hash, password_required, unlock_required, idempotency_key_hash,
+  reveal_window_seconds
+) values (
+  'HQEBAQEBAQEBAQEBAQEBAQ',
+  '{"version":1,"objectType":"content","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link","ciphertext":"AAAAAAAAAAAAAAAAAAAAAA"}'::jsonb,
+  now() + interval '1 hour',
+  2,
+  decode(repeat('37', 32), 'hex'), false, false,
+  decode(repeat('38', 32), 'hex'),
+  3600
+);
+
+select is(
+  (select status from public.reveal_share('HQEBAQEBAQEBAQEBAQEBAQ', decode(repeat('51', 32), 'hex'))),
+  'authorized',
+  'window share: first release authorized'
+);
+select is(
+  (select status from public.reveal_share('HQEBAQEBAQEBAQEBAQEBAQ', decode(repeat('52', 32), 'hex'))),
+  'authorized',
+  'window share: second release authorized (exhausts limit)'
+);
+select is(
+  (select status from public.reveal_share('HQEBAQEBAQEBAQEBAQEBAQ', decode(repeat('53', 32), 'hex'))),
+  'unavailable',
+  'exhausting reveals inside an open window is still uniformly unavailable'
+);
+
+-- Revocation closes the share even while its window is open.
+update public.shares
+  set revoked_at = now()
+  where public_id = 'HQEBAQEBAQEBAQEBAQEBAQ';
+select is(
+  (select status from public.reveal_share('HQEBAQEBAQEBAQEBAQEBAQ', decode(repeat('54', 32), 'hex'))),
+  'unavailable',
+  'revocation overrides an open window'
 );
 
 select * from finish();

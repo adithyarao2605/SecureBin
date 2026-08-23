@@ -1,5 +1,5 @@
 import { utf8Decode, utf8Encode } from "../crypto/encoding";
-import { MAX_CONTENT_BYTES, validateContentEnvelope, validateFileEnvelope } from "../crypto/envelope";
+import { validateContentEnvelope, validateFileEnvelope } from "../crypto/envelope";
 import { MAX_FILE_CIPHERTEXT_SIZE } from "../crypto/file";
 
 /**
@@ -17,6 +17,9 @@ export const PARCEL_VERSION = 0x01;
 
 const MAX_PARCEL_BYTES = 64 * 1024 * 1024; // 10 MiB plaintext cap × 5 + envelopes
 const MAX_POLICY_JSON_BYTES = 4 * 1024;
+// A maximal content envelope (512 KiB ciphertext base64url + metadata) is
+// ~700 KB; allow headroom so every share the composer can seal also imports.
+const MAX_CONTENT_ENVELOPE_JSON_BYTES = 1024 * 1024;
 
 export interface ParcelAttachment {
   readonly slot: number;
@@ -175,7 +178,7 @@ export function decodeParcel(bytes: Uint8Array): Parcel {
 
     const envelopeLength = readU32(view, cursor);
     cursor += 4;
-    if (envelopeLength > MAX_CONTENT_BYTES || cursor + envelopeLength > bytes.length) throw new ParcelError();
+    if (envelopeLength > MAX_CONTENT_ENVELOPE_JSON_BYTES || cursor + envelopeLength > bytes.length) throw new ParcelError();
     const contentEnvelope = validateContentEnvelope(JSON.parse(utf8Decode(bytes.subarray(cursor, cursor + envelopeLength))));
     cursor += envelopeLength;
 
@@ -187,6 +190,7 @@ export function decodeParcel(bytes: Uint8Array): Parcel {
     for (let index = 0; index < attachmentCount; index += 1) {
       if (cursor + 1 > bytes.length) throw new ParcelError();
       const slot = bytes[cursor];
+      if (slot > 4) throw new ParcelError();
       cursor += 1;
       const attachmentEnvelopeLength = readU32(view, cursor);
       cursor += 4;
