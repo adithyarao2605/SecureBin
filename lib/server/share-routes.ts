@@ -1,4 +1,4 @@
-import { isPublicId, parseCreateShareInput, parseDeleteInput, parseRevealInput, type ShareStatus } from "../shares/contracts";
+import { isPublicId, parseCreateShareInput, parseDeleteInput, parseRevealInput, parseStatusBatchInput, type ShareStatus } from "../shares/contracts";
 import { networkDiscriminator } from "./hashing";
 import { errorResponse, jsonResponse, readJsonBody } from "./http";
 import { readServerConfig } from "./config";
@@ -88,6 +88,24 @@ export function createGetStatusHandler(dependencies: ShareRouteDependencies): (r
   };
 }
 
+export function createPostStatusBatchHandler(dependencies: ShareRouteDependencies): (request: Request) => Promise<Response> {
+  return async (request) => {
+    const rateLimit = await allowed(request, dependencies, "status", 60);
+    if (rateLimit !== true) return rateLimit;
+    const input = parseStatusBatchInput(await readJsonBody(request, MAX_SMALL_BODY_BYTES));
+    if (!input) return errorResponse("invalid_request", 400);
+    try {
+      const statuses = await dependencies.service.getStatusBatch(input.publicIds);
+      return jsonResponse({
+        statuses: statuses.map(({ publicId, status }) => ({ publicId, ...statusPayload(status) })),
+      });
+    } catch (error) {
+      if (error instanceof ShareServiceError && error.kind === "invalid") return errorResponse("invalid_request", 400);
+      return isDependencyFailure(error) ? errorResponse("server_error", 503) : errorResponse("server_error", 500);
+    }
+  };
+}
+
 export function createPostRevealHandler(dependencies: ShareRouteDependencies): (request: Request, context: { params: Promise<{ publicId: string }> }) => Promise<Response> {
   return async (request, context) => {
     const rateLimit = await allowed(request, dependencies, "reveal", 20);
@@ -140,7 +158,7 @@ export function createDeleteShareHandler(dependencies: ShareRouteDependencies): 
   };
 }
 
-function statusPayload(status: ShareStatus): unknown {
+function statusPayload(status: ShareStatus): Record<string, unknown> {
   if (status.status === "unavailable") return { status: "unavailable" };
   return {
     status: status.status,

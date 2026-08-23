@@ -70,18 +70,17 @@ export function ShareResultCard({
         </div>
       )}
 
+      <div className="share-copy-row">
+        <button type="button" className="action-button primary-button" onClick={onCopyLink}>
+          {copyStatus === "copied" ? "Copied" : "Copy link"}
+        </button>
+      </div>
+
       {receiptData && <PrivacyReceipt data={receiptData} />}
 
       <ShareActions shareUrl={shareUrl} />
 
       <div className="share-actions-row">
-        <button
-          type="button"
-          className="action-button primary-button"
-          onClick={onCopyLink}
-        >
-          {copyStatus === "copied" ? "Copied" : "Copy link"}
-        </button>
 
         {activeDeleteCapability && !revokedMessage && !showRevokeConfirm && (
           <button

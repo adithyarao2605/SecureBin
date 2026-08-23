@@ -1,7 +1,7 @@
 -- Day 5: encrypted discussion tests.
 begin;
 
-select plan(15);
+select plan(24);
 
 -- Primary share S1 with discussion capability cap1 = 0x77 * 32.
 insert into public.shares (
@@ -37,6 +37,7 @@ select lives_ok(
     select * from public.add_share_comment(
       'DQEBAQEBAQEBAQEBAQEBAQ',
       decode(repeat('77', 32), 'hex'),
+      sha256(decode(repeat('70', 32), 'hex')),
       null,
       '{"v":1}'::jsonb,
       null
@@ -48,8 +49,8 @@ select lives_ok(
 select is(
   (
     select count(*)::integer from public.share_comments c
-    join public.shares s on s.id = c.share_id
-    where s.public_id = 'DQEBAQEBAQEBAQEBAQEBAQ'
+     join public.shares s on s.id = c.share_id
+      where s.public_id = 'DQEBAQEBAQEBAQEBAQEBAQ'
   ),
   1,
   'exactly one comment row is stored for the share'
@@ -61,6 +62,7 @@ select throws_ok(
     select * from public.add_share_comment(
       'DQEBAQEBAQEBAQEBAQEBAQ',
       decode(repeat('88', 32), 'hex'),
+      sha256(decode(repeat('71', 32), 'hex')),
       null,
       '{"v":1}'::jsonb,
       null
@@ -84,6 +86,7 @@ select throws_ok(
     select * from public.add_share_comment(
       'DQEBAQEBAQEBAQEBAQEBAQ',
       decode(repeat('77', 32), 'hex'),
+      sha256(decode(repeat('72', 32), 'hex')),
       (select c.id from public.share_comments c
         join public.shares s on s.id = c.share_id
        where s.public_id = 'DREBAQEBAQEBAQEBAQEBAQ'),
@@ -102,6 +105,7 @@ select lives_ok(
     select * from public.add_share_comment(
       'DQEBAQEBAQEBAQEBAQEBAQ',
       decode(repeat('77', 32), 'hex'),
+      sha256(decode(repeat('71', 32), 'hex')),
       (select c.id from public.share_comments c
         join public.shares s on s.id = c.share_id
        where s.public_id = 'DQEBAQEBAQEBAQEBAQEBAQ'),
@@ -118,6 +122,7 @@ select throws_ok(
     select * from public.add_share_comment(
       'DQEBAQEBAQEBAQEBAQEBAQ',
       decode(repeat('77', 32), 'hex'),
+      sha256(decode(repeat('73', 32), 'hex')),
       null,
       '"not-an-object"'::jsonb,
       null
@@ -131,7 +136,7 @@ select throws_ok(
 -- 7. Body envelope above 4096 text bytes violates the table bound.
 select throws_ok(
   format(
-    'select public.add_share_comment(''DQEBAQEBAQEBAQEBAQEBAQ'', decode(repeat(''77'', 32), ''hex''), null, %L::jsonb, null)',
+    'select public.add_share_comment(''DQEBAQEBAQEBAQEBAQEBAQ'', decode(repeat(''77'', 32), ''hex''), sha256(decode(repeat(''74'', 32), ''hex'')), null, %L::jsonb, null)',
     jsonb_build_object('pad', repeat('A', 4200))::text
   ),
   '23514',
@@ -142,7 +147,7 @@ select throws_ok(
 -- 8. Nickname envelope above 1024 text bytes violates the table bound.
 select throws_ok(
   format(
-    'select public.add_share_comment(''DQEBAQEBAQEBAQEBAQEBAQ'', decode(repeat(''77'', 32), ''hex''), null, ''{"v":1}''::jsonb, %L::jsonb)',
+    'select public.add_share_comment(''DQEBAQEBAQEBAQEBAQEBAQ'', decode(repeat(''77'', 32), ''hex''), sha256(decode(repeat(''75'', 32), ''hex'')), null, ''{"v":1}''::jsonb, %L::jsonb)',
     jsonb_build_object('pad', repeat('A', 1200))::text
   ),
   '23514',
@@ -170,6 +175,104 @@ select is(
   'other shares comments are excluded from the listing'
 );
 
+-- 16. The per-comment token permits editing and records the marker.
+select lives_ok(
+  $$
+    select * from public.edit_share_comment(
+      'DQEBAQEBAQEBAQEBAQEBAQ',
+      decode(repeat('77', 32), 'hex'),
+      (select c.id from public.share_comments c
+        join public.shares s on s.id = c.share_id
+       where s.public_id = 'DQEBAQEBAQEBAQEBAQEBAQ'
+         and c.edit_token_hash = sha256(decode(repeat('70', 32), 'hex'))
+       order by c.created_at asc, c.id asc limit 1),
+      sha256(decode(repeat('70', 32), 'hex')),
+      '{"v":2}'::jsonb
+    );
+  $$,
+  'the comment edit token permits an edit'
+);
+
+select isnt(
+  (
+    select edited_at from public.share_comments c
+     join public.shares s on s.id = c.share_id
+    where s.public_id = 'DQEBAQEBAQEBAQEBAQEBAQ'
+      and c.edit_token_hash = sha256(decode(repeat('70', 32), 'hex'))
+    order by c.created_at asc, c.id asc limit 1
+  ),
+  null,
+  'editing records edited_at'
+);
+
+-- 18. Wrong token and wrong capability are both rejected before mutation.
+select throws_ok(
+  $$
+    select * from public.edit_share_comment(
+      'DQEBAQEBAQEBAQEBAQEBAQ', decode(repeat('77', 32), 'hex'),
+      (select c.id from public.share_comments c
+        join public.shares s on s.id = c.share_id
+       where s.public_id = 'DQEBAQEBAQEBAQEBAQEBAQ'
+         and c.edit_token_hash = sha256(decode(repeat('70', 32), 'hex'))
+       order by c.created_at asc, c.id asc limit 1),
+      sha256(decode(repeat('76', 32), 'hex')), '{"v":3}'::jsonb
+    );
+  $$,
+  '22023', 'invalid comment edit token', 'wrong edit token is rejected'
+);
+
+select throws_ok(
+  $$
+    select * from public.edit_share_comment(
+      'DQEBAQEBAQEBAQEBAQEBAQ', decode(repeat('88', 32), 'hex'),
+      (select c.id from public.share_comments c
+        join public.shares s on s.id = c.share_id
+       where s.public_id = 'DQEBAQEBAQEBAQEBAQEBAQ'
+         and c.edit_token_hash = sha256(decode(repeat('70', 32), 'hex'))
+       order by c.created_at asc, c.id asc limit 1),
+      sha256(decode(repeat('70', 32), 'hex')), '{"v":3}'::jsonb
+    );
+  $$,
+  '22023', 'discussion capability mismatch', 'wrong discussion capability is rejected for edit'
+);
+
+-- 20. Deleting the parent hard-removes it while preserving the orphan reply.
+select lives_ok(
+  $$
+    select * from public.delete_share_comment(
+      'DQEBAQEBAQEBAQEBAQEBAQ', decode(repeat('77', 32), 'hex'),
+      (select c.id from public.share_comments c
+        join public.shares s on s.id = c.share_id
+       where s.public_id = 'DQEBAQEBAQEBAQEBAQEBAQ'
+         and c.edit_token_hash = sha256(decode(repeat('70', 32), 'hex'))
+       order by c.created_at asc, c.id asc limit 1),
+      sha256(decode(repeat('70', 32), 'hex'))
+    );
+  $$,
+  'the comment edit token permits deletion'
+);
+
+select is(
+  (
+    select count(*)::integer
+      from public.list_share_comments('DQEBAQEBAQEBAQEBAQEBAQ', decode(repeat('77', 32), 'hex'))
+  ),
+  1,
+  'deleting a parent leaves its orphan reply'
+);
+
+select is(
+  (
+    select (parent_comment_id is not null)
+      from public.share_comments c
+      join public.shares s on s.id = c.share_id
+     where s.public_id = 'DQEBAQEBAQEBAQEBAQEBAQ'
+     limit 1
+  ),
+  true,
+  'the orphan reply retains the deleted parent id'
+);
+
 -- 11. Expired share: posting is gated by the helper lifecycle check.
 -- Fixture first: created in the past so the expiry order constraint
 -- accepts an already-expired row.
@@ -193,6 +296,7 @@ select throws_ok(
     select * from public.add_share_comment(
       'DSEBAQEBAQEBAQEBAQEBAQ',
       decode(repeat('99', 32), 'hex'),
+      sha256(decode(repeat('99', 32), 'hex')),
       null,
       '{"v":1}'::jsonb,
       null
@@ -214,6 +318,29 @@ select throws_ok(
   '22023',
   'discussion unavailable',
   'expired share rejects list_share_comments'
+);
+
+select throws_ok(
+  $$
+    select * from public.edit_share_comment(
+      'DSEBAQEBAQEBAQEBAQEBAQ', decode(repeat('99', 32), 'hex'),
+      '11111111-1111-4111-8111-111111111111',
+      decode(repeat('99', 32), 'hex'), '{"v":2}'::jsonb
+    );
+  $$,
+  '22023', 'discussion unavailable',
+  'expired share rejects edit_share_comment'
+);
+
+select throws_ok(
+  $$
+    select * from public.delete_share_comment(
+      'DSEBAQEBAQEBAQEBAQEBAQ', decode(repeat('99', 32), 'hex'),
+      '11111111-1111-4111-8111-111111111111', decode(repeat('99', 32), 'hex')
+    );
+  $$,
+  '22023', 'discussion unavailable',
+  'expired share rejects delete_share_comment'
 );
 
 -- Rate-limit fixture: fresh share with zero prior discussion consumption.
@@ -239,6 +366,7 @@ select lives_ok(
         perform public.add_share_comment(
           'DTEBAQEBAQEBAQEBAQEBAQ',
           decode(repeat('aa', 32), 'hex'),
+          sha256(decode(repeat('aa', 32), 'hex')),
           null,
           '{"v":1}'::jsonb,
           null
@@ -256,6 +384,7 @@ select throws_ok(
     select * from public.add_share_comment(
       'DTEBAQEBAQEBAQEBAQEBAQ',
       decode(repeat('aa', 32), 'hex'),
+      sha256(decode(repeat('aa', 32), 'hex')),
       null,
       '{"v":1}'::jsonb,
       null

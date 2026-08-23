@@ -6,7 +6,7 @@
  * and all queries use public IDs.
  */
 
-import { isMaxReveals, type MaxReveals } from "./contracts";
+import { isMaxReveals, type MaxReveals, type ShareStatusBatchItem } from "./contracts";
 
 export interface ShareHistoryItem {
   readonly publicId: string;
@@ -26,6 +26,10 @@ const MAX_HISTORY_ITEMS = 50;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isHistoryStatus(value: unknown): value is NonNullable<ShareHistoryItem["status"]> {
+  return value === "active" || value === "scheduled" || value === "unavailable" || value === "checking" || value === "revoked";
 }
 
 function parseHistoryItem(item: unknown): ShareHistoryItem | null {
@@ -49,7 +53,7 @@ function parseHistoryItem(item: unknown): ShareHistoryItem | null {
     maxReveals: item.maxReveals,
     deleteCapability: typeof item.deleteCapability === "string" ? item.deleteCapability : null,
     noteSnippet: typeof item.noteSnippet === "string" ? item.noteSnippet : undefined,
-    status: typeof item.status === "string" ? (item.status as ShareHistoryItem["status"]) : undefined,
+    status: isHistoryStatus(item.status) ? item.status : undefined,
     remainingReveals: typeof item.remainingReveals === "number" ? item.remainingReveals : null,
   };
 }
@@ -100,6 +104,27 @@ export function updateShareInHistory(
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {
     // Silently handle
+  }
+}
+
+export function mergeShareStatuses(statuses: readonly ShareStatusBatchItem[]): ShareHistoryItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const current = loadShareHistory();
+    const byPublicId = new Map(statuses.map((entry) => [entry.publicId, entry.status]));
+    const updated = current.map((item) => {
+      const status = byPublicId.get(item.publicId);
+      if (!status) return item;
+      return {
+        ...item,
+        status: status.status,
+        remainingReveals: status.status === "unavailable" ? null : status.remainingReveals,
+      };
+    });
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    return updated;
+  } catch {
+    return loadShareHistory();
   }
 }
 

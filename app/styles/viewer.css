@@ -419,6 +419,12 @@
   font-size: 0.78rem;
 }
 
+.discussion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
 .discussion-form {
   display: flex;
   flex-direction: column;

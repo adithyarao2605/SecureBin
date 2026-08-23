@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearShareHistory,
   loadShareHistory,
+  mergeShareStatuses,
   removeShareFromHistory,
   saveShareToHistory,
   updateShareInHistory,
@@ -111,5 +112,24 @@ describe("Browser-local Share History Manager", () => {
 
     clearShareHistory();
     expect(loadShareHistory()).toEqual([]);
+  });
+
+  it("merges batch status while preserving local capabilities", () => {
+    saveShareToHistory(sampleItem);
+    const merged = mergeShareStatuses([{
+      publicId: sampleItem.publicId,
+      status: {
+        status: "active",
+        availableAt: null,
+        expiresAt: sampleItem.expiresAt,
+        passwordRequired: false,
+        unlockRequired: false,
+        maxReveals: 3,
+        remainingReveals: 1,
+      },
+    }]);
+
+    expect(merged[0]).toMatchObject({ status: "active", remainingReveals: 1, deleteCapability: sampleItem.deleteCapability });
+    expect(loadShareHistory()[0]?.deleteCapability).toBe(sampleItem.deleteCapability);
   });
 });

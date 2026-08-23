@@ -1,32 +1,76 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   clearShareHistory,
   loadShareHistory,
+  mergeShareStatuses,
   removeShareFromHistory,
   updateShareInHistory,
   type ShareHistoryItem,
 } from "../../lib/shares/share-history";
-import type { MaxReveals } from "../../lib/shares/contracts";
+import { parseStatusBatchResponse } from "../../lib/shares/contracts";
 import { formatLocalizedDateTime } from "../../lib/shares/policy-ui";
 
 export interface ShareHistoryDeskProps {
   readonly refreshSignal?: number;
+  readonly visible?: boolean;
   readonly onSwitchToCreate?: () => void;
 }
 
-export function ShareHistoryDesk({ refreshSignal, onSwitchToCreate }: ShareHistoryDeskProps) {
+export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCreate }: ShareHistoryDeskProps) {
   const [history, setHistory] = useState<ShareHistoryItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [checkingId, setCheckingId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const refreshInFlight = useRef(false);
 
   useEffect(() => {
     setMounted(true);
     setHistory(loadShareHistory());
-  }, [refreshSignal]);
+  }, []);
+
+  async function refreshStatuses() {
+    if (refreshInFlight.current) return;
+    const items = loadShareHistory();
+    setHistory(items);
+    if (items.length === 0) return;
+    refreshInFlight.current = true;
+    setIsRefreshing(true);
+    try {
+      const response = await fetch("/api/shares/status-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicIds: items.map((item) => item.publicId) }),
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const statuses = parseStatusBatchResponse(await response.json());
+      if (statuses) setHistory(mergeShareStatuses(statuses));
+    } catch {
+      // Keep the last known local status on network or payload errors.
+    } finally {
+      refreshInFlight.current = false;
+      setIsRefreshing(false);
+    }
+  }
+
+  useEffect(() => {
+    if (visible) void refreshStatuses();
+  }, [visible]);
+
+  useEffect(() => {
+    if (visible && refreshSignal !== undefined && refreshSignal > 0) void refreshStatuses();
+  }, [refreshSignal, visible]);
+
+  useEffect(() => {
+    function handleFocus() {
+      if (visible) void refreshStatuses();
+    }
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [visible]);
 
   async function handleCopy(item: ShareHistoryItem) {
     try {
@@ -35,44 +79,6 @@ export function ShareHistoryDesk({ refreshSignal, onSwitchToCreate }: ShareHisto
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
       // Clipboard fallback
-    }
-  }
-
-  async function checkLiveStatus(publicId: string) {
-    setCheckingId(publicId);
-    try {
-      const response = await fetch(`/api/shares/${encodeURIComponent(publicId)}/status`, {
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        // Only a 404 means the share is truly gone; other statuses are
-        // transient and must not corrupt the local record.
-        if (response.status === 404) {
-          updateShareInHistory(publicId, { status: "unavailable", remainingReveals: null });
-          setHistory(loadShareHistory());
-        }
-        return;
-      }
-
-      const data = (await response.json()) as {
-        status: string;
-        remainingReveals?: number | null;
-        maxReveals?: MaxReveals;
-      };
-
-      if (data.status === "unavailable") {
-        updateShareInHistory(publicId, { status: "unavailable", remainingReveals: 0 });
-      } else if (data.status === "scheduled") {
-        updateShareInHistory(publicId, { status: "scheduled", remainingReveals: data.remainingReveals ?? null });
-      } else if (data.status === "active") {
-        updateShareInHistory(publicId, { status: "active", remainingReveals: data.remainingReveals ?? null });
-      }
-      setHistory(loadShareHistory());
-    } catch {
-      // Network error
-    } finally {
-      setCheckingId(null);
     }
   }
 
@@ -89,6 +95,7 @@ export function ShareHistoryDesk({ refreshSignal, onSwitchToCreate }: ShareHisto
       if (response.ok) {
         updateShareInHistory(item.publicId, { status: "revoked", deleteCapability: null });
         setHistory(loadShareHistory());
+        void refreshStatuses();
       }
     } catch {
       // Revoke error
@@ -147,6 +154,7 @@ export function ShareHistoryDesk({ refreshSignal, onSwitchToCreate }: ShareHisto
             Stored locally in your browser. Track reveals, copy links, or revoke access.
           </p>
         </div>
+        {isRefreshing && <p className="history-refreshing" role="status" aria-live="polite">Refreshing</p>}
         <button
           type="button"
           className="history-clear-btn"
@@ -205,16 +213,6 @@ export function ShareHistoryDesk({ refreshSignal, onSwitchToCreate }: ShareHisto
                   onClick={() => handleCopy(item)}
                 >
                   {copiedId === item.publicId ? "Copied" : "Copy link"}
-                </button>
-
-                <button
-                  type="button"
-                  className="history-action-btn secondary"
-                  disabled={checkingId === item.publicId}
-                  onClick={() => checkLiveStatus(item.publicId)}
-                  title="Check remaining reveals live from server"
-                >
-                  {checkingId === item.publicId ? "Checking…" : "Check status"}
                 </button>
 
                 {item.deleteCapability && displayStatus !== "revoked" && displayStatus !== "unavailable" && (

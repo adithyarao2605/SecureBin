@@ -6,8 +6,9 @@ import {
   openDiscussionText,
   sealDiscussionText,
 } from "../../lib/crypto/discussion";
-import { bytesToBase64Url } from "../../lib/crypto/encoding";
+import { bytesToBase64Url, randomBytes } from "../../lib/crypto/encoding";
 import type { FactorMask } from "../../lib/crypto/factors";
+import { isDigest } from "../../lib/shares/contracts";
 import { formatLocalizedDateTime } from "../../lib/shares/policy-ui";
 
 export type DiscussionThreadProps = {
@@ -24,6 +25,7 @@ interface RawComment {
   body_envelope: unknown;
   nickname_envelope: unknown;
   created_at: unknown;
+  edited_at: unknown;
 }
 
 interface DecryptedComment {
@@ -32,6 +34,31 @@ interface DecryptedComment {
   readonly body: string;
   readonly nickname: string | null;
   readonly createdAt: string;
+  readonly editedAt: string | null;
+}
+
+const COMMENT_TOKEN_STORAGE_KEY = "securebin_comment_tokens_v1";
+
+function loadCommentTokens(): Record<string, string> {
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(COMMENT_TOKEN_STORAGE_KEY) ?? "{}");
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        (entry): entry is [string, string] => typeof entry[0] === "string" && isDigest(entry[1])
+      )
+    );
+  } catch {
+    return {};
+  }
+}
+
+function saveCommentTokens(tokens: Record<string, string>): void {
+  try {
+    window.localStorage.setItem(COMMENT_TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+  } catch {
+    // A storage quota or privacy-mode failure leaves the comment read-only.
+  }
 }
 
 function parseComments(value: unknown): RawComment[] {
@@ -72,6 +99,10 @@ export function DiscussionThread({
   const [parentId, setParentId] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [postStatus, setPostStatus] = useState("");
+  const [commentTokens, setCommentTokens] = useState<Record<string, string>>(loadCommentTokens);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [mutating, setMutating] = useState(false);
   const loadInFlight = useRef(false);
 
   const loadComments = useCallback(async () => {
@@ -104,6 +135,7 @@ export function DiscussionThread({
             nickname: nicknameText,
             createdAt:
               typeof entry.created_at === "string" ? entry.created_at : new Date().toISOString(),
+            editedAt: typeof entry.edited_at === "string" ? entry.edited_at : null,
           });
         } catch {
           // Undecryptable entries are skipped; the key is share-bound so this
@@ -136,8 +168,10 @@ export function DiscussionThread({
     setPosting(true);
     try {
       const key = await keyPromise;
+      const editToken = bytesToBase64Url(randomBytes(32));
       const payload: Record<string, unknown> = {
         capability: bytesToBase64Url(capability),
+        editToken,
         bodyEnvelope: await sealDiscussionText(key, bodyText),
       };
       const trimmedNickname = nickname.trim();
@@ -154,6 +188,13 @@ export function DiscussionThread({
         }
       );
       if (!response.ok) throw new Error("comment_post_failed");
+      const created: unknown = await response.json();
+      if (typeof created !== "object" || created === null || typeof (created as { commentId?: unknown }).commentId !== "string") {
+        throw new Error("comment_post_response_invalid");
+      }
+      const nextTokens = { ...commentTokens, [(created as { commentId: string }).commentId]: editToken };
+      setCommentTokens(nextTokens);
+      saveCommentTokens(nextTokens);
       setReplyText("");
       setParentId(null);
       setPostStatus("");
@@ -165,7 +206,152 @@ export function DiscussionThread({
     }
   }
 
-  const topLevel = comments.filter((c) => c.parentId === null);
+  async function handleEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingId || !editText.trim() || mutating) return;
+    const editToken = commentTokens[editingId];
+    if (!editToken) return;
+    setMutating(true);
+    try {
+      const key = await keyPromise;
+      const response = await fetch(
+        `/api/shares/${encodeURIComponent(publicId)}/comments/${encodeURIComponent(editingId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            capability: bytesToBase64Url(capability),
+            editToken,
+            bodyEnvelope: await sealDiscussionText(key, editText.trim()),
+          }),
+        }
+      );
+      if (!response.ok) throw new Error("comment_edit_failed");
+      setEditingId(null);
+      setEditText("");
+      setPostStatus("");
+      await loadComments();
+    } catch {
+      setPostStatus("The edit could not be saved. Try again.");
+    } finally {
+      setMutating(false);
+    }
+  }
+
+  async function handleDelete(commentId: string) {
+    if (mutating) return;
+    const editToken = commentTokens[commentId];
+    if (!editToken) return;
+    setMutating(true);
+    try {
+      const response = await fetch(
+        `/api/shares/${encodeURIComponent(publicId)}/comments/${encodeURIComponent(commentId)}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ capability: bytesToBase64Url(capability), editToken }),
+        }
+      );
+      if (!response.ok) throw new Error("comment_delete_failed");
+      const nextTokens = { ...commentTokens };
+      delete nextTokens[commentId];
+      setCommentTokens(nextTokens);
+      saveCommentTokens(nextTokens);
+      if (editingId === commentId) {
+        setEditingId(null);
+        setEditText("");
+      }
+      setPostStatus("");
+      await loadComments();
+    } catch {
+      setPostStatus("The comment could not be deleted. Try again.");
+    } finally {
+      setMutating(false);
+    }
+  }
+
+  const topLevel = comments.filter(
+    (comment) => comment.parentId === null || !comments.some((parent) => parent.id === comment.parentId)
+  );
+
+  function renderComment(comment: DecryptedComment) {
+    const replies = comments.filter((candidate) => candidate.parentId === comment.id);
+    const orphaned = comment.parentId !== null && !comments.some((parent) => parent.id === comment.parentId);
+    const token = commentTokens[comment.id];
+    const isEditing = editingId === comment.id;
+    return (
+      <li key={comment.id} className="discussion-comment">
+        {orphaned && <p className="discussion-meta">[comment removed]</p>}
+        <p className="discussion-meta">
+          <strong>{comment.nickname ?? "Anonymous"}</strong>{" "}
+          <time dateTime={comment.createdAt}>
+            {formatLocalizedDateTime(comment.createdAt)}
+          </time>
+          {comment.editedAt && <span> (edited)</span>}
+        </p>
+        {isEditing ? (
+          <form className="discussion-form" onSubmit={(event) => void handleEdit(event)}>
+            <label htmlFor={`discussion-edit-${comment.id}`} className="sr-only">
+              Edit comment
+            </label>
+            <textarea
+              id={`discussion-edit-${comment.id}`}
+              className="composer-textarea discussion-reply-input"
+              value={editText}
+              onChange={(event) => setEditText(event.target.value)}
+            />
+            <button type="submit" className="action-button primary-button" disabled={mutating}>
+              {mutating ? "Saving…" : "Save edit"}
+            </button>
+            <button
+              type="button"
+              className="action-button tertiary-button"
+              onClick={() => {
+                setEditingId(null);
+                setEditText("");
+              }}
+            >
+              Cancel
+            </button>
+          </form>
+        ) : (
+          <p className="discussion-body">{comment.body}</p>
+        )}
+        <div className="discussion-actions">
+          <button
+            type="button"
+            className="discussion-reply-button action-button tertiary-button"
+            onClick={() => setParentId(comment.id)}
+          >
+            Reply
+          </button>
+          {token && !isEditing && (
+            <>
+              <button
+                type="button"
+                className="discussion-reply-button action-button tertiary-button"
+                onClick={() => {
+                  setEditingId(comment.id);
+                  setEditText(comment.body);
+                }}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className="discussion-reply-button action-button tertiary-button"
+                onClick={() => void handleDelete(comment.id)}
+                disabled={mutating}
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
+        {replies.length > 0 && <ul className="discussion-replies">{replies.map(renderComment)}</ul>}
+      </li>
+    );
+  }
 
   return (
     <section className="discussion-thread" aria-label="Encrypted discussion">
@@ -178,42 +364,7 @@ export function DiscussionThread({
       )}
 
       <ul className="discussion-list">
-        {topLevel.map((comment) => {
-          const replies = comments.filter((c) => c.parentId === comment.id);
-          return (
-            <li key={comment.id} className="discussion-comment">
-              <p className="discussion-meta">
-                <strong>{comment.nickname ?? "Anonymous"}</strong>{" "}
-                <time dateTime={comment.createdAt}>
-                  {formatLocalizedDateTime(comment.createdAt)}
-                </time>
-              </p>
-              <p className="discussion-body">{comment.body}</p>
-              <button
-                type="button"
-                className="discussion-reply-button action-button tertiary-button"
-                onClick={() => setParentId(comment.id)}
-              >
-                Reply
-              </button>
-              {replies.length > 0 && (
-                <ul className="discussion-replies">
-                  {replies.map((reply) => (
-                    <li key={reply.id} className="discussion-comment">
-                      <p className="discussion-meta">
-                        <strong>{reply.nickname ?? "Anonymous"}</strong>{" "}
-                        <time dateTime={reply.createdAt}>
-                          {formatLocalizedDateTime(reply.createdAt)}
-                        </time>
-                      </p>
-                      <p className="discussion-body">{reply.body}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          );
-        })}
+        {topLevel.map(renderComment)}
         {topLevel.length === 0 && !loadError && (
           <li className="discussion-empty">No comments yet.</li>
         )}

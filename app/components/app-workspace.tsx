@@ -15,6 +15,12 @@ import { loadShareHistory } from "../../lib/shares/share-history";
 
 type AppTab = "create" | "history" | "how-it-works";
 
+function tabFromHash(hash: string): AppTab {
+  if (hash === "#history") return "history";
+  if (hash === "#how-it-works") return "how-it-works";
+  return "create";
+}
+
 export function AppWorkspace() {
   const [activeTab, setActiveTab] = useState<AppTab>("create");
   const [phase, setPhase] = useState<ProoflinePhase>("draft");
@@ -29,9 +35,19 @@ export function AppWorkspace() {
   }, [historySignal]);
 
   useEffect(() => {
-    if (window.location.hash === "#history") setActiveTab("history");
-    if (window.location.hash === "#how-it-works") setActiveTab("how-it-works");
+    const selectFromHash = () => {
+      setActiveTab(tabFromHash(window.location.hash));
+    };
+    selectFromHash();
+    window.addEventListener("hashchange", selectFromHash);
+    return () => window.removeEventListener("hashchange", selectFromHash);
   }, []);
+
+  function changeTab(next: AppTab) {
+    setActiveTab(next);
+    const hash = next === "history" ? "#history" : next === "how-it-works" ? "#how-it-works" : "";
+    window.history.replaceState(null, "", `${window.location.pathname}${hash}`);
+  }
 
   return (
     <div className="site-shell">
@@ -40,7 +56,7 @@ export function AppWorkspace() {
           <button
             type="button"
             className="brand brand-btn"
-            onClick={() => setActiveTab("create")}
+            onClick={() => changeTab("create")}
             aria-label="SecureBin home - New share"
           >
             <span className="brand-name">SecureBin</span>
@@ -57,7 +73,7 @@ export function AppWorkspace() {
               aria-selected={activeTab === "create"}
               aria-controls="panel-create"
               className={`tab-pill-btn ${activeTab === "create" ? "active" : ""}`}
-              onClick={() => setActiveTab("create")}
+              onClick={() => changeTab("create")}
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="tab-icon">
                 <path d="M12 20h9" />
@@ -73,7 +89,7 @@ export function AppWorkspace() {
               aria-selected={activeTab === "history"}
               aria-controls="panel-history"
               className={`tab-pill-btn ${activeTab === "history" ? "active" : ""}`}
-              onClick={() => setActiveTab("history")}
+              onClick={() => changeTab("history")}
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="tab-icon">
                 <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -93,7 +109,7 @@ export function AppWorkspace() {
               aria-selected={activeTab === "how-it-works"}
               aria-controls="panel-how-it-works"
               className={`tab-pill-btn ${activeTab === "how-it-works" ? "active" : ""}`}
-              onClick={() => setActiveTab("how-it-works")}
+              onClick={() => changeTab("how-it-works")}
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="tab-icon">
                 <circle cx="12" cy="12" r="10" />
@@ -117,7 +133,7 @@ export function AppWorkspace() {
               <Composer
                 onPhaseChange={setPhase}
                 onPolicyChange={setPolicy}
-                onShareCreated={() => setHistorySignal((prev) => prev + 1)}
+                onShareChange={() => setHistorySignal((prev) => prev + 1)}
               />
             </div>
             <div className="evidence-rail-container">
@@ -127,7 +143,7 @@ export function AppWorkspace() {
         </div>
 
         <div id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden={activeTab !== "history"} className="tab-panel">
-          <ShareHistoryDesk refreshSignal={historySignal} onSwitchToCreate={() => setActiveTab("create")} />
+          <ShareHistoryDesk refreshSignal={historySignal} visible={activeTab === "history"} onSwitchToCreate={() => changeTab("create")} />
         </div>
 
         <div id="panel-how-it-works" role="tabpanel" aria-labelledby="tab-how-it-works" hidden={activeTab !== "how-it-works"} className="tab-panel">

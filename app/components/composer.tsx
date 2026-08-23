@@ -31,10 +31,10 @@ export type { ComposerMode, MarkdownViewMode };
 export interface ComposerProps {
   readonly onPhaseChange?: (phase: ProoflinePhase) => void;
   readonly onPolicyChange?: (policy: ValidatedPolicy) => void;
-  readonly onShareCreated?: () => void;
+  readonly onShareChange?: () => void;
 }
 
-export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: ComposerProps = {}) {
+export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: ComposerProps = {}) {
   const [mode, setMode] = useState<ComposerMode>("note");
   const [markdownView, setMarkdownView] = useState<MarkdownViewMode>("edit");
   const [language, setLanguage] = useState<CodeLanguage>("typescript");
@@ -172,7 +172,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       lastAttemptRef.current = null;
       setProtection(EMPTY_PROTECTION);
       if (onPhaseChange) onPhaseChange("created");
-      if (onShareCreated) onShareCreated();
+      if (onShareChange) onShareChange();
     } catch (err) {
       console.error("[SecureBin] Share creation halted:", err instanceof Error ? err.message : String(err));
       setErrorMessage("This share could not be created. Your draft is still only on this device.");
@@ -204,6 +204,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
       setShowRevokeConfirm(false);
       setActiveDeleteCapability(null);
       updateShareInHistory(activePublicId, { status: "revoked", remainingReveals: null });
+      if (onShareChange) onShareChange();
       if (onPhaseChange) onPhaseChange("unavailable");
     } else {
       setRevokedMessage("The share could not be revoked. Try again.");

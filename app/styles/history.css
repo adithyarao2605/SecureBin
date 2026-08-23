@@ -61,6 +61,13 @@
   font-size: 0.95rem;
 }
 
+.history-refreshing {
+  margin: 0;
+  color: var(--mineral);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .history-clear-btn {
   background: transparent;
   border: 1px solid var(--line);

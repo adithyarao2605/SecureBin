@@ -3,6 +3,7 @@ import { Buffer } from "node:buffer";
 import { describe, expect, it } from "vitest";
 
 import type { CreateShareInput } from "../../lib/shares/contracts";
+import { sha256Base64Url } from "../../lib/server/hashing";
 import { createShareService } from "../../lib/server/share-service";
 import type { SecureStorage } from "../../lib/server/storage";
 import type { RpcClient } from "../../lib/server/supabase-rpc";
@@ -62,6 +63,17 @@ class FakeRpcClient implements RpcClient {
           max_reveals: null,
           remaining_reveals: null,
         }];
+      case "get_share_status_batch":
+        return (args.p_public_ids as string[]).map((id) => ({
+          public_id: id,
+          status: "active",
+          available_at: null,
+          expires_at: "2099-01-01T00:00:00.000Z",
+          password_required: false,
+          unlock_required: false,
+          max_reveals: null,
+          remaining_reveals: null,
+        }));
       case "reveal_share":
         return [{
           status: "authorized",
@@ -74,6 +86,12 @@ class FakeRpcClient implements RpcClient {
         }];
       case "revoke_share":
         return [{ valid_capability: true, revoked: true }];
+      case "add_share_comment":
+        return [{ comment_id: "11111111-1111-4111-8111-111111111111", created_at: "2099-01-01T00:00:00.000Z" }];
+      case "edit_share_comment":
+        return [{ comment_id: "11111111-1111-4111-8111-111111111111", edited_at: "2099-01-01T00:00:00.000Z" }];
+      case "delete_share_comment":
+        return [{ deleted: true }];
       default:
         throw new Error(`unexpected rpc: ${functionName}`);
     }
@@ -135,6 +153,52 @@ describe("share service RPC mapping", () => {
     expect(revealCall?.args.p_request_token_hash).toBe("\\xe8936f412865d7835b0bb970fe780f4740eb0c49b16ab9bd82d8bc938e3f272a");
     const revokeCall = rpc.calls.find(({ functionName }) => functionName === "revoke_share");
     expect(revokeCall?.args.p_delete_token_hash).toBe("\\xa8e46592d861df319356a462b76a2a16d3e7f3218811a1cd74349d6998955cee");
+  });
+
+  it("maps a batch RPC response in request order", async () => {
+    const rpc = new FakeRpcClient();
+    const service = createShareService(rpc, fakeStorage);
+    await expect(service.getStatusBatch([publicId])).resolves.toEqual([{
+      publicId,
+      status: {
+        status: "active",
+        availableAt: null,
+        expiresAt: "2099-01-01T00:00:00.000Z",
+        passwordRequired: false,
+        unlockRequired: false,
+        maxReveals: null,
+        remainingReveals: null,
+      },
+    }]);
+  });
+
+  it("hashes per-comment edit tokens before the mutation RPCs", async () => {
+    const rpc = new FakeRpcClient();
+    const service = createShareService(rpc, fakeStorage);
+    const rawToken = "A".repeat(43);
+
+    await expect(service.addComment(publicId, {
+      capability: "A".repeat(43),
+      editToken: rawToken,
+      bodyEnvelope: { v: 1 },
+    })).resolves.toMatchObject({ commentId: "11111111-1111-4111-8111-111111111111" });
+    await expect(service.editComment(publicId, "11111111-1111-4111-8111-111111111111", {
+      capability: "A".repeat(43),
+      editToken: rawToken,
+      bodyEnvelope: { v: 2 },
+    })).resolves.toEqual({ commentId: "11111111-1111-4111-8111-111111111111", editedAt: "2099-01-01T00:00:00.000Z" });
+    await expect(service.deleteComment(publicId, "11111111-1111-4111-8111-111111111111", {
+      capability: "A".repeat(43),
+      editToken: rawToken,
+    })).resolves.toBe(true);
+
+    const addCall = rpc.calls.find(({ functionName }) => functionName === "add_share_comment");
+    expect(addCall?.args.p_edit_token_hash).toBe(bytea(sha256Base64Url(rawToken)));
+    const editCall = rpc.calls.find(({ functionName }) => functionName === "edit_share_comment");
+    expect(editCall?.args.p_edit_token_hash).toBe(bytea(sha256Base64Url(rawToken)));
+    expect(editCall?.args).not.toHaveProperty("p_edit_token");
+    const deleteCall = rpc.calls.find(({ functionName }) => functionName === "delete_share_comment");
+    expect(deleteCall?.args.p_edit_token_hash).toBe(bytea(sha256Base64Url(rawToken)));
   });
 
   it("correctly maps scheduled, unavailable, limited, and burn-after-reading statuses", async () => {

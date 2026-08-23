@@ -5,9 +5,16 @@ import {
   parseRpcEnvelope,
   parseRpcFileEnvelope,
   parseStatus,
+  isDigest,
+  isPublicId,
+  MAX_STATUS_BATCH_IDS,
+  type AddCommentInput,
+  type DeleteCommentInput,
+  type EditCommentInput,
   type RevealAttachment,
   type CreateShareInput,
   type RevealResult,
+  type ShareStatusBatchItem,
   type ShareStatus,
 } from "../shares/contracts";
 import { sha256Base64Url } from "./hashing";
@@ -23,11 +30,18 @@ export interface ShareService {
   consumeRateLimit(discriminatorHash: string, action: RateLimitAction, limit: number): Promise<boolean>;
   createShare(input: CreateShareInput): Promise<CreatedShare>;
   getStatus(publicId: string): Promise<ShareStatus>;
+  getStatusBatch(publicIds: readonly string[]): Promise<ShareStatusBatchItem[]>;
   reveal(publicId: string, requestToken: string): Promise<RevealResult>;
   addComment(
     publicId: string,
-    payload: Record<string, unknown>
+    payload: AddCommentInput
   ): Promise<{ commentId: string; createdAt: string }>;
+  editComment(
+    publicId: string,
+    commentId: string,
+    payload: EditCommentInput
+  ): Promise<{ commentId: string; editedAt: string }>;
+  deleteComment(publicId: string, commentId: string, payload: DeleteCommentInput): Promise<boolean>;
   listComments(publicId: string, capability: string): Promise<Array<Record<string, unknown>>>;
   revoke(publicId: string, deleteCapability: string): Promise<boolean>;
 }
@@ -35,9 +49,9 @@ export interface ShareService {
 export type RateLimitAction = "upload" | "create" | "status" | "reveal" | "delete" | "discussion";
 
 export class ShareServiceError extends Error {
-  readonly kind: "dependency" | "invalid" | "conflict";
+  readonly kind: "dependency" | "invalid" | "conflict" | "rate_limited";
 
-  constructor(kind: "dependency" | "invalid" | "conflict") {
+  constructor(kind: "dependency" | "invalid" | "conflict" | "rate_limited") {
     super("SecureBin share operation failed");
     this.name = "ShareServiceError";
     this.kind = kind;
@@ -59,6 +73,43 @@ function firstRow(value: unknown): Record<string, unknown> | null {
   if (!Array.isArray(value) || value.length !== 1) return null;
   const row = value[0];
   return isRecord(row) ? row : null;
+}
+
+const STATUS_BATCH_ROW_KEYS = [
+  "public_id",
+  "status",
+  "available_at",
+  "expires_at",
+  "password_required",
+  "unlock_required",
+  "max_reveals",
+  "remaining_reveals",
+] as const;
+
+function hasExactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+
+function parseBatchStatusRows(value: unknown, publicIds: readonly string[]): ShareStatusBatchItem[] | null {
+  if (!Array.isArray(value) || value.length !== publicIds.length) return null;
+  const requested = new Set(publicIds);
+  const parsed = new Map<string, ShareStatusBatchItem>();
+  for (const entry of value) {
+    if (!isRecord(entry) || !hasExactKeys(entry, STATUS_BATCH_ROW_KEYS) || typeof entry.public_id !== "string" || !isPublicId(entry.public_id)) return null;
+    if (!requested.has(entry.public_id) || parsed.has(entry.public_id)) return null;
+    const status = parseStatus(entry);
+    if (!status) return null;
+    parsed.set(entry.public_id, { publicId: entry.public_id, status });
+  }
+  const ordered: ShareStatusBatchItem[] = [];
+  for (const publicId of publicIds) {
+    const status = parsed.get(publicId);
+    if (!status) return null;
+    ordered.push(status);
+  }
+  return ordered;
 }
 
 function dependencyError(): ShareServiceError {
@@ -141,6 +192,26 @@ export function createShareService(
       }
     },
 
+    async getStatusBatch(publicIds) {
+      if (
+        publicIds.length === 0 ||
+        publicIds.length > MAX_STATUS_BATCH_IDS ||
+        new Set(publicIds).size !== publicIds.length ||
+        !publicIds.every(isPublicId)
+      ) {
+        throw new ShareServiceError("invalid");
+      }
+      try {
+        const value = await rpc.call("get_share_status_batch", { p_public_ids: publicIds });
+        const statuses = parseBatchStatusRows(value, publicIds);
+        if (!statuses) throw new ShareServiceError("dependency");
+        return statuses;
+      } catch (error) {
+        if (error instanceof ShareServiceError) throw error;
+        throw dependencyError();
+      }
+    },
+
     async reveal(publicId, requestToken) {
       try {
         const value = await rpc.call("reveal_share", {
@@ -206,13 +277,15 @@ export function createShareService(
       if (parentCommentId !== "" && !UUID_PATTERN.test(parentCommentId)) {
         throw new ShareServiceError("invalid");
       }
-      if (!capability || typeof payload.bodyEnvelope !== "object" || payload.bodyEnvelope === null) {
+      const editToken = typeof payload.editToken === "string" ? payload.editToken : "";
+      if (!isDigest(capability) || !isDigest(editToken) || typeof payload.bodyEnvelope !== "object" || payload.bodyEnvelope === null) {
         throw new ShareServiceError("invalid");
       }
       try {
         const value = await rpc.call("add_share_comment", {
           p_public_id: publicId,
           p_discussion_capability: bytesHex(capability),
+          p_edit_token_hash: bytesHex(sha256Base64Url(editToken)),
           p_parent_comment_id: parentCommentId === "" ? null : parentCommentId,
           p_body_envelope: payload.bodyEnvelope,
           p_nickname_envelope: payload.nicknameEnvelope ?? null,
@@ -226,7 +299,58 @@ export function createShareService(
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
         if (error instanceof RpcRequestError && (error.code === "22023" || error.code === "P0001")) {
-          throw new ShareServiceError(error.errorDetails?.includes("rate_limited") ? "dependency" : "invalid");
+          throw new ShareServiceError(error.errorDetails?.includes("rate_limited") ? "rate_limited" : "invalid");
+        }
+        throw dependencyError();
+      }
+    },
+
+    async editComment(publicId, commentId, payload) {
+      const capability = typeof payload.capability === "string" ? payload.capability : "";
+      const editToken = typeof payload.editToken === "string" ? payload.editToken : "";
+      if (!UUID_PATTERN.test(commentId) || !isDigest(capability) || !isDigest(editToken) || typeof payload.bodyEnvelope !== "object" || payload.bodyEnvelope === null) {
+        throw new ShareServiceError("invalid");
+      }
+      try {
+        const value = await rpc.call("edit_share_comment", {
+          p_public_id: publicId,
+          p_discussion_capability: bytesHex(capability),
+          p_comment_id: commentId,
+          p_edit_token_hash: bytesHex(sha256Base64Url(editToken)),
+          p_body_envelope: payload.bodyEnvelope,
+        });
+        const row = firstRow(value);
+        if (!row || typeof row.comment_id !== "string" || typeof row.edited_at !== "string") throw new ShareServiceError("dependency");
+        return { commentId: row.comment_id, editedAt: row.edited_at };
+      } catch (error) {
+        if (error instanceof ShareServiceError) throw error;
+        if (error instanceof RpcRequestError && (error.code === "22023" || error.code === "P0001")) {
+          throw new ShareServiceError(error.errorDetails?.includes("rate_limited") ? "rate_limited" : "invalid");
+        }
+        throw dependencyError();
+      }
+    },
+
+    async deleteComment(publicId, commentId, payload) {
+      const capability = typeof payload.capability === "string" ? payload.capability : "";
+      const editToken = typeof payload.editToken === "string" ? payload.editToken : "";
+      if (!UUID_PATTERN.test(commentId) || !isDigest(capability) || !isDigest(editToken)) {
+        throw new ShareServiceError("invalid");
+      }
+      try {
+        const value = await rpc.call("delete_share_comment", {
+          p_public_id: publicId,
+          p_discussion_capability: bytesHex(capability),
+          p_comment_id: commentId,
+          p_edit_token_hash: bytesHex(sha256Base64Url(editToken)),
+        });
+        const row = firstRow(value);
+        if (!row || typeof row.deleted !== "boolean") throw new ShareServiceError("dependency");
+        return row.deleted;
+      } catch (error) {
+        if (error instanceof ShareServiceError) throw error;
+        if (error instanceof RpcRequestError && (error.code === "22023" || error.code === "P0001")) {
+          throw new ShareServiceError(error.errorDetails?.includes("rate_limited") ? "rate_limited" : "invalid");
         }
         throw dependencyError();
       }

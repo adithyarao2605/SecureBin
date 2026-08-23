@@ -1,3 +1,8 @@
+import {
+  parseAddCommentInput,
+  parseDeleteCommentInput,
+  parseEditCommentInput,
+} from "../shares/contracts";
 import { errorResponse, jsonResponse, readJsonBody } from "./http";
 import { readServerConfig } from "./config";
 import { networkDiscriminator } from "./hashing";
@@ -19,6 +24,8 @@ export function defaultCommentRouteDependencies(): CommentRouteDependencies {
 export function createCommentHandlers(dependencies: CommentRouteDependencies): {
   get: (request: Request, context: { params: Promise<{ publicId: string }> }) => Promise<Response>;
   post: (request: Request, context: { params: Promise<{ publicId: string }> }) => Promise<Response>;
+  patch: (request: Request, context: { params: Promise<{ publicId: string; commentId: string }> }) => Promise<Response>;
+  delete: (request: Request, context: { params: Promise<{ publicId: string; commentId: string }> }) => Promise<Response>;
 } {
   async function allowed(
     request: Request,
@@ -38,7 +45,10 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
     if (error instanceof ShareServiceError && error.kind === "invalid") {
       return errorResponse("invalid_request", 400);
     }
-    if (error instanceof RpcRequestError && error.code === "P0001" && error.errorDetails?.includes("rate_limited")) {
+    if (
+      (error instanceof ShareServiceError && error.kind === "rate_limited") ||
+      (error instanceof RpcRequestError && error.code === "P0001" && error.errorDetails?.includes("rate_limited"))
+    ) {
       return errorResponse("rate_limited", 429);
     }
     return isDependency(error) ? errorResponse("server_error", 503) : errorResponse("server_error", 500);
@@ -79,22 +89,50 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
       } catch {
         return errorResponse("invalid_request", 400);
       }
-      const body: unknown = await readJsonBody(request, MAX_COMMENT_BODY_BYTES);
-      if (
-        typeof body !== "object" ||
-        body === null ||
-        typeof (body as Record<string, unknown>).capability !== "string" ||
-        typeof (body as Record<string, unknown>).bodyEnvelope !== "object" ||
-        (body as Record<string, unknown>).bodyEnvelope === null
-      ) {
+      const body = parseAddCommentInput(await readJsonBody(request, MAX_COMMENT_BODY_BYTES));
+      if (!body) return errorResponse("invalid_request", 400);
+      try {
+        const created = await dependencies.service.addComment(publicId, body);
+        return jsonResponse(created, 201);
+      } catch (error) {
+        return mapError(error);
+      }
+    },
+
+    async patch(request, context) {
+      const limitCheck = await allowed(request, "discussion", 30);
+      if (limitCheck !== true) return limitCheck;
+      let publicId: string;
+      let commentId: string;
+      try {
+        ({ publicId, commentId } = await context.params);
+      } catch {
         return errorResponse("invalid_request", 400);
       }
+      const body = parseEditCommentInput(await readJsonBody(request, MAX_COMMENT_BODY_BYTES));
+      if (!body) return errorResponse("invalid_request", 400);
       try {
-        const created = await dependencies.service.addComment(
-          publicId,
-          body as Record<string, unknown>
-        );
-        return jsonResponse(created, 201);
+        return jsonResponse(await dependencies.service.editComment(publicId, commentId, body));
+      } catch (error) {
+        return mapError(error);
+      }
+    },
+
+    async delete(request, context) {
+      const limitCheck = await allowed(request, "discussion", 30);
+      if (limitCheck !== true) return limitCheck;
+      let publicId: string;
+      let commentId: string;
+      try {
+        ({ publicId, commentId } = await context.params);
+      } catch {
+        return errorResponse("invalid_request", 400);
+      }
+      const body = parseDeleteCommentInput(await readJsonBody(request, MAX_COMMENT_BODY_BYTES));
+      if (!body) return errorResponse("invalid_request", 400);
+      try {
+        const deleted = await dependencies.service.deleteComment(publicId, commentId, body);
+        return deleted ? jsonResponse({ deleted: true }) : errorResponse("unavailable", 404);
       } catch (error) {
         return mapError(error);
       }

@@ -13,6 +13,12 @@
   gap: 0.5rem;
 }
 
+.mode-tabs-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .mode-tabs {
   display: flex;
   gap: 0.5rem;

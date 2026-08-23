@@ -5,6 +5,7 @@ import {
   createGetStatusHandler,
   createPostRevealHandler,
   createPostShareHandler,
+  createPostStatusBatchHandler,
   type ShareRouteDependencies,
 } from "@/lib/server/share-routes";
 import {
@@ -45,8 +46,22 @@ function dependencies(service: Partial<ShareService> = {}): ShareRouteDependenci
         maxReveals: null,
         remainingReveals: null,
       })),
+      getStatusBatch: vi.fn(async (publicIds: readonly string[]) => publicIds.map((id) => ({
+        publicId: id,
+        status: {
+          status: "active" as const,
+          availableAt: null,
+          expiresAt: "2099-01-01T00:00:00.000Z",
+          passwordRequired: false,
+          unlockRequired: false,
+          maxReveals: null,
+          remainingReveals: null,
+        },
+      }))),
       reveal: vi.fn(async () => ({ status: "authorized" as const, contentEnvelope: envelope, files: [], retryExpiresAt: "2099-01-01T00:05:00.000Z" })),
       addComment: vi.fn(async () => ({ commentId: "c1", createdAt: new Date().toISOString() })),
+      editComment: vi.fn(async () => ({ commentId: "c1", editedAt: new Date().toISOString() })),
+      deleteComment: vi.fn(async () => true),
       listComments: vi.fn(async () => []),
       revoke: vi.fn(async () => true),
       ...service,
@@ -312,6 +327,32 @@ describe("share route handlers", () => {
     const body = await response.json();
     expect(body).toEqual({ status: "unavailable" });
     expect(Object.keys(body)).toEqual(["status"]);
+  });
+
+  it("validates and serves one batch status request", async () => {
+    const deps = dependencies({
+      getStatusBatch: vi.fn(async () => [{ publicId, status: { status: "unavailable" as const } }]),
+    });
+    const response = await createPostStatusBatchHandler(deps)(new Request("http://localhost/api/shares/status-batch", {
+      method: "POST",
+      body: JSON.stringify({ publicIds: [publicId] }),
+    }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ statuses: [{ publicId, status: "unavailable" }] });
+    expect(deps.service.getStatusBatch).toHaveBeenCalledWith([publicId]);
+  });
+
+  it("rejects duplicate and oversized status batches before the service", async () => {
+    for (const publicIds of [[publicId, publicId], Array.from({ length: 51 }, () => publicId)]) {
+      const deps = dependencies();
+      const response = await createPostStatusBatchHandler(deps)(new Request("http://localhost/api/shares/status-batch", {
+        method: "POST",
+        body: JSON.stringify({ publicIds }),
+      }));
+      expect(response.status).toBe(400);
+      expect(deps.service.getStatusBatch).not.toHaveBeenCalled();
+    }
   });
 
   it("requires the exact reveal token shape and rejects extras", async () => {

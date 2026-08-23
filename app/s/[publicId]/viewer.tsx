@@ -6,6 +6,8 @@ import { base64UrlToBytes, bytesToBase64Url, randomBytes } from "../../../lib/cr
 import { validateLinkSecret, validatePublicId } from "../../../lib/crypto/envelope";
 import { openFile } from "../../../lib/crypto/file";
 import type { ContentPayload } from "../../../lib/crypto/payload";
+import { mergeShareStatuses, loadShareHistory } from "../../../lib/shares/share-history";
+import { parseStatusBatchResponse } from "../../../lib/shares/contracts";
 import {
   parseReveal,
   parseStatus,
@@ -17,6 +19,23 @@ import { type DecryptedAttachment } from "./revealed-content";
 import { ViewerView } from "./viewer-parts/viewer-view";
 
 export type { ViewerState };
+
+async function refreshLocalHistoryStatus(publicId: string): Promise<void> {
+  if (!loadShareHistory().some((item) => item.publicId === publicId)) return;
+  try {
+    const response = await fetch("/api/shares/status-batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ publicIds: [publicId] }),
+      cache: "no-store",
+    });
+    if (!response.ok) return;
+    const statuses = parseStatusBatchResponse(await response.json());
+    if (statuses) mergeShareStatuses(statuses);
+  } catch {
+    // The desk refreshes again when it becomes visible.
+  }
+}
 
 export function Viewer({ publicId }: { publicId: string }) {
   const [state, setState] = useState<ViewerState>("checking");
@@ -196,6 +215,7 @@ export function Viewer({ publicId }: { publicId: string }) {
       }
 
       const revealPayload = parseReveal(await response.json());
+      void refreshLocalHistoryStatus(publicId);
       const plaintext = await openContent(
         revealPayload.contentEnvelope,
         publicId,

@@ -36,6 +36,15 @@ async function commentsResponse(): Promise<Response> {
           body_envelope: await sealDiscussionText(key, "Second sealed note"),
           nickname_envelope: null,
           created_at: "2026-08-20T11:00:00.000Z",
+          edited_at: "2026-08-20T11:30:00.000Z",
+        },
+        {
+          comment_id: "44444444-4444-4444-8444-444444444444",
+          parent_comment_id: "55555555-5555-4555-8555-555555555555",
+          body_envelope: await sealDiscussionText(key, "Orphaned reply"),
+          nickname_envelope: null,
+          created_at: "2026-08-20T12:00:00.000Z",
+          edited_at: null,
         },
       ],
     }),
@@ -49,8 +58,15 @@ describe("DiscussionThread", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
-    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (init?.method === "POST") {
+        return Promise.resolve({
+          ok: true,
+          status: 201,
+          json: async () => ({ commentId: "33333333-3333-4333-8333-333333333333", createdAt: "2026-08-20T12:00:00.000Z" }),
+        } as unknown as Response);
+      }
       if (url.includes("/comments")) {
         return Promise.resolve(commentsResponse());
       }
@@ -64,7 +80,9 @@ describe("DiscussionThread", () => {
     expect(await screen.findByText("First sealed note")).toBeInTheDocument();
     expect(screen.getByText("Second sealed note")).toBeInTheDocument();
     expect(screen.getByText("Ada")).toBeInTheDocument();
-    expect(screen.getAllByText("Anonymous")).toHaveLength(1);
+    expect(screen.getAllByText("Anonymous")).toHaveLength(2);
+    expect(screen.getByText("[comment removed]")).toBeInTheDocument();
+    expect(screen.getByText("(edited)")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Encrypted discussion" })).toBeInTheDocument();
     expect(
       screen.getByText(/Comments are encrypted locally; the server stores opaque ciphertext/)
@@ -90,12 +108,10 @@ describe("DiscussionThread", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Post" }));
 
-    await waitFor(() => {
-      const postCall = vi.mocked(fetch).mock.calls.find(([, init]) =>
-        (init as RequestInit | undefined)?.method === "POST"
-      );
-      expect(postCall).toBeDefined();
-    });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Post" })).toBeEnabled()
+    );
+    await waitFor(() => expect(vi.mocked(fetch).mock.calls.length).toBeGreaterThanOrEqual(3));
 
     const [, postInit] = vi.mocked(fetch).mock.calls.find(
       ([, init]) => (init as RequestInit | undefined)?.method === "POST"
@@ -105,9 +121,11 @@ describe("DiscussionThread", () => {
       parentCommentId: unknown;
       bodyEnvelope: unknown;
       nicknameEnvelope: unknown;
+      editToken: unknown;
     };
 
     expect(payload.capability).toBe(bytesToBase64Url(capability));
+    expect(payload.editToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
     expect(payload.parentCommentId).toBe(topLevelId);
     await expect(openDiscussionText(key, payload.bodyEnvelope)).resolves.toBe("A sealed reply");
     await expect(openDiscussionText(key, payload.nicknameEnvelope)).resolves.toBe("Grace");

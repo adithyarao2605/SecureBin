@@ -43,7 +43,7 @@ export default function LandingPage() {
               <Link className="landing-primary-action" href="/new">Create a Secure Share <ArrowIcon /></Link>
               <a className="landing-secondary-action" href="#self-hosting">Self-Hosting <ArrowIcon /></a>
             </div>
-            <div className="landing-proof-pills" aria-label="SecureBin properties">
+            <div className="landing-proof-pills" id="features" aria-label="SecureBin properties">
               <span><Icon type="browser" />Client-side encryption</span>
               <span><Icon type="key" />Zero-knowledge</span>
               <span><Icon type="flame" />Burn after reading</span>
@@ -73,7 +73,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="landing-footer"><div><strong>SecureBin</strong><span>© 2024 SecureBin. Zero-knowledge by design.</span></div><nav aria-label="Footer navigation"><a href="#how-it-works">Features</a><a href="#how-it-works">Docs</a><a href="#self-hosting">Self-Hosting</a><a href="https://github.com" rel="noreferrer">GitHub</a><a href="#self-hosting">Privacy</a><a href="#how-it-works">Contact</a></nav></footer>
+      <footer className="landing-footer"><div><strong>SecureBin</strong><span>© 2026 SecureBin. Zero-knowledge by design.</span></div><nav aria-label="Footer navigation"><a href="#features">Features</a><Link href="/new#how-it-works">Docs</Link><a href="#self-hosting">Self-Hosting</a><a href="https://github.com/adithyarao2605/SecureBin" rel="noreferrer">GitHub</a><a href="mailto:hello@securebin.dev">Contact</a></nav></footer>
     </div>
   );
 }

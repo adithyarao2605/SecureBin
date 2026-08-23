@@ -93,6 +93,25 @@ export interface DeleteInput {
   readonly deleteCapability: string;
 }
 
+export interface AddCommentInput {
+  readonly capability: string;
+  readonly editToken: string;
+  readonly bodyEnvelope: Record<string, unknown>;
+  readonly nicknameEnvelope?: Record<string, unknown> | null;
+  readonly parentCommentId?: string | null;
+}
+
+export interface EditCommentInput {
+  readonly capability: string;
+  readonly editToken: string;
+  readonly bodyEnvelope: Record<string, unknown>;
+}
+
+export interface DeleteCommentInput {
+  readonly capability: string;
+  readonly editToken: string;
+}
+
 export interface SharePolicy {
   readonly availableAt: string | null;
   readonly expiresAt: string | null;
@@ -119,6 +138,17 @@ export type ShareStatus =
   | ShareStatusActive
   | ShareStatusScheduled
   | ShareStatusUnavailable;
+
+export const MAX_STATUS_BATCH_IDS = 50;
+
+export interface ShareStatusBatchInput {
+  readonly publicIds: string[];
+}
+
+export interface ShareStatusBatchItem {
+  readonly publicId: string;
+  readonly status: ShareStatus;
+}
 
 export interface RevealResult {
   readonly status: "authorized" | "unavailable" | "request_expired";
@@ -148,7 +178,7 @@ function isBase64Url(value: unknown, length: number): value is string {
   return decoded !== null && decoded.length === length;
 }
 
-function isDigest(value: unknown): value is string {
+export function isDigest(value: unknown): value is string {
   return isBase64Url(value, 32);
 }
 
@@ -317,8 +347,45 @@ export function parseDeleteInput(value: unknown): DeleteInput | null {
   return { deleteCapability: value.deleteCapability };
 }
 
+export function parseAddCommentInput(value: unknown): AddCommentInput | null {
+  if (
+    !isRecord(value) ||
+    !hasOnlyKeys(value, ["capability", "bodyEnvelope", "editToken"], ["nicknameEnvelope", "parentCommentId"]) ||
+    !isDigest(value.capability) ||
+    !isDigest(value.editToken) ||
+    !isRecord(value.bodyEnvelope)
+  ) return null;
+  if (value.nicknameEnvelope !== undefined && value.nicknameEnvelope !== null && !isRecord(value.nicknameEnvelope)) return null;
+  if (value.parentCommentId !== undefined && value.parentCommentId !== null && typeof value.parentCommentId !== "string") return null;
+  return value as unknown as AddCommentInput;
+}
+
+export function parseEditCommentInput(value: unknown): EditCommentInput | null {
+  if (
+    !isRecord(value) ||
+    !hasExactKeys(value, ["bodyEnvelope", "capability", "editToken"]) ||
+    !isDigest(value.capability) ||
+    !isDigest(value.editToken) ||
+    !isRecord(value.bodyEnvelope)
+  ) return null;
+  return value as unknown as EditCommentInput;
+}
+
+export function parseDeleteCommentInput(value: unknown): DeleteCommentInput | null {
+  if (!isRecord(value) || !hasExactKeys(value, ["capability", "editToken"]) || !isDigest(value.capability) || !isDigest(value.editToken)) return null;
+  return value as unknown as DeleteCommentInput;
+}
+
 export function isPublicId(value: string): boolean {
   return isBase64Url(value, PUBLIC_ID_BYTES);
+}
+
+export function parseStatusBatchInput(value: unknown): ShareStatusBatchInput | null {
+  if (!isRecord(value) || !hasExactKeys(value, ["publicIds"]) || !Array.isArray(value.publicIds)) return null;
+  if (value.publicIds.length === 0 || value.publicIds.length > MAX_STATUS_BATCH_IDS) return null;
+  if (!value.publicIds.every((publicId): publicId is string => typeof publicId === "string" && isPublicId(publicId))) return null;
+  if (new Set(value.publicIds).size !== value.publicIds.length) return null;
+  return { publicIds: value.publicIds };
 }
 
 export function parseRpcEnvelope(value: unknown): CreateShareInput["contentEnvelope"] | null {
@@ -356,4 +423,36 @@ export function parseStatus(value: unknown): ShareStatus | null {
     maxReveals,
     remainingReveals,
   } as ShareStatus;
+}
+
+export function parseStatusBatchResponse(value: unknown): ShareStatusBatchItem[] | null {
+  if (!isRecord(value) || !hasExactKeys(value, ["statuses"]) || !Array.isArray(value.statuses)) return null;
+  if (value.statuses.length === 0 || value.statuses.length > MAX_STATUS_BATCH_IDS) return null;
+
+  const parsed: ShareStatusBatchItem[] = [];
+  const seen = new Set<string>();
+  for (const entry of value.statuses) {
+    if (!isRecord(entry) || typeof entry.publicId !== "string" || !isPublicId(entry.publicId) || seen.has(entry.publicId)) return null;
+    seen.add(entry.publicId);
+    if (entry.status === "unavailable") {
+      if (!hasExactKeys(entry, ["publicId", "status"])) return null;
+      parsed.push({ publicId: entry.publicId, status: { status: "unavailable" } });
+      continue;
+    }
+    if (!hasExactKeys(entry, [
+      "publicId", "status", "availableAt", "expiresAt", "passwordRequired", "unlockRequired", "maxReveals", "remainingReveals",
+    ])) return null;
+    const status = parseStatus({
+      status: entry.status,
+      available_at: entry.availableAt,
+      expires_at: entry.expiresAt,
+      password_required: entry.passwordRequired,
+      unlock_required: entry.unlockRequired,
+      max_reveals: entry.maxReveals,
+      remaining_reveals: entry.remainingReveals,
+    });
+    if (!status) return null;
+    parsed.push({ publicId: entry.publicId, status });
+  }
+  return parsed;
 }
