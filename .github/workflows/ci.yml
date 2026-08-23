@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, dev]
   pull_request:
 
 permissions:
@@ -74,6 +74,8 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Run end-to-end tests
         run: pnpm test:e2e
+      - name: Run end-to-end tests against the production build
+        run: pnpm test:e2e:prod
       - name: Run accessibility tests
         run: pnpm test:a11y
       - name: Upload Playwright Test Results

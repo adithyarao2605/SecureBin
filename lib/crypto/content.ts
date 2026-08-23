@@ -200,7 +200,12 @@ export async function openContent(
 
   // v2 frames may carry a discussion capability block (SBCT payload 0x02).
   if (envelope.version === 2) {
-    const decoded = decodeContentPayloadWithCapability(plaintextBytes);
+    let decoded: ReturnType<typeof decodeContentPayloadWithCapability>;
+    try {
+      decoded = decodeContentPayloadWithCapability(plaintextBytes);
+    } catch {
+      throw new ContentCryptoError("invalid_content", "The decrypted content payload format is invalid.");
+    }
     return decoded.discussionCapability
       ? { ...decoded.payload, discussionCapability: decoded.discussionCapability }
       : decoded.payload;

@@ -7,7 +7,7 @@ evidence that an unimplemented component has shipped.
 
 ## Current implementation coverage
 
-The Day 1–5 surface is implemented and tested: browser-encrypted text plus Markdown/code modes with SBCT v2 framing (including the SBCT `0x02` discussion-capability trailer), password and two-channel unlock factors, up to five encrypted attachments per share through private Storage (slot-staged reservations, signed uploads, size verification, signed 60-second reveal downloads, safe local previews, Download-all ZIP), custom reveal counts, "Never" expiry, append-only encrypted discussions gated by a capability digest and share lifecycle, scheduled cleanup of expired shares, abandoned reservations, and rotated upload paths. The newest migrations are applied to the hosted database; the current landing/app route split still requires an owner production redeploy. See [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md) for the closed incident record.
+The Day 1–5 surface is implemented and tested: browser-encrypted text plus Markdown/code modes with SBCT v2 framing (including the SBCT `0x02` discussion-capability trailer), password and two-channel unlock factors, up to five encrypted attachments per share through private Storage (slot-staged reservations, signed uploads, size verification, signed 60-second reveal downloads, safe local previews, Download-all ZIP), custom reveal counts, "Never" expiry, capability-gated encrypted discussions with proof-token edit/delete gated by a capability digest and share lifecycle, batch status refresh for the history desk, scheduled cleanup of expired shares, abandoned reservations, and rotated upload paths. Migrations through `20260829000000` are verified applied to the hosted database; the newest migration requires owner verification per [`deployment.md`](deployment.md). See [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md) for the closed incident record.
 
 ## System context and data boundary
 
@@ -84,6 +84,7 @@ flowchart TB
 
 The rendered product keeps this boundary legible with plain status copy and
 accessible structure. It uses a light-first, warm evidence-desk visual system
-with bundled fonts and no remote assets on secret routes; it does not use
-terminal, matrix, neon, or shield/lock motifs as a substitute for security
-evidence.
+with a system font stack (display/body faces named ahead of system fallbacks;
+no webfont files are bundled) and no remote assets on secret routes; it does
+not use terminal, matrix, neon, or shield/lock motifs as a substitute for
+security evidence.

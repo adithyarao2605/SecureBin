@@ -8,7 +8,8 @@ The implemented evidence covers the Day 1–5 surface: encrypted plain-text,
 Markdown, and code content with v2 SBCT framing (including the `0x02`
 discussion-capability trailer); password and two-channel unlock factors;
 multi-file encrypted attachments (up to five) through private Storage with
-staged reservations and Download-all ZIP; append-only encrypted discussions;
+staged reservations and Download-all ZIP; capability-gated encrypted discussions
+with proof-token edit/delete;
 safe local rendering boundaries; custom reveal counts; "Never" expiry; and
 scheduled cleanup.
 

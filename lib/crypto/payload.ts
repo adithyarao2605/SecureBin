@@ -158,7 +158,10 @@ export function decodeContentPayloadWithCapability(bytes: Uint8Array): DecodedCo
   }
 
   const version = bytes[4];
-  if (version !== CONTENT_PAYLOAD_VERSION) {
+  if (
+    version !== CONTENT_PAYLOAD_VERSION &&
+    version !== CONTENT_PAYLOAD_VERSION_DISCUSSION
+  ) {
     throw new PayloadCodecError(`Unsupported payload version: ${version}`);
   }
 

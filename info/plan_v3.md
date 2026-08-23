@@ -39,9 +39,9 @@ page assets, which are self-hosted or generated locally.
   **Create share → `/new`** action.
 - Aurora = local canvas component running the teal/indigo shader;
   `prefers-reduced-motion` and no-WebGL fall back to a static gradient.
-  Fonts self-hosted via `next/font` (Bricolage Grotesque, JetBrains Mono).
-  Material-symbol icons replaced with existing inline SVGs. Zero remote
-  requests.
+  Fonts use a system font stack naming the display/body faces ahead of
+  fallbacks (no webfont files bundled). Material-symbol icons replaced with
+  existing inline SVGs. Zero remote requests.
 - Light theme variant derived from tokens; reduced-motion honored.
 - The landing keeps the how-it-works and self-hosting sections below the hero;
   the header tab opens the full app explanation panel.

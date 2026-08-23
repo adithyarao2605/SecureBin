@@ -1,6 +1,6 @@
 # Deployment and reproducibility
 
-The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md)). All database migrations through `20260829000000_encrypted_discussions.sql` are committed and applied to the hosted database. The current Phase A landing/app route split still needs the owner-operated production redeploy.
+The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md)). All database migrations through `20260830000000_discussion_comment_edit_delete.sql` are committed; those through `20260829000000_encrypted_discussions.sql` are verified applied to the hosted database, and the newest one must be confirmed by the owner (`supabase migration list`, then `supabase db push`) before discussion edit/delete works in production. The current Phase A landing/app route split also needs the owner-operated production redeploy.
 
 Branch model: development happens on `dev`, which Vercel builds as a preview deployment; `main` is production. Verify features on the preview URL before promoting to `main`.
 
@@ -48,7 +48,7 @@ dependency installation and runs the same Python repository check.
 - The exact reviewed commit SHA from `git rev-parse HEAD`.
 - This runbook and the current [`../info/HANDOFF.md`](../info/HANDOFF.md).
 - A statement of scope: Days 1–5 are implemented and gated in CI with local
-  verification (151 unit, 16 integration, 131 pgTAP, 12 E2E, 3 Axe tests);
+  verification (159 unit, 16 integration, 131 pgTAP, 12 E2E, 3 Axe tests);
   the newest migrations are already applied; the current landing/app code
   still requires an owner production redeploy.
 
@@ -176,18 +176,18 @@ the provider stores, never in a tracked file.
    these Production values:
 
    ```text
-   NEXT_PUBLIC_APP_URL=https://<your-production-host>
    NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=<browser-safe anon or publishable key>
    SUPABASE_SERVICE_ROLE_KEY=<server-only sb_secret key or legacy service-role JWT>
    RATE_LIMIT_HMAC_KEY=<independent random value>
    CRON_SECRET=<independent random value for POST /api/internal/cleanup>
    ```
 
-   SecureBin accepts Supabase's recommended `sb_secret_...` key as well as the
-   legacy service-role JWT under this variable name. Mark the service-role,
-   rate-limit, and cron values as sensitive. Never use
-   the service-role value in a `NEXT_PUBLIC_*` variable.
+   Only `NEXT_PUBLIC_SUPABASE_URL` is public: the middleware embeds the Supabase
+   project origin into the Content-Security-Policy and no anonymous key ships in
+   any bundle. SecureBin accepts Supabase's recommended `sb_secret_...` key as
+   well as the legacy service-role JWT under its variable name. Mark the
+   service-role, rate-limit, and cron values as sensitive. Never use the
+   service-role value in a `NEXT_PUBLIC_*` variable.
 6. Deploy `main`. If the final Vercel hostname differs from the value supplied
    for `NEXT_PUBLIC_APP_URL`, correct it and redeploy.
 7. Run the production checks below, then record the URL, deployed commit SHA,

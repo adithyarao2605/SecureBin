@@ -35,10 +35,30 @@ export async function readJsonBody(request: Request, maxBytes: number): Promise<
     const declaredLength = Number.parseInt(contentLength, 10);
     if (!Number.isSafeInteger(declaredLength) || declaredLength < 0 || declaredLength > maxBytes) return null;
   }
+  // Stream with early abort so chunked or undeclared bodies cannot buffer
+  // arbitrary bytes in memory ahead of the size cap.
+  const reader = request.body?.getReader();
+  if (!reader) return null;
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    received += value.byteLength;
+    if (received > maxBytes) {
+      void reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
   try {
-    const bytes = await request.arrayBuffer();
-    if (bytes.byteLength > maxBytes) return null;
-    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    const body = new Uint8Array(received);
+    let offset = 0;
+    for (const chunk of chunks) {
+      body.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(body);
     return JSON.parse(text) as unknown;
   } catch {
     return null;

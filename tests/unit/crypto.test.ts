@@ -30,6 +30,7 @@ import {
 } from "../../lib/crypto/file";
 import {
   decodeContentPayload,
+  decodeContentPayloadWithCapability,
   encodeContentPayload,
   PayloadCodecError,
   type ContentPayload,
@@ -277,7 +278,7 @@ describe("SecureBin Content & File Cryptography (Day 3)", () => {
 
       // Invalid version
       const badVersion = new Uint8Array(valid);
-      badVersion[4] = 0x02;
+      badVersion[4] = 0x03;
       expect(() => decodeContentPayload(badVersion)).toThrow(PayloadCodecError);
 
       // Invalid mode
@@ -294,6 +295,27 @@ describe("SecureBin Content & File Cryptography (Day 3)", () => {
       // Truncated length
       const truncated = valid.subarray(0, valid.length - 2);
       expect(() => decodeContentPayload(truncated)).toThrow(PayloadCodecError);
+    });
+
+    it("round-trips v0x02 frames carrying a discussion capability through seal/open", async () => {
+      const capability = new Uint8Array(32).map((_, index) => (index + 1) & 0xff);
+      const payload: ContentPayload = { mode: "note", text: "discussion-enabled note" };
+
+      const frame = encodeContentPayload(payload, { discussionCapability: capability });
+      expect(frame[4]).toBe(0x02);
+      const decoded = decodeContentPayloadWithCapability(frame);
+      expect(decoded.payload).toEqual(payload);
+      expect(decoded.discussionCapability).toEqual(capability);
+
+      // All-zero capability block decodes as discussions disabled.
+      const zeroFrame = encodeContentPayload(payload, { discussionCapability: new Uint8Array(32) });
+      expect(zeroFrame[4]).toBe(0x01);
+      expect(decodeContentPayloadWithCapability(zeroFrame).discussionCapability).toBeNull();
+
+      const sealed = await sealContent(payload, undefined, undefined, { discussionCapability: capability });
+      expect(sealed.envelope.version).toBe(2);
+      const opened = await openContent(sealed.envelope, sealed.publicId, sealed.linkSecret);
+      expect(opened).toEqual({ ...payload, discussionCapability: capability });
     });
 
     it("matches the locked v2 content golden vector", async () => {

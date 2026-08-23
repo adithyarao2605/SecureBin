@@ -44,11 +44,11 @@ Encrypted discussions inherit the parent share's lifecycle inside the same atomi
 
 - Revoked, expired, reveal-exhausted, and scheduled shares reject both comment reads and writes with a uniform unavailable rejection — no thread content or existence signal escapes after the share closes.
 - A valid discussion capability digest is required in addition to the lifecycle check; public-ID-only access can never enumerate a thread.
-- Comment rows are append-only and are removed with the share by the scheduled cleanup path.
+- Comment bodies are replaced only by proof-token-gated edits (`edited_at` is set), and proof-token-gated deletes hard-remove the row; replies to deleted comments remain as orphans. Rows are removed with the share by the scheduled cleanup path.
 
 ## Current evidence boundary
 
-The Day 2 concurrency matrix and every policy added through Day 5 are **verified** by the pgTAP suite (7 files, 115 tests) and integration tests:
+The Day 2 concurrency matrix and every policy added through Day 5 are **verified** by the pgTAP suite (8 files, 131 tests) and integration tests:
 - 20 concurrent requests on a `max_reveals = 1` share: exactly 1 authorized (winner lease), 19 uniform `unavailable`.
 - 20 concurrent requests on a `max_reveals = 3` share: exactly 3 authorized, 17 uniform `unavailable`.
 - Custom-limit concurrency: exactly N of M authorized at a non-preset limit.

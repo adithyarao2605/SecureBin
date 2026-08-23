@@ -7,7 +7,7 @@ This document is the technical source of truth for the judged SecureBin release.
 
 ### Current implementation status
 
-Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), Day 3 (Multi-Mode Content with SBCT Binary Framing, Encrypted Attachments, Storage URL Normalization, Safe Local Previews), Day 4 (Password Factor with PBKDF2-HMAC-SHA-256 at 600,000 iterations, Two-Channel Unlock Codes, QR + Native Share + Email Actions, Privacy Receipt, Pre-flight Disclosure, Complete Non-Happy-Path States), and Day 5 (Custom Reveal Counts 1–100, "Never" Expiry, Markdown Edit/Split/Preview, Code Mode with Local Language Detection, Multi-File Encrypted Attachments ≤5 with Download-all ZIP, Drag-and-Drop Zone, and Encrypted Discussions) are **implemented and fully verified**: 151 unit tests (22 files), 16 integration tests, 131 pgTAP tests (8 files), 12 Playwright E2E tests, and 3 Axe accessibility tests pass locally. The public landing is `/`; the sharing app is `/new`. Phases B–D of plan_v3 are also complete.
+Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), Day 3 (Multi-Mode Content with SBCT Binary Framing, Encrypted Attachments, Storage URL Normalization, Safe Local Previews), Day 4 (Password Factor with PBKDF2-HMAC-SHA-256 at 600,000 iterations, Two-Channel Unlock Codes, QR + Native Share + Email Actions, Privacy Receipt, Pre-flight Disclosure, Complete Non-Happy-Path States), and Day 5 (Custom Reveal Counts 1–100, "Never" Expiry, Markdown Edit/Split/Preview, Code Mode with Local Language Detection, Multi-File Encrypted Attachments ≤5 with Download-all ZIP, Drag-and-Drop Zone, and Encrypted Discussions) are **implemented and fully verified**: 159 unit tests (24 files), 16 integration tests, 131 pgTAP tests (8 files), 12 Playwright E2E tests, and 3 Axe accessibility tests pass locally. The public landing is `/`; the sharing app is `/new`. Phases B–D of plan_v3 are also complete.
 
 Development happens on the `dev` branch (Vercel preview); `main` is production.
 
@@ -221,7 +221,7 @@ The Day 3 single-file triple (`file_object_path`, `file_envelope`, `file_ciphert
 
 ### `share_comments`
 
-Append-only discussion thread table (forward migration `20260829000000_encrypted_discussions.sql`). Each row stores the share ID, an optional parent comment UUID for one-level replies, the pre-encrypted body envelope (≤4096 bytes), an optional encrypted nickname envelope (≤1024 bytes), and the server creation time. Rows are never updated or deleted except through share cleanup; lifecycle is inherited from the parent share — revoked, expired, reveal-exhausted, or scheduled shares raise a uniform discussion-unavailable rejection for both listing and posting.
+Encrypted discussion thread table (forward migrations `20260829000000_encrypted_discussions.sql` and `20260830000000_discussion_comment_edit_delete.sql`). Each row stores the share ID, an optional parent comment UUID for one-level replies, the pre-encrypted body envelope (≤4096 bytes), an optional encrypted nickname envelope (≤1024 bytes), the SHA-256 digest of a client-held edit proof token, and the server creation time. Edits replace the body envelope and set `edited_at` only when the raw token hashes to the stored digest; deletion hard-removes the row so replies to it survive as orphans rendered as "[comment removed]". Lifecycle is inherited from the parent share — revoked, expired, reveal-exhausted, or scheduled shares raise a uniform discussion-unavailable rejection for listing, posting, editing, and deleting; rows are removed with the share by scheduled cleanup.
 
 ### `upload_reservations`
 
@@ -280,6 +280,10 @@ Accept a random reveal request token. An atomic RPC locks the share row and:
 
 The route returns the content envelope and, when attachments exist, a `files` array — one entry per slot with `{ slot, envelope, ciphertextSize, downloadUrl }`, each download URL signed for 60 seconds. If signed URL generation or response delivery fails, retrying with the same token regenerates the response without another increment. Known limitation: the reveal lease is consumed by the RPC before the server generates the signed URLs, so a recipient who abandons the attempt and returns after the 5-minute lease window has expired consumes a second authorization on the next attempt.
 
+### `POST /api/shares/status-batch`
+
+Accept up to 50 public IDs (`MAX_STATUS_BATCH_IDS`) and return one status row per ID using the same active/scheduled/unavailable classification as the single-status endpoint. Backed by the service-definer RPC `get_share_status_batch(text[])`; unavailable rows are returned uniformly so callers cannot distinguish missing from revoked. Rate-limited under the same `status` bucket family as single-status reads. This endpoint never returns ciphertext and never consumes a reveal.
+
 ### `GET /api/shares/:publicId/comments`
 
 List a share's encrypted discussion thread. The raw discussion capability travels in the `x-discussion-capability` request header (kept out of proxy and access logs); it is hashed server-side and compared against the stored digest. The atomic function enforces lifecycle inheritance first: revoked, expired, reveal-exhausted, or scheduled shares are rejected uniformly before any comment row is read. Returns comment rows (id, parent id, encrypted envelopes, timestamps) in ascending order; never plaintext.
@@ -287,6 +291,10 @@ List a share's encrypted discussion thread. The raw discussion capability travel
 ### `POST /api/shares/:publicId/comments`
 
 Accept the raw discussion capability, an optional parent comment UUID, the pre-encrypted body envelope, and optional encrypted nickname envelope. The RPC re-checks lifecycle inheritance, verifies the capability digest against the share's stored digest, rate-limits per share (`discussion/{share_id}` discriminator, 60 per minute), and inserts append-only. Route-level buckets also apply to both endpoints via the HMACed network discriminator: 120 requests per fixed window for GET and 30 for POST. Comment bodies arrive only as ciphertext; no plaintext or capability value is logged.
+
+### `PATCH|DELETE /api/shares/:publicId/comments/:commentId`
+
+Edit and delete a comment using its random client-held proof token. The client sends the raw discussion capability plus the raw proof token; both are hashed server-side and compared against the stored digests without logging. The atomic RPCs re-check lifecycle inheritance before touching any row. A successful edit replaces the body envelope and sets `edited_at`; a successful delete hard-removes the row, leaving replies in place as orphans. Wrong tokens return the same rejection for every failure shape. The raw token exists only in the author's browser storage; losing it makes the comment permanently read-only.
 
 ### `DELETE /api/shares/:publicId`
 

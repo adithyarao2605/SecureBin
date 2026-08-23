@@ -52,6 +52,7 @@ export function createUploadService(
           p_idempotency_key_hash: bytesHex(input.idempotencyKeyHash),
           p_file_envelope: input.fileEnvelope,
           p_expected_ciphertext_size: input.expectedCiphertextSize,
+          p_attachment_slot: input.attachmentSlot,
         });
         const row = firstRow(value);
         if (!row || typeof row.object_path !== "string" || !row.expires_at) {
