@@ -33,6 +33,7 @@ REQUIRED_FILES = (
     "docs/architecture-diagrams.md",
     "docs/policy-state.md",
     "docs/deployment.md",
+    "docs/self-hosting.md",
     "info/HANDOFF.md",
     "scripts/demo-smoke.sh",
     "scripts/demo-smoke.ps1",

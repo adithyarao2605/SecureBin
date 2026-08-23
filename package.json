@@ -21,7 +21,10 @@
     "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "supabase:start": "supabase start",
     "supabase:reset": "supabase db reset",
-    "supabase:test": "supabase test db"
+    "supabase:test": "supabase test db",
+    "local:setup": "bash scripts/local-setup.sh",
+    "local": "bash scripts/local.sh",
+    "local:stop": "bash scripts/local-stop.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.50.0",

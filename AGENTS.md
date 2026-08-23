@@ -72,6 +72,9 @@ pnpm validate
 pnpm supabase:start
 pnpm supabase:reset
 pnpm supabase:test
+pnpm local:setup
+pnpm local
+pnpm local:stop
 ```
 
 Keep this list synchronized with `package.json`. Use `pnpm validate` as the final local gate.
