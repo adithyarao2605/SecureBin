@@ -153,6 +153,7 @@ export function createShareService(
           p_discussion_capability_hash: input.discussionCapabilityHash
             ? bytesHex(input.discussionCapabilityHash)
             : null,
+          p_reveal_window_seconds: input.revealWindowSeconds,
         });;
         const row = firstRow(value);
         if (!row || typeof row.public_id !== "string" || typeof row.created !== "boolean") throw new ShareServiceError("dependency");
@@ -228,10 +229,12 @@ export function createShareService(
             contentEnvelope: null,
             files: [],
             retryExpiresAt: typeof row.retry_expires_at === "string" ? parseIsoUtc(row.retry_expires_at) : null,
+            releaseWindowEndsAt: null,
           };
         }
         const contentEnvelope = parseRpcEnvelope(row.content_envelope);
         const retryExpiresAt = typeof row.retry_expires_at === "string" ? parseIsoUtc(row.retry_expires_at) : null;
+        const releaseWindowEndsAt = typeof row.window_ends_at === "string" ? parseIsoUtc(row.window_ends_at) : null;
         if (!contentEnvelope || !retryExpiresAt) throw new ShareServiceError("dependency");
 
         const files: RevealAttachment[] = [];
@@ -262,6 +265,7 @@ export function createShareService(
           contentEnvelope,
           files,
           retryExpiresAt,
+          releaseWindowEndsAt,
         };
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;

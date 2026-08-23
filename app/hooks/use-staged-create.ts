@@ -49,6 +49,7 @@ export interface StagedCreateRequest {
     readonly availableAt: string | null;
     readonly expiresAt: string | null;
     readonly maxReveals: number | null;
+    readonly revealWindowSeconds?: number | null;
   };
   readonly mask: string;
 }
@@ -217,6 +218,7 @@ export function useStagedCreate() {
         idempotencyKeyHash,
         passwordRequired: request.mask.includes("password"),
         unlockRequired: request.mask.includes("unlock"),
+        revealWindowSeconds: request.policy.revealWindowSeconds,
       };
 
       if (request.discussionCapability) {

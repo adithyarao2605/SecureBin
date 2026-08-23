@@ -58,7 +58,7 @@ function dependencies(service: Partial<ShareService> = {}): ShareRouteDependenci
           remainingReveals: null,
         },
       }))),
-      reveal: vi.fn(async () => ({ status: "authorized" as const, contentEnvelope: envelope, files: [], retryExpiresAt: "2099-01-01T00:05:00.000Z" })),
+      reveal: vi.fn(async () => ({ status: "authorized" as const, contentEnvelope: envelope, files: [], retryExpiresAt: "2099-01-01T00:05:00.000Z", releaseWindowEndsAt: null })),
       addComment: vi.fn(async () => ({ commentId: "c1", createdAt: new Date().toISOString() })),
       editComment: vi.fn(async () => ({ commentId: "c1", editedAt: new Date().toISOString() })),
       deleteComment: vi.fn(async () => true),
@@ -368,7 +368,7 @@ describe("share route handlers", () => {
 
   it("returns uniform 404 unavailable on exhausted or unavailable reveal", async () => {
     const deps = dependencies({
-      reveal: vi.fn(async () => ({ status: "unavailable" as const, contentEnvelope: null, files: [], retryExpiresAt: null })),
+      reveal: vi.fn(async () => ({ status: "unavailable" as const, contentEnvelope: null, files: [], retryExpiresAt: null, releaseWindowEndsAt: null })),
     });
     const handler = createPostRevealHandler(deps);
     const response = await handler(new Request("http://localhost/api/shares", {
@@ -402,6 +402,7 @@ describe("share route handlers", () => {
         contentEnvelope: envelope,
         files: [{ ...fileMetadata, slot: 0 }],
         retryExpiresAt: "2099-01-01T00:05:00.000Z",
+        releaseWindowEndsAt: null,
       })),
     });
 
@@ -418,6 +419,7 @@ describe("share route handlers", () => {
       contentEnvelope: envelope,
       files: [{ ...fileMetadata, slot: 0 }],
       retryExpiresAt: "2099-01-01T00:05:00.000Z",
+      releaseWindowEndsAt: null,
     });
   });
 

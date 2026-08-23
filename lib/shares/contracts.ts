@@ -62,6 +62,24 @@ export interface CreateShareInput {
   readonly idempotencyKeyHash: string;
   /** SHA-256 digest of the raw discussion capability; null disables threads. */
   readonly discussionCapabilityHash: string | null;
+  /**
+   * Sender-chosen reveal window in seconds, counted from the FIRST successful
+   * release; null keeps releases open until normal expiry.
+   */
+  readonly revealWindowSeconds: number | null;
+}
+
+/** Bounds for a sender-chosen release window (10 s … 24 h). */
+export const MIN_REVEAL_WINDOW_SECONDS = 10;
+export const MAX_REVEAL_WINDOW_SECONDS = 86_400;
+
+export function isRevealWindowSeconds(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= MIN_REVEAL_WINDOW_SECONDS &&
+    value <= MAX_REVEAL_WINDOW_SECONDS
+  );
 }
 
 export type FileEnvelopeV2 = Envelope & {
@@ -155,6 +173,8 @@ export interface RevealResult {
   readonly contentEnvelope: (Envelope & { readonly objectType: "content"; readonly ciphertext: string }) | null;
   readonly files: RevealAttachment[];
   readonly retryExpiresAt: string | null;
+  /** When the sender's release window closes; null when no window was set. */
+  readonly releaseWindowEndsAt: string | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -274,7 +294,7 @@ export function parseFileEnvelope(value: unknown): FileEnvelopeV2 | null {
 export function parseCreateShareInput(value: unknown, nowMillis: number = Date.now()): CreateShareInput | null {
   if (!isRecord(value) || !hasOnlyKeys(value,
     ["contentEnvelope", "deleteTokenHash", "idempotencyKeyHash", "passwordRequired", "policy", "publicId", "unlockRequired"],
-    ["discussionCapabilityHash"]
+    ["discussionCapabilityHash", "revealWindowSeconds"]
   )) return null;
   if (!isRecord(value.policy) || !hasExactKeys(value.policy, ["availableAt", "expiresAt", "maxReveals"])) return null;
   if (!isBase64Url(value.publicId, PUBLIC_ID_BYTES)) return null;
@@ -300,6 +320,13 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
     if (availableAt !== null && Date.parse(availableAt) >= expiryMillis) return null;
   }
   if (value.fileEnvelope !== undefined || value.fileCiphertextSize !== undefined) return null;
+  if (
+    value.revealWindowSeconds !== undefined &&
+    value.revealWindowSeconds !== null &&
+    !isRevealWindowSeconds(value.revealWindowSeconds)
+  ) {
+    return null;
+  }
 
   return {
     publicId: value.publicId,
@@ -315,6 +342,10 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
       typeof value.discussionCapabilityHash === "string" && isDigest(value.discussionCapabilityHash)
         ? value.discussionCapabilityHash
         : null,
+    revealWindowSeconds:
+      value.revealWindowSeconds === undefined || value.revealWindowSeconds === null
+        ? null
+        : value.revealWindowSeconds,
   };
 }
 

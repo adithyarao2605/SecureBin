@@ -76,6 +76,7 @@ function authorizedResponse(): Response {
     retryExpiresAt: "2099-01-01T00:05:00.000Z",
     contentEnvelope: envelope,
     files: [],
+    releaseWindowEndsAt: null,
   });
 }
 

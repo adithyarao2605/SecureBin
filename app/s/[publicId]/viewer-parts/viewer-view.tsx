@@ -28,10 +28,11 @@ export type ViewerViewProps = {
   onSubmitFactors: () => void;
   onReveal: () => void;
   onCancelConfirm: () => void;
-  discussionCapability: Uint8Array | null;
-  discussionSalt: Uint8Array | null;
-  discussionMask: FactorMask;
-};
+        discussionCapability: Uint8Array | null;
+        discussionSalt: Uint8Array | null;
+        discussionMask: FactorMask;
+      releaseWindowEndsAt: string | null;
+      };
 
 export function ViewerView({
   publicId,
@@ -52,9 +53,10 @@ export function ViewerView({
   onSubmitFactors,
   onReveal,
   onCancelConfirm,
-  discussionCapability,
-  discussionSalt,
-  discussionMask,
+   discussionCapability,
+   discussionSalt,
+   discussionMask,
+   releaseWindowEndsAt,
 }: ViewerViewProps) {
   const activeStatus = shareStatus?.status === "active" ? shareStatus : null;
 
@@ -191,6 +193,16 @@ export function ViewerView({
 
         {state === "opened" && content !== null && (
           <RevealedContent content={content} attachments={attachments}>
+            {releaseWindowEndsAt && (
+              <p className="viewer-status-text policy-hint" role="status">
+                The sender set a release window: further ciphertext releases
+                stop at{" "}
+                <time dateTime={releaseWindowEndsAt}>
+                  {formatLocalizedDateTime(releaseWindowEndsAt)}
+                </time>
+                . Copies already saved cannot be erased.
+              </p>
+            )}
             {discussionCapability && discussionSalt && (
               <DiscussionThread
                 publicId={publicId}

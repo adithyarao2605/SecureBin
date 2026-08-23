@@ -13,6 +13,11 @@ export type ProoflinePhase =
 export type ExpiryPreset = "24h" | "7d" | "30d" | "custom" | "never";
 export type ExpiryUnit = "hours" | "days";
 export type RevealPreset = "burn" | "3" | "5" | "10" | "custom" | "unlimited";
+export type RevealWindowPreset = "none" | "10s" | "30s" | "1m" | "5m" | "custom";
+
+/** Bounds mirror the server contract: 10 seconds … 24 hours. */
+export const MIN_REVEAL_WINDOW_SECONDS = 10;
+export const MAX_REVEAL_WINDOW_SECONDS = 86_400;
 
 export interface PolicyDraft {
   readonly availability: "now" | "scheduled";
@@ -24,6 +29,9 @@ export interface PolicyDraft {
   readonly revealPreset?: RevealPreset;
   readonly customMaxReveals?: number;
   readonly maxReveals: MaxReveals;
+  /** Release window counted from the first successful opening. */
+  readonly revealWindowPreset?: RevealWindowPreset;
+  readonly customRevealWindowSeconds?: number;
 }
 
 /** Local calendar date (YYYY-MM-DD) one day from nowMillis. */
@@ -51,7 +59,37 @@ export function defaultPolicyDraft(): PolicyDraft {
     customExpiryUnit: "hours",
     revealPreset: "unlimited",
     maxReveals: null,
+    revealWindowPreset: "none",
   };
+}
+
+/** Seconds for a reveal-window preset; custom resolves from the input. */
+export function resolveRevealWindowSeconds(
+  preset: RevealWindowPreset,
+  customSeconds?: number
+): number | null | "invalid" {
+  switch (preset) {
+    case "none":
+      return null;
+    case "10s":
+      return 10;
+    case "30s":
+      return 30;
+    case "1m":
+      return 60;
+    case "5m":
+      return 300;
+    case "custom":
+      if (
+        typeof customSeconds !== "number" ||
+        !Number.isInteger(customSeconds) ||
+        customSeconds < MIN_REVEAL_WINDOW_SECONDS ||
+        customSeconds > MAX_REVEAL_WINDOW_SECONDS
+      ) {
+        return "invalid";
+      }
+      return customSeconds;
+  }
 }
 
 export function computeExpiryDate(
@@ -163,6 +201,7 @@ export type ValidatedPolicy =
       /** Null means the share never expires (still revocable). */
       readonly expiresAt: string | null;
       readonly maxReveals: MaxReveals;
+      readonly revealWindowSeconds: number | null;
     }
   | {
       readonly valid: false;
@@ -241,10 +280,26 @@ export function validatePolicyDraft(
     maxReveals = draft.maxReveals;
   }
 
+  let revealWindowSeconds: number | null = null;
+  if (draft.revealWindowPreset !== undefined && draft.revealWindowPreset !== "none") {
+    const resolved = resolveRevealWindowSeconds(
+      draft.revealWindowPreset,
+      draft.customRevealWindowSeconds
+    );
+    if (resolved === "invalid") {
+      return {
+        valid: false,
+        error: `The release window must be a whole number of seconds between ${MIN_REVEAL_WINDOW_SECONDS} and ${MAX_REVEAL_WINDOW_SECONDS}.`,
+      };
+    }
+    revealWindowSeconds = resolved;
+  }
+
   return {
     valid: true,
     availableAt,
     expiresAt,
     maxReveals,
+    revealWindowSeconds,
   };
 }

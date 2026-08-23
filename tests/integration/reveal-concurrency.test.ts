@@ -70,6 +70,7 @@ describe("reveal concurrency and race conditions", () => {
       unlockRequired: false,
       idempotencyKeyHash,
       discussionCapabilityHash: null,
+        revealWindowSeconds: null,
     });
     expect(created).toEqual({ publicId, created: true });
 
@@ -126,6 +127,7 @@ describe("reveal concurrency and race conditions", () => {
       unlockRequired: false,
       idempotencyKeyHash,
       discussionCapabilityHash: null,
+        revealWindowSeconds: null,
     });
 
     const tokens = Array.from({ length: 20 }, () => randomBytes(32).toString("base64url"));
@@ -179,6 +181,7 @@ describe("reveal concurrency and race conditions", () => {
       unlockRequired: false,
       idempotencyKeyHash,
       discussionCapabilityHash: null,
+        revealWindowSeconds: null,
     });
 
     const tokens = Array.from({ length: 20 }, () => randomBytes(32).toString("base64url"));
@@ -216,6 +219,7 @@ describe("reveal concurrency and race conditions", () => {
       unlockRequired: false,
       idempotencyKeyHash,
       discussionCapabilityHash: null,
+        revealWindowSeconds: null,
     });
 
     const status = await service.getStatus(publicId);
@@ -249,6 +253,7 @@ describe("reveal concurrency and race conditions", () => {
       unlockRequired: false,
       idempotencyKeyHash,
       discussionCapabilityHash: null,
+        revealWindowSeconds: null,
     });
 
     const revealToken = randomBytes(32).toString("base64url");
@@ -291,6 +296,7 @@ describe("reveal concurrency and race conditions", () => {
       unlockRequired: false,
       idempotencyKeyHash,
       discussionCapabilityHash: null,
+        revealWindowSeconds: null,
     });
 
     const revealRes = await service.reveal(publicId, randomBytes(32).toString("base64url"));

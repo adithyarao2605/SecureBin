@@ -257,7 +257,11 @@ Cleanup uses exactly two service-role RPCs: `list_cleanup_candidates()` returns 
 
 Accept the client public ID, content envelope (optionally carrying the SBCT `0x02` discussion trailer), lifecycle policy (`expires_at` may be `null` for "Never"; `max_reveals` is an integer from 1 to 100 or null for unlimited), deletion-token digest, idempotency-key digest, prompting flags, and the optional SHA-256 digest of the discussion capability. Find and lock the unexpired unattached reservations matching public ID, idempotency digest, file envelope, size, and slots; verify and attach transactionally. Return the public ID and normalized policy. Never accept an upload-reservation capability, plaintext content, file metadata, or a raw discussion capability — only its digest.
 
-The replacement RPC is the 10-argument `create_share(text, jsonb, timestamptz, timestamptz, integer, bytea, boolean, boolean, bytea, bytea)` in public-ID-through-discussion-capability-hash order (forward migration `20260829000000`; earlier overloads are dropped and revoked). An idempotency-key retry whose immutable request differs returns HTTP `409` with exactly `{"error":"idempotency_conflict"}` and no original ID, envelope, policy, or capability.
+The replacement RPC is the 11-argument `create_share(text, jsonb, timestamptz, timestamptz, integer, bytea, boolean, boolean, bytea, bytea, integer)` in public-ID-through-reveal-window order (forward migration `20260831000000`; earlier overloads are dropped and revoked). The trailing `p_reveal_window_seconds` is null or an integer from 10 to 86 400. An idempotency-key retry whose immutable request differs — including a different window — returns HTTP `409` with exactly `{"error":"idempotency_conflict"}` and no original ID, envelope, policy, or capability.
+
+### Reveal window
+
+A sender may cap the span between the first and last ciphertext release (`none | 10s | 30s | 1m | 5m | custom ≤ 24h`). The window starts atomically inside `reveal_share` at the first successful authorization: that transaction stamps `first_released_at` and `window_ends_at`. Once `window_ends_at` has passed, new request tokens receive the uniform unavailable path; the original token keeps its normal five-minute retry-lease semantics (it re-mints the SAME release). The reveal response carries `releaseWindowEndsAt` so recipients see an honest closing time; SecureBin claims no power over copies already saved.
 
 ### `GET /api/shares/:publicId/status`
 

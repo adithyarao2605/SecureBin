@@ -129,6 +129,7 @@ export function createPostRevealHandler(dependencies: ShareRouteDependencies): (
         contentEnvelope: result.contentEnvelope,
         files: result.files,
         retryExpiresAt: result.retryExpiresAt,
+        releaseWindowEndsAt: result.releaseWindowEndsAt,
       });
     } catch (error) {
       return isDependencyFailure(error) ? errorResponse("server_error", 503) : errorResponse("server_error", 500);

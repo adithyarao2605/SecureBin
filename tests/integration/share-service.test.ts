@@ -41,6 +41,7 @@ const createInput: CreateShareInput = {
   unlockRequired: false,
   idempotencyKeyHash: digest,
   discussionCapabilityHash: null,
+        revealWindowSeconds: null,
 };
 
 type RpcCall = { readonly functionName: string; readonly args: Record<string, unknown> };
@@ -146,6 +147,7 @@ describe("share service RPC mapping", () => {
       contentEnvelope,
       files: [],
       retryExpiresAt: "2099-01-01T00:05:00.000Z",
+      releaseWindowEndsAt: null,
     });
     await expect(service.revoke(publicId, "raw-delete-capability")).resolves.toBe(true);
 

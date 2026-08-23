@@ -38,6 +38,8 @@ export interface ParsedReveal {
     readonly downloadUrl: string;
   }>;
   readonly retryExpiresAt: string;
+  /** Sender-chosen release window end; null when no window applies. */
+  readonly releaseWindowEndsAt: string | null;
 }
 
 export type ViewerState =
@@ -164,7 +166,7 @@ export function parseStatus(value: unknown): ShareStatus {
 
 export function parseReveal(value: unknown): ParsedReveal {
   if (!record(value)) throw new ViewerPayloadError();
-  hasOnlyKeys(value, ["contentEnvelope", "files", "retryExpiresAt", "status"], []);
+  hasOnlyKeys(value, ["contentEnvelope", "files", "releaseWindowEndsAt", "retryExpiresAt", "status"], []);
   if (value.status !== "authorized" || typeof value.retryExpiresAt !== "string") {
     throw new ViewerPayloadError();
   }
@@ -190,7 +192,17 @@ export function parseReveal(value: unknown): ParsedReveal {
     };
   });
 
-  return { contentEnvelope, files, retryExpiresAt: value.retryExpiresAt };
+  return {
+    contentEnvelope,
+    files,
+    retryExpiresAt: value.retryExpiresAt,
+    releaseWindowEndsAt:
+      value.releaseWindowEndsAt === null || value.releaseWindowEndsAt === undefined
+        ? null
+        : typeof value.releaseWindowEndsAt === "string"
+          ? value.releaseWindowEndsAt
+          : null,
+  };
 }
 
 export function prooflinePhaseFor(state: ViewerState): ProoflinePhase {

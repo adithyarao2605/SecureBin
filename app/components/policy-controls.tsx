@@ -1,4 +1,9 @@
-import type { ExpiryPreset, PolicyDraft, RevealPreset } from "../../lib/shares/policy-ui";
+import type {
+  ExpiryPreset,
+  PolicyDraft,
+  RevealPreset,
+  RevealWindowPreset,
+} from "../../lib/shares/policy-ui";
 
 export interface PolicyControlsProps {
   readonly draft: PolicyDraft;
@@ -289,6 +294,66 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
 
         <p className="policy-hint">
           A reveal authorizes one ciphertext release. It does not know whether the recipient read it.
+        </p>
+      </fieldset>
+
+      {/* Release Window Fieldset */}
+      <fieldset className="policy-fieldset">
+        <legend className="policy-legend">When should further releases close?</legend>
+        <div className="policy-input-group">
+          <label htmlFor="reveal-window-preset" className="policy-input-label">
+            Release window after the first opening
+          </label>
+          <select
+            id="reveal-window-preset"
+            className="policy-select"
+            value={draft.revealWindowPreset ?? "none"}
+            disabled={disabled}
+            onChange={(e) =>
+              onChange({
+                ...draft,
+                revealWindowPreset: e.target.value as RevealWindowPreset,
+                customRevealWindowSeconds: draft.customRevealWindowSeconds ?? 60,
+              })
+            }
+          >
+            <option value="none">No extra window</option>
+            <option value="10s">10 seconds</option>
+            <option value="30s">30 seconds</option>
+            <option value="1m">1 minute</option>
+            <option value="5m">5 minutes</option>
+            <option value="custom">Custom window</option>
+          </select>
+
+          {draft.revealWindowPreset === "custom" && (
+            <div className="policy-custom-expiry-inputs">
+              <div className="policy-input-group">
+                <label htmlFor="custom-reveal-window" className="policy-input-label">
+                  Window length (seconds)
+                </label>
+                <input
+                  id="custom-reveal-window"
+                  type="number"
+                  min={10}
+                  max={86_400}
+                  className="policy-number-input"
+                  value={draft.customRevealWindowSeconds ?? 60}
+                  disabled={disabled}
+                  onChange={(e) => {
+                    const val = Number.parseInt(e.target.value, 10);
+                    onChange({
+                      ...draft,
+                      customRevealWindowSeconds: Number.isNaN(val) ? undefined : val,
+                    });
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        <p className="policy-hint">
+          The window starts at the first opening. After it closes, new ciphertext releases stop.
+          Copies a recipient already saved cannot be erased.
         </p>
       </fieldset>
     </div>

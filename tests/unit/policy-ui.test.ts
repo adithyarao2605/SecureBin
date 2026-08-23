@@ -179,5 +179,33 @@ describe("policy-ui helper functions", () => {
       expect(result.error).toContain("must be before the expiration date");
     }
   });
+
+  it("resolves reveal window presets to seconds and validates custom bounds", () => {
+    const base = defaultPolicyDraft();
+
+    const none = validatePolicyDraft({ ...base, revealWindowPreset: "none" }, fixedNow);
+    expect(none.valid && none.revealWindowSeconds).toBe(null);
+
+    const preset = validatePolicyDraft({ ...base, revealWindowPreset: "5m" }, fixedNow);
+    expect(preset.valid && preset.revealWindowSeconds).toBe(300);
+
+    const custom = validatePolicyDraft(
+      { ...base, revealWindowPreset: "custom", customRevealWindowSeconds: 600 },
+      fixedNow
+    );
+    expect(custom.valid && custom.revealWindowSeconds).toBe(600);
+
+    const tooSmall = validatePolicyDraft(
+      { ...base, revealWindowPreset: "custom", customRevealWindowSeconds: 5 },
+      fixedNow
+    );
+    if (tooSmall.valid) throw new Error("expected 5s window to be rejected");
+
+    const tooLarge = validatePolicyDraft(
+      { ...base, revealWindowPreset: "custom", customRevealWindowSeconds: 86_401 },
+      fixedNow
+    );
+    if (tooLarge.valid) throw new Error("expected >24h window to be rejected");
+  });
 });
 

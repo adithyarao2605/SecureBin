@@ -51,6 +51,7 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [factorError, setFactorError] = useState("");
   const [discussionCapability, setDiscussionCapability] = useState<Uint8Array | null>(null);
   const [discussionSalt, setDiscussionSalt] = useState<Uint8Array | null>(null);
+  const [releaseWindowEndsAt, setReleaseWindowEndsAt] = useState<string | null>(null);
   const requestTokenRef = useRef<string | null>(null);
   const revealInFlightRef = useRef(false);
 
@@ -242,6 +243,7 @@ export function Viewer({ publicId }: { publicId: string }) {
 
       setContent(plaintext);
       setAttachments(decryptedFiles);
+      setReleaseWindowEndsAt(revealPayload.releaseWindowEndsAt);
       if (plaintext.discussionCapability) {
         setDiscussionCapability(plaintext.discussionCapability);
         setDiscussionSalt(base64UrlToBytes(revealPayload.contentEnvelope.hkdfSalt));
@@ -298,6 +300,7 @@ export function Viewer({ publicId }: { publicId: string }) {
       discussionCapability={discussionCapability}
       discussionSalt={discussionSalt}
       discussionMask={currentFactorOptions()?.mask ?? "link"}
+      releaseWindowEndsAt={releaseWindowEndsAt}
     />
   );
 }
