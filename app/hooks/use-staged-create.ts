@@ -306,6 +306,7 @@ export function useStagedCreate() {
       expiresAt: request.policy.expiresAt,
       availableAt: request.policy.availableAt,
       maxReveals: request.policy.maxReveals,
+      revealWindowSeconds: request.policy.revealWindowSeconds ?? null,
       deleteCapability: prepared.context.deleteCapability,
       status: "active",
       remainingReveals: request.policy.maxReveals,
@@ -349,6 +350,15 @@ export function useStagedCreate() {
         algorithm: prepared.sealedContent.envelope.algorithm,
         kdf: prepared.sealedContent.envelope.kdf,
         envelopeVersion: prepared.sealedContent.envelope.version,
+        contentType:
+          request.contentPayload.mode === "code"
+            ? `Code (${request.contentPayload.language})`
+            : request.contentPayload.mode === "markdown"
+            ? "Markdown"
+            : "Note",
+        fileCount: prepared.files.length,
+        discussionEnabled: request.discussionCapability !== null,
+        revealWindowSeconds: request.policy.revealWindowSeconds ?? null,
       },
       parcel,
     };

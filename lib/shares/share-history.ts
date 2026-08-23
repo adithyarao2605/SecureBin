@@ -17,6 +17,9 @@ export interface ShareHistoryItem {
   readonly maxReveals: MaxReveals;
   readonly deleteCapability: string | null;
   readonly noteSnippet?: string;
+  /** Sender-assigned device-local label (never uploaded). */
+  readonly label?: string;
+  readonly revealWindowSeconds?: number | null;
   status?: "active" | "scheduled" | "unavailable" | "checking" | "revoked";
   remainingReveals?: number | null;
 }
@@ -53,6 +56,11 @@ function parseHistoryItem(item: unknown): ShareHistoryItem | null {
     maxReveals: item.maxReveals,
     deleteCapability: typeof item.deleteCapability === "string" ? item.deleteCapability : null,
     noteSnippet: typeof item.noteSnippet === "string" ? item.noteSnippet : undefined,
+    label: typeof item.label === "string" ? item.label.slice(0, 80) : undefined,
+    revealWindowSeconds:
+      typeof item.revealWindowSeconds === "number" || item.revealWindowSeconds === null
+        ? item.revealWindowSeconds
+        : undefined,
     status: isHistoryStatus(item.status) ? item.status : undefined,
     remainingReveals: typeof item.remainingReveals === "number" ? item.remainingReveals : null,
   };

@@ -232,3 +232,38 @@
 .history-remove-btn:hover {
   color: var(--copper);
 }
+
+/* Local sender-manager upgrades: labels + policy view */
+.history-label-row {
+  margin: 0.35rem 0;
+}
+
+.history-label-input {
+  width: 100%;
+  max-width: 22rem;
+  background: transparent;
+  border: 1px dashed var(--border, #4a5a63);
+  border-radius: 6px;
+  color: inherit;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.history-policy {
+  margin: 0.35rem 0;
+}
+
+.history-policy summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.history-policy-list {
+  list-style: none;
+  padding: 0.25rem 0 0;
+  margin: 0;
+  font-size: 0.8rem;
+  display: grid;
+  gap: 0.15rem;
+}

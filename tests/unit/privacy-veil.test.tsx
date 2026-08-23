@@ -9,7 +9,7 @@ describe("privacy veil", () => {
     vi.restoreAllMocks?.();
   });
 
-  it("starts veiled and toggles locally without leaving the page", () => {
+  it("starts revealed and toggles locally without leaving the page", () => {
     render(
       <PrivacyVeil>
         <p>secret payload</p>
@@ -17,18 +17,18 @@ describe("privacy veil", () => {
     );
 
     const region = document.querySelector(".privacy-veil")!;
-    expect(region.getAttribute("data-veiled")).toBe("true");
-    expect(region.querySelector(".veil-content")!.getAttribute("aria-hidden")).toBe("true");
-
-    fireEvent.click(screen.getByRole("button", { name: "Show decrypted content" }));
     expect(region.getAttribute("data-veiled")).toBe("false");
-    expect(screen.getByText("secret payload")).toBeVisible();
+    expect(region.querySelector(".veil-content")!.getAttribute("aria-hidden")).toBe("false");
 
     fireEvent.click(screen.getByRole("button", { name: "Hide decrypted content" }));
     expect(region.getAttribute("data-veiled")).toBe("true");
+    expect(screen.getByText("secret payload")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show decrypted content" }));
+    expect(region.getAttribute("data-veiled")).toBe("false");
   });
 
-  it("re-hides on Escape and on window blur", () => {
+  it("hides on Hide, Escape, and window blur", () => {
     render(
       <PrivacyVeil>
         <p>secret payload</p>
@@ -36,9 +36,10 @@ describe("privacy veil", () => {
     );
     const region = document.querySelector(".privacy-veil")!;
 
-    fireEvent.click(screen.getByRole("button", { name: "Show decrypted content" }));
-    expect(region.getAttribute("data-veiled")).toBe("false");
+    fireEvent.click(screen.getByRole("button", { name: "Hide decrypted content" }));
+    expect(region.getAttribute("data-veiled")).toBe("true");
 
+    fireEvent.click(screen.getByRole("button", { name: "Show decrypted content" }));
     fireEvent.keyDown(window, { key: "Escape" });
     expect(region.getAttribute("data-veiled")).toBe("true");
 

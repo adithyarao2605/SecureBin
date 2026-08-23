@@ -30,14 +30,14 @@ test("veils decrypted content locally and never calls the server to re-show", as
   const veilRegion = page.locator(".privacy-veil");
   await expect(veilRegion).toBeVisible({ timeout: 20_000 });
   // Opened state reached: from here on, veil toggles must be offline.
-  await expect(page.getByRole("button", { name: "Show decrypted content" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hide decrypted content" })).toBeVisible();
   opened = true;
 
-  expect(await veilRegion.getAttribute("data-veiled")).toBe("true");
-
-  await page.getByRole("button", { name: "Show decrypted content" }).click();
   expect(await veilRegion.getAttribute("data-veiled")).toBe("false");
   await expect(page.getByText(NOTE)).toBeAttached();
+
+  await page.getByRole("button", { name: "Hide decrypted content" }).click();
+  expect(await veilRegion.getAttribute("data-veiled")).toBe("true");
 
   await page.keyboard.press("Escape");
   expect(await veilRegion.getAttribute("data-veiled")).toBe("true");

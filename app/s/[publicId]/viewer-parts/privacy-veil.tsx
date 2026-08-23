@@ -9,7 +9,9 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
  * courtesy shield, not screenshot prevention.
  */
 export function PrivacyVeil({ children }: { children: ReactNode }) {
-  const [veiled, setVeiled] = useState(true);
+  // Starts revealed: hiding is user-initiated, then Esc or window blur
+  // re-hides automatically until the recipient shows it again.
+  const [veiled, setVeiled] = useState(false);
   const toggleRef = useRef<HTMLButtonElement | null>(null);
 
   const hide = useCallback(() => setVeiled(true), []);

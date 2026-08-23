@@ -201,6 +201,52 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
                   </span>
                 </div>
 
+                <div className="history-label-row">
+                  <label htmlFor={`history-label-${item.publicId}`} className="sr-only">
+                    Local label for {item.publicId}
+                  </label>
+                  <input
+                    id={`history-label-${item.publicId}`}
+                    type="text"
+                    className="history-label-input"
+                    placeholder="Add a local label…"
+                    maxLength={80}
+                    value={item.label ?? ""}
+                    onChange={(event) => {
+                      const label = event.target.value;
+                      updateShareInHistory(item.publicId, { label: label || undefined });
+                      setHistory((prev) =>
+                        prev.map((entry) =>
+                          entry.publicId === item.publicId ? { ...entry, label } : entry
+                        )
+                      );
+                    }}
+                  />
+                </div>
+
+                <details className="history-policy">
+                  <summary>Policy</summary>
+                  <ul className="history-policy-list">
+                    <li>
+                      Availability:{" "}
+                      {item.availableAt
+                        ? formatLocalizedDateTime(item.availableAt)
+                        : "Immediately"}
+                    </li>
+                    <li>Expires: {formatLocalizedDateTime(item.expiresAt)}</li>
+                    <li>
+                      Reveals:{" "}
+                      {item.maxReveals === null ? "Unlimited" : `Up to ${item.maxReveals}`}
+                    </li>
+                    <li>
+                      Release window:{" "}
+                      {item.revealWindowSeconds == null
+                        ? "None"
+                        : `${item.revealWindowSeconds}s from first opening`}
+                    </li>
+                  </ul>
+                </details>
+
                 <div className="history-link-preview">
                   <code>{item.publicId}</code>
                 </div>

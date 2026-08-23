@@ -53,5 +53,32 @@ describe("Privacy receipt", () => {
     expect(screen.getByText("Unlimited ciphertext releases")).toBeInTheDocument();
     expect(screen.getByText("One encrypted file (name and type encrypted too)")).toBeInTheDocument();
     expect(screen.getByText("None required for this share")).toBeInTheDocument();
+    expect(screen.getAllByText(/Copies already saved cannot be erased|cannot erase copies/iu).length).toBeGreaterThan(0);
+  });
+
+  it("renders the expanded Day-6 fields and offers a receipt download", () => {
+    render(
+      <PrivacyReceipt
+        data={{
+          ...baseReceipt,
+          contentType: "Code (typescript)",
+          fileCount: 2,
+          discussionEnabled: true,
+          revealWindowSeconds: 300,
+        }}
+      />
+    );
+    const disclosure = screen.getByText("Privacy receipt").closest("details");
+    disclosure!.open = true;
+
+    expect(screen.getByText("Code (typescript)")).toBeInTheDocument();
+    expect(screen.getByText(/^2 encrypted files/u)).toBeInTheDocument();
+    expect(
+      screen.getByText("Enabled — revealed recipients can post encrypted replies")
+    ).toBeInTheDocument();
+    expect(screen.getByText("300s from the first opening")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Download receipt \(\.txt\)/iu })
+    ).toBeInTheDocument();
   });
 });
