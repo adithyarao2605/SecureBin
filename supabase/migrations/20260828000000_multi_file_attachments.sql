@@ -307,7 +307,8 @@ begin
     );
 
     update public.upload_reservations
-      set attached_share_id = inserted_id
+      set attached_share_id = inserted_id,
+          attached_at = now()
       where id = staged.id;
 
     staged_count := staged_count + 1;

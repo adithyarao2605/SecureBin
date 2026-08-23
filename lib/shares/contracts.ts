@@ -60,15 +60,27 @@ export interface CreateShareInput {
   readonly passwordRequired: boolean;
   readonly unlockRequired: boolean;
   readonly idempotencyKeyHash: string;
-  readonly fileEnvelope: (Envelope & { readonly objectType: "file"; readonly version: 2; readonly ciphertext?: never }) | null;
-  readonly fileCiphertextSize: number | null;
 }
+
+export type FileEnvelopeV2 = Envelope & {
+  readonly objectType: "file";
+  readonly version: 2;
+  readonly ciphertext?: never;
+};
 
 export interface UploadReservationInput {
   readonly publicId: string;
   readonly idempotencyKeyHash: string;
-  readonly fileEnvelope: Envelope & { readonly objectType: "file"; readonly version: 2; readonly ciphertext?: never };
+  readonly fileEnvelope: FileEnvelopeV2;
   readonly expectedCiphertextSize: number;
+  readonly attachmentSlot: number;
+}
+
+export interface RevealAttachment {
+  readonly slot: number;
+  readonly envelope: FileEnvelopeV2;
+  readonly ciphertextSize: number;
+  readonly downloadUrl: string;
 }
 
 export interface RevealInput {
@@ -106,16 +118,10 @@ export type ShareStatus =
   | ShareStatusScheduled
   | ShareStatusUnavailable;
 
-export interface RevealFileMetadata {
-  readonly envelope: Envelope & { readonly objectType: "file"; readonly version: 2; readonly ciphertext?: never };
-  readonly ciphertextSize: number;
-  readonly downloadUrl: string;
-}
-
 export interface RevealResult {
   readonly status: "authorized" | "unavailable" | "request_expired";
   readonly contentEnvelope: (Envelope & { readonly objectType: "content"; readonly ciphertext: string }) | null;
-  readonly file?: RevealFileMetadata | null;
+  readonly files: RevealAttachment[];
   readonly retryExpiresAt: string | null;
 }
 
@@ -227,15 +233,16 @@ export function parseContentEnvelope(value: unknown): CreateShareInput["contentE
   return envelope as CreateShareInput["contentEnvelope"] | null;
 }
 
-export function parseFileEnvelope(value: unknown): NonNullable<CreateShareInput["fileEnvelope"]> | null {
+export function parseFileEnvelope(value: unknown): FileEnvelopeV2 | null {
+  // Metadata-only file envelopes carry one fewer field (no ciphertext).
   const envelope = parseEnvelope(value, "file", false);
-  return envelope as NonNullable<CreateShareInput["fileEnvelope"]> | null;
+  return envelope as FileEnvelopeV2 | null;
 }
 
 export function parseCreateShareInput(value: unknown, nowMillis: number = Date.now()): CreateShareInput | null {
   if (!isRecord(value) || !hasOnlyKeys(value,
     ["contentEnvelope", "deleteTokenHash", "idempotencyKeyHash", "passwordRequired", "policy", "publicId", "unlockRequired"],
-    ["fileCiphertextSize", "fileEnvelope"],
+    []
   )) return null;
   if (!isRecord(value.policy) || !hasExactKeys(value.policy, ["availableAt", "expiresAt", "maxReveals"])) return null;
   if (!isBase64Url(value.publicId, PUBLIC_ID_BYTES)) return null;
@@ -260,13 +267,7 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
     if (expiryMillis <= nowMillis || expiryMillis > nowMillis + MAX_EXPIRY_DAYS * 86_400_000) return null;
     if (availableAt !== null && Date.parse(availableAt) >= expiryMillis) return null;
   }
-  const fileEnvelope = value.fileEnvelope === undefined || value.fileEnvelope === null ? null : parseFileEnvelope(value.fileEnvelope);
-  const fileCiphertextSize = value.fileCiphertextSize === undefined || value.fileCiphertextSize === null ? null : value.fileCiphertextSize;
-  const normalizedFileCiphertextSize = fileCiphertextSize === null || !isNonNegativeInteger(fileCiphertextSize) ? null : fileCiphertextSize;
-  if (value.fileEnvelope !== undefined && value.fileEnvelope !== null && !fileEnvelope) return null;
-  if (fileEnvelope === null && fileCiphertextSize !== null) return null;
-  if (fileEnvelope !== null && (normalizedFileCiphertextSize === null || normalizedFileCiphertextSize < 16 || normalizedFileCiphertextSize > MAX_FILE_CIPHERTEXT_SIZE)) return null;
-  if (fileEnvelope !== null && fileEnvelope.factorMask !== contentEnvelope.factorMask) return null;
+  if (value.fileEnvelope !== undefined || value.fileCiphertextSize !== undefined) return null;
 
   return {
     publicId: value.publicId,
@@ -278,25 +279,25 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
     passwordRequired: value.passwordRequired,
     unlockRequired: value.unlockRequired,
     idempotencyKeyHash: value.idempotencyKeyHash,
-    fileEnvelope,
-    fileCiphertextSize: normalizedFileCiphertextSize,
   };
 }
 
 export function parseUploadReservationInput(value: unknown): UploadReservationInput | null {
-  if (!isRecord(value) || !hasExactKeys(value, ["expectedCiphertextSize", "fileEnvelope", "idempotencyKeyHash", "publicId"])) return null;
+  if (!isRecord(value) || !hasExactKeys(value, ["attachmentSlot", "expectedCiphertextSize", "fileEnvelope", "idempotencyKeyHash", "publicId"])) return null;
   if (!isBase64Url(value.publicId, PUBLIC_ID_BYTES)) return null;
   if (!isDigest(value.idempotencyKeyHash)) return null;
   const fileEnvelope = parseFileEnvelope(value.fileEnvelope);
   if (!fileEnvelope) return null;
   if (typeof value.expectedCiphertextSize !== "number" || !isNonNegativeInteger(value.expectedCiphertextSize)) return null;
   if (value.expectedCiphertextSize < 16 || value.expectedCiphertextSize > MAX_FILE_CIPHERTEXT_SIZE) return null;
+  if (typeof value.attachmentSlot !== "number" || !Number.isInteger(value.attachmentSlot) || value.attachmentSlot < 0 || value.attachmentSlot > 4) return null;
 
   return {
     publicId: value.publicId,
     idempotencyKeyHash: value.idempotencyKeyHash,
     fileEnvelope,
     expectedCiphertextSize: value.expectedCiphertextSize,
+    attachmentSlot: value.attachmentSlot,
   };
 }
 
@@ -318,7 +319,7 @@ export function parseRpcEnvelope(value: unknown): CreateShareInput["contentEnvel
   return parseContentEnvelope(value);
 }
 
-export function parseRpcFileEnvelope(value: unknown): NonNullable<CreateShareInput["fileEnvelope"]> | null {
+export function parseRpcFileEnvelope(value: unknown): FileEnvelopeV2 | null {
   return parseFileEnvelope(value);
 }
 

@@ -34,11 +34,15 @@ import { PolicyControls } from "./policy-controls";
 export type ComposerMode = "note" | "markdown" | "code";
 export type MarkdownViewMode = "edit" | "split" | "preview";
 
+interface PreparedAttemptFile {
+  readonly sealed: SealedFile;
+  readonly uploaded: boolean;
+}
+
 interface PreparedAttempt {
   readonly context: ShareCryptoContext;
   readonly sealedContent: SealedContent;
-  readonly sealedFile: SealedFile | null;
-  readonly fileUploaded: boolean;
+  readonly files: PreparedAttemptFile[];
   readonly payload: Record<string, unknown>;
 }
 
@@ -59,7 +63,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
   const [markdownView, setMarkdownView] = useState<MarkdownViewMode>("edit");
   const [language, setLanguage] = useState<CodeLanguage>("typescript");
   const [draft, setDraft] = useState("");
-  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [policyDraft, setPolicyDraft] = useState<PolicyDraft>(defaultPolicyDraft());
   const [isPending, setIsPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -111,21 +115,21 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
   }
 
   function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > MAX_FILE_PLAINTEXT_BYTES) {
-      setErrorMessage(`File is too large. Maximum size is 10 MB (selected: ${formatBytes(file.size)}).`);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
+    const selected = Array.from(event.target.files ?? []);
+    if (selected.length === 0) return;
+    for (const file of selected) {
+      if (file.size > MAX_FILE_PLAINTEXT_BYTES) {
+        setErrorMessage(`"${file.name}" is too large. Maximum size per file is 10 MB.`);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
     }
-
-    setAttachedFile(file);
+    setAttachedFiles((prev) => [...prev, ...selected].slice(0, 5));
     resetPrepared();
   }
 
-  function handleRemoveFile() {
-    setAttachedFile(null);
+  function handleRemoveFile(index: number) {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
     if (fileInputRef.current) fileInputRef.current.value = "";
     resetPrepared();
   }
@@ -148,7 +152,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
     event.preventDefault();
     if (isPending) return;
 
-    if (!draft.trim() && !attachedFile) {
+    if (!draft.trim() && attachedFiles.length === 0) {
       setErrorMessage("Write some content or attach a file before creating a share.");
       return;
     }
@@ -204,16 +208,19 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         };
         const sealedContent = await sealContent(contentPayload, context, factorArgs);
 
-        let sealedFile: SealedFile | null = null;
-        if (attachedFile) {
-          const buffer = await attachedFile.arrayBuffer();
-          const fileData = new Uint8Array(buffer);
-          const payload: FilePayload = {
-            filename: attachedFile.name,
-            mimeType: attachedFile.type || "application/octet-stream",
-            data: fileData,
-          };
-          sealedFile = await sealFile(payload, context, factorArgs);
+        const stagedFiles: PreparedAttemptFile[] = [];
+        for (const file of attachedFiles) {
+          const buffer = await file.arrayBuffer();
+          const sealed = await sealFile(
+            {
+              filename: file.name,
+              mimeType: file.type || "application/octet-stream",
+              data: new Uint8Array(buffer),
+            },
+            context,
+            factorArgs
+          );
+          stagedFiles.push({ sealed, uploaded: false });
         }
 
         const [deleteTokenHash, idempotencyKeyHash] = await Promise.all([
@@ -233,30 +240,32 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           idempotencyKeyHash,
           passwordRequired: mask.includes("password"),
           unlockRequired: mask.includes("unlock"),
-          fileEnvelope: sealedFile ? sealedFile.envelope : null,
-          fileCiphertextSize: sealedFile ? sealedFile.ciphertextSize : null,
         };
 
         prepared = {
           context,
           sealedContent,
-          sealedFile,
-          fileUploaded: false,
+          files: stagedFiles,
           payload,
         };
         preparedRef.current = prepared;
       }
 
-      // If a file is attached and not yet uploaded, perform staged upload
-      if (prepared.sealedFile && !prepared.fileUploaded) {
+      // Staged uploads, one reservation + PUT per attachment slot. Each
+      // uploaded flag persists in preparedRef so a retry never re-uploads.
+      for (let index = 0; index < prepared.files.length; index += 1) {
+        const entry = prepared.files[index];
+        if (entry.uploaded) continue;
+
         const uploadRes = await fetch("/api/uploads", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             publicId: prepared.context.publicId,
             idempotencyKeyHash: prepared.payload.idempotencyKeyHash,
-            fileEnvelope: prepared.sealedFile.envelope,
-            expectedCiphertextSize: prepared.sealedFile.ciphertextSize,
+            fileEnvelope: entry.sealed.envelope,
+            expectedCiphertextSize: entry.sealed.ciphertextSize,
+            attachmentSlot: index,
           }),
         });
 
@@ -275,7 +284,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         const putRes = await fetch(uploadData.uploadUrl, {
           method: "PUT",
           headers: { "Content-Type": "application/octet-stream" },
-          body: new Blob([bytesToArrayBuffer(prepared.sealedFile.ciphertext)], { type: "application/octet-stream" }),
+          body: new Blob([bytesToArrayBuffer(entry.sealed.ciphertext)], { type: "application/octet-stream" }),
         });
 
         if (!putRes.ok) {
@@ -284,7 +293,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
           throw new Error("storage_upload_failed");
         }
 
-        prepared = { ...prepared, fileUploaded: true };
+        prepared.files[index] = { sealed: entry.sealed, uploaded: true };
         preparedRef.current = prepared;
       }
 
@@ -315,7 +324,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
         publicId: returnedPublicId,
         fingerprint: await digestCapability(prepared.sealedContent.envelope.ciphertext ?? ""),
         mask,
-        hasFile: Boolean(prepared.sealedFile),
+        hasFile: prepared.files.length > 0,
         availableAt: validated.availableAt,
         expiresAt: validated.expiresAt,
         maxReveals: validated.maxReveals,
@@ -392,7 +401,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
     setUnlockCodeShown("");
     setReceiptData(null);
     setDraft("");
-    setAttachedFile(null);
+    setAttachedFiles([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
     setShareUrl("");
     setActiveDeleteCapability(null);
@@ -640,31 +649,42 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareCreated }: Comp
             disabled={isPending}
             onChange={handleFileSelect}
           />
-          {!attachedFile ? (
+          {attachedFiles.length === 0 && (
             <button
               type="button"
               className="action-button secondary-button attach-file-btn"
               disabled={isPending}
               onClick={() => fileInputRef.current?.click()}
             >
-              Attach file (max 10 MB)
+              Attach files (max 10 MB each, up to 5)
             </button>
-          ) : (
-            <div className="attached-file-badge" role="status">
+          )}
+          {attachedFiles.map((file, index) => (
+            <div key={`${file.name}-${index}`} className="attached-file-badge" role="status">
               <span className="file-info-text">
-                📎 <strong>{attachedFile.name}</strong> ({formatBytes(attachedFile.size)})
+                📎 <strong>{file.name}</strong> ({formatBytes(file.size)})
               </span>
               <button
                 type="button"
                 className="remove-file-button"
                 disabled={isPending}
-                onClick={handleRemoveFile}
-                aria-label="Remove attached file"
+                onClick={() => handleRemoveFile(index)}
+                aria-label={`Remove ${file.name}`}
               >
                 ✕ Remove
               </button>
             </div>
-          )}
+          ))}
+          <input
+            type="file"
+            ref={fileInputRef}
+            id="file-attachment-input"
+            aria-label="Attach files (max 10 MB each, up to 5)"
+            className="sr-only"
+            disabled={isPending}
+            onChange={handleFileSelect}
+            multiple
+          />
         </div>
 
         <PolicyControls

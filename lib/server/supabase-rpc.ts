@@ -42,7 +42,7 @@ export function createRpcClient(
       } catch {
         throw new RpcRequestError(503, null, null);
       }
-      if (!response.ok) {
+      if (!response.ok) {;
         let code: string | null = null;
         let details: string | null = null;
         try {

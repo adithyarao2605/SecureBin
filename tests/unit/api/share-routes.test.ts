@@ -45,7 +45,7 @@ function dependencies(service: Partial<ShareService> = {}): ShareRouteDependenci
         maxReveals: null,
         remainingReveals: null,
       })),
-      reveal: vi.fn(async () => ({ status: "authorized" as const, contentEnvelope: envelope, retryExpiresAt: "2099-01-01T00:05:00.000Z" })),
+      reveal: vi.fn(async () => ({ status: "authorized" as const, contentEnvelope: envelope, files: [], retryExpiresAt: "2099-01-01T00:05:00.000Z" })),
       revoke: vi.fn(async () => true),
       ...service,
     },
@@ -325,7 +325,7 @@ describe("share route handlers", () => {
 
   it("returns uniform 404 unavailable on exhausted or unavailable reveal", async () => {
     const deps = dependencies({
-      reveal: vi.fn(async () => ({ status: "unavailable" as const, contentEnvelope: null, retryExpiresAt: null })),
+      reveal: vi.fn(async () => ({ status: "unavailable" as const, contentEnvelope: null, files: [], retryExpiresAt: null })),
     });
     const handler = createPostRevealHandler(deps);
     const response = await handler(new Request("http://localhost/api/shares", {
@@ -336,7 +336,7 @@ describe("share route handlers", () => {
     expect(await response.json()).toEqual({ status: "unavailable" });
   });
 
-  it("returns authorized ciphertext and file download URL when file is attached", async () => {
+  it("returns authorized ciphertext and attachment download URLs when files are attached", async () => {
     const fileMetadata = {
       envelope: {
         version: 2 as const,
@@ -357,7 +357,7 @@ describe("share route handlers", () => {
       reveal: vi.fn(async () => ({
         status: "authorized" as const,
         contentEnvelope: envelope,
-        file: fileMetadata,
+        files: [{ ...fileMetadata, slot: 0 }],
         retryExpiresAt: "2099-01-01T00:05:00.000Z",
       })),
     });
@@ -373,7 +373,7 @@ describe("share route handlers", () => {
     expect(json).toEqual({
       status: "authorized",
       contentEnvelope: envelope,
-      file: fileMetadata,
+      files: [{ ...fileMetadata, slot: 0 }],
       retryExpiresAt: "2099-01-01T00:05:00.000Z",
     });
   });

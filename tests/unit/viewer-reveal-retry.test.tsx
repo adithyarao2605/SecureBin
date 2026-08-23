@@ -75,6 +75,7 @@ function authorizedResponse(): Response {
     status: "authorized",
     retryExpiresAt: "2099-01-01T00:05:00.000Z",
     contentEnvelope: envelope,
+    files: [],
   });
 }
 

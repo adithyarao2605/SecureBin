@@ -69,8 +69,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      fileEnvelope: null,
-      fileCiphertextSize: null,
     });
     expect(created).toEqual({ publicId, created: true });
 
@@ -126,8 +124,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      fileEnvelope: null,
-      fileCiphertextSize: null,
     });
 
     const tokens = Array.from({ length: 20 }, () => randomBytes(32).toString("base64url"));
@@ -180,8 +176,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      fileEnvelope: null,
-      fileCiphertextSize: null,
     });
 
     const tokens = Array.from({ length: 20 }, () => randomBytes(32).toString("base64url"));
@@ -218,8 +212,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      fileEnvelope: null,
-      fileCiphertextSize: null,
     });
 
     const status = await service.getStatus(publicId);
@@ -252,8 +244,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      fileEnvelope: null,
-      fileCiphertextSize: null,
     });
 
     const revealToken = randomBytes(32).toString("base64url");
@@ -295,8 +285,6 @@ describe("reveal concurrency and race conditions", () => {
       passwordRequired: false,
       unlockRequired: false,
       idempotencyKeyHash,
-      fileEnvelope: null,
-      fileCiphertextSize: null,
     });
 
     const revealRes = await service.reveal(publicId, randomBytes(32).toString("base64url"));

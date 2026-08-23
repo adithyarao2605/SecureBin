@@ -5,8 +5,8 @@ import {
   parseRpcEnvelope,
   parseRpcFileEnvelope,
   parseStatus,
+  type RevealAttachment,
   type CreateShareInput,
-  type RevealFileMetadata,
   type RevealResult,
   type ShareStatus,
 } from "../shares/contracts";
@@ -91,9 +91,7 @@ export function createShareService(
           p_password_required: input.passwordRequired,
           p_unlock_required: input.unlockRequired,
           p_idempotency_key_hash: bytesHex(input.idempotencyKeyHash),
-          p_file_envelope: input.fileEnvelope,
-          p_file_ciphertext_size: input.fileCiphertextSize,
-        });
+        });;
         const row = firstRow(value);
         if (!row || typeof row.public_id !== "string" || typeof row.created !== "boolean") throw new ShareServiceError("dependency");
         return { publicId: row.public_id, created: row.created };
@@ -146,6 +144,7 @@ export function createShareService(
           return {
             status: row.status,
             contentEnvelope: null,
+            files: [],
             retryExpiresAt: typeof row.retry_expires_at === "string" ? parseIsoUtc(row.retry_expires_at) : null,
           };
         }
@@ -153,32 +152,33 @@ export function createShareService(
         const retryExpiresAt = typeof row.retry_expires_at === "string" ? parseIsoUtc(row.retry_expires_at) : null;
         if (!contentEnvelope || !retryExpiresAt) throw new ShareServiceError("dependency");
 
-        let file: RevealFileMetadata | null = null;
-        if (
-          typeof row.file_object_path === "string" &&
-          row.file_object_path.length > 0 &&
-          row.file_envelope &&
-          typeof row.file_ciphertext_size === "number"
-        ) {
-          const fileEnvelope = parseRpcFileEnvelope(row.file_envelope);
-          if (!fileEnvelope) throw new ShareServiceError("dependency");
-
-          try {
-            const downloadUrl = await storage.createSignedDownload(row.file_object_path, 60);
-            file = {
-              envelope: fileEnvelope,
-              ciphertextSize: row.file_ciphertext_size,
-              downloadUrl,
-            };
-          } catch {
-            throw new ShareServiceError("dependency");
+        const files: RevealAttachment[] = [];
+        if (Array.isArray(row.attachments)) {
+          for (const entry of row.attachments) {
+            if (!isRecord(entry)) throw new ShareServiceError("dependency");
+            const envelope = typeof entry.envelope === "object" && entry.envelope !== null
+              ? parseRpcFileEnvelope(entry.envelope)
+              : null;
+            const path = typeof entry.objectPath === "string" ? entry.objectPath : "";
+            const size = typeof entry.ciphertextSize === "number" ? entry.ciphertextSize : -1;
+            const slot = typeof entry.slot === "number" ? entry.slot : -1;
+            if (!envelope || !path || size < 16 || slot < 0) throw new ShareServiceError("dependency");
+            let downloadUrl: string;
+            try {
+              downloadUrl = await storage.createSignedDownload(path, 60);
+            } catch {
+              throw new ShareServiceError("dependency");
+            }
+            files.push({ slot, envelope, ciphertextSize: size, downloadUrl });
           }
+        } else {
+          throw new ShareServiceError("dependency");
         }
 
         return {
           status: "authorized",
           contentEnvelope,
-          file,
+          files,
           retryExpiresAt,
         };
       } catch (error) {

@@ -109,7 +109,7 @@ export function createPostRevealHandler(dependencies: ShareRouteDependencies): (
       return jsonResponse({
         status: "authorized",
         contentEnvelope: result.contentEnvelope,
-        file: result.file ?? null,
+        files: result.files,
         retryExpiresAt: result.retryExpiresAt,
       });
     } catch (error) {

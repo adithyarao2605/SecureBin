@@ -39,8 +39,6 @@ const createInput: CreateShareInput = {
   passwordRequired: false,
   unlockRequired: false,
   idempotencyKeyHash: digest,
-  fileEnvelope: null,
-  fileCiphertextSize: null,
 };
 
 type RpcCall = { readonly functionName: string; readonly args: Record<string, unknown> };
@@ -68,9 +66,7 @@ class FakeRpcClient implements RpcClient {
           status: "authorized",
           share_id: "share-1",
           content_envelope: contentEnvelope,
-          file_object_path: null,
-          file_envelope: null,
-          file_ciphertext_size: null,
+          attachments: [],
           reveal_count: 1,
           max_reveals: null,
           retry_expires_at: "2099-01-01T00:05:00.000Z",
@@ -88,7 +84,7 @@ function bytea(base64UrlValue: string): string {
 }
 
 describe("share service RPC mapping", () => {
-  it("maps create arguments without exposing plaintext and matches 11-arg signature", async () => {
+  it("maps create arguments without exposing plaintext and matches 9-arg signature without file parameters", async () => {
     const rpc = new FakeRpcClient();
     const service = createShareService(rpc, fakeStorage);
 
@@ -100,8 +96,6 @@ describe("share service RPC mapping", () => {
     expect(call?.args.p_content_envelope).toBe(contentEnvelope);
     expect(call?.args.p_delete_token_hash).toBe(bytea(digest));
     expect(call?.args.p_idempotency_key_hash).toBe(bytea(digest));
-    expect(call?.args.p_file_envelope).toBeNull();
-    expect(call?.args.p_file_ciphertext_size).toBeNull();
     expect(call?.args).not.toHaveProperty("p_reservation_token_hash");
     expect(call?.args).not.toHaveProperty("plaintext");
   });
@@ -131,7 +125,7 @@ describe("share service RPC mapping", () => {
     await expect(service.reveal(publicId, "raw-reveal-token")).resolves.toEqual({
       status: "authorized",
       contentEnvelope,
-      file: null,
+      files: [],
       retryExpiresAt: "2099-01-01T00:05:00.000Z",
     });
     await expect(service.revoke(publicId, "raw-delete-capability")).resolves.toBe(true);

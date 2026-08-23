@@ -65,6 +65,7 @@ describe("upload service integration", () => {
       idempotencyKeyHash,
       fileEnvelope,
       expectedCiphertextSize,
+      attachmentSlot: 0,
     });
 
     expect(res1.uploadUrl).toBeDefined();
@@ -76,6 +77,7 @@ describe("upload service integration", () => {
       idempotencyKeyHash,
       fileEnvelope,
       expectedCiphertextSize,
+      attachmentSlot: 0,
     });
 
     expect(res2.uploadUrl).toBeDefined();
@@ -92,6 +94,7 @@ describe("upload service integration", () => {
       idempotencyKeyHash,
       fileEnvelope,
       expectedCiphertextSize: 1024,
+        attachmentSlot: 0,
     });
 
     // Conflicting expectedCiphertextSize
@@ -100,6 +103,7 @@ describe("upload service integration", () => {
       idempotencyKeyHash,
       fileEnvelope,
       expectedCiphertextSize: 4096,
+        attachmentSlot: 0,
     })).rejects.toMatchObject({
       name: "UploadServiceError",
       kind: "conflict",

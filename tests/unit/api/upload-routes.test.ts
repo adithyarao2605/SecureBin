@@ -27,6 +27,7 @@ function validUploadPayload(overrides: Record<string, unknown> = {}) {
     idempotencyKeyHash: digest,
     fileEnvelope: validFileEnvelope,
     expectedCiphertextSize: 1024,
+        attachmentSlot: 0,
     ...overrides,
   };
 }
@@ -64,6 +65,7 @@ describe("upload route contracts and parsing", () => {
       idempotencyKeyHash: digest,
       fileEnvelope: validFileEnvelope,
       expectedCiphertextSize: 1024,
+        attachmentSlot: 0,
     });
   });
 

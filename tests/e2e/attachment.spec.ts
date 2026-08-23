@@ -14,7 +14,9 @@ test("creates a share with an encrypted attachment and reveals both", async ({ p
 
   const capturedBodies: string[] = [];
   page.on("request", (request) => {
-    if (request.method() === "POST" && new URL(request.url()).pathname === "/api/shares") {
+    if (request.method() !== "POST") return;
+    const pathname = new URL(request.url()).pathname;
+    if (pathname === "/api/shares" || pathname === "/api/uploads") {
       capturedBodies.push(request.postData() ?? "");
     }
   });
@@ -41,11 +43,21 @@ test("creates a share with an encrypted attachment and reveals both", async ({ p
 
   // Zero-knowledge: the plaintext filename must never cross the network.
   expect(capturedBodies.every((body) => !body.includes("probe.png"))).toBe(true);
-  const createBody = capturedBodies.find((body) => body.includes("fileEnvelope"));
-  expect(createBody).toBeTruthy();
-  const parsed = JSON.parse(createBody ?? "{}") as { fileCiphertextSize?: unknown };
-  expect(typeof parsed.fileCiphertextSize).toBe("number");
-  expect(parsed.fileCiphertextSize).toBeGreaterThan(16);
+
+  const reservationBody = capturedBodies.find((body) => body.includes("fileEnvelope"));
+  expect(reservationBody, "reservation request was not intercepted").toBeTruthy();
+  expect(reservationBody).toBeTruthy();
+  const reservation = JSON.parse(reservationBody ?? "{}") as {
+    expectedCiphertextSize?: unknown;
+    attachmentSlot?: unknown;
+  };
+  expect(reservation.attachmentSlot).toBe(0);
+  expect(reservation.expectedCiphertextSize).toBeGreaterThan(16);
+
+  // The create request itself carries no attachment material at all.
+  const createBody = capturedBodies.find((body) => !body.includes("fileEnvelope"));
+  expect(createBody, "create request was not intercepted").toBeTruthy();
+  expect(JSON.parse(createBody ?? "{}")).not.toHaveProperty("fileEnvelope");
 
   const shareHref = await shareLinkInput.inputValue();
   await page.goto(shareHref);

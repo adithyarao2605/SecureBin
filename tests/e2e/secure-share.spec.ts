@@ -100,6 +100,7 @@ test("seals a note locally, sends ciphertext-only data, and decrypts it in the v
         body: JSON.stringify({
           status: "authorized",
           contentEnvelope: capture.envelope,
+          files: [],
           retryExpiresAt: "2099-01-01T00:05:00.000Z",
         }),
       });

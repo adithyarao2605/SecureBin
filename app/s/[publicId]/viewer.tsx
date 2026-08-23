@@ -44,11 +44,12 @@ type ShareStatus = ActiveStatus | ScheduledStatus | { status: "unavailable" };
 
 interface ParsedReveal {
   readonly contentEnvelope: ContentEnvelope;
-  readonly file: {
+  readonly files: Array<{
+    readonly slot: number;
     readonly envelope: FileEnvelope;
     readonly ciphertextSize: number;
     readonly downloadUrl: string;
-  } | null;
+  }>;
   readonly retryExpiresAt: string;
 }
 
@@ -164,32 +165,33 @@ function parseStatus(value: unknown): ShareStatus {
 
 function parseReveal(value: unknown): ParsedReveal {
   if (!record(value)) throw new ViewerPayloadError();
-  hasOnlyKeys(value, ["contentEnvelope", "retryExpiresAt", "status"], ["file"]);
+  hasOnlyKeys(value, ["contentEnvelope", "files", "retryExpiresAt", "status"], []);
   if (value.status !== "authorized" || typeof value.retryExpiresAt !== "string") {
     throw new ViewerPayloadError();
   }
   const contentEnvelope = validateContentEnvelope(value.contentEnvelope);
 
-  let fileMetadata: ParsedReveal["file"] = null;
-  if (value.file !== undefined && value.file !== null) {
-    if (!record(value.file)) throw new ViewerPayloadError();
-    exactKeys(value.file, ["ciphertextSize", "downloadUrl", "envelope"]);
-    if (typeof value.file.ciphertextSize !== "number" || typeof value.file.downloadUrl !== "string") {
+  if (!Array.isArray(value.files)) throw new ViewerPayloadError();
+  const files = value.files.map((entry): ParsedReveal["files"][number] => {
+    if (!record(entry)) throw new ViewerPayloadError();
+    exactKeys(entry, ["ciphertextSize", "downloadUrl", "envelope", "slot"]);
+    if (
+      typeof entry.ciphertextSize !== "number" ||
+      typeof entry.downloadUrl !== "string" ||
+      typeof entry.slot !== "number"
+    ) {
       throw new ViewerPayloadError();
     }
-    const fileEnvelope = validateFileEnvelope(value.file.envelope);
-    fileMetadata = {
+    const fileEnvelope = validateFileEnvelope(entry.envelope);
+    return {
+      slot: entry.slot,
       envelope: fileEnvelope,
-      ciphertextSize: value.file.ciphertextSize,
-      downloadUrl: value.file.downloadUrl,
+      ciphertextSize: entry.ciphertextSize,
+      downloadUrl: entry.downloadUrl,
     };
-  }
+  });
 
-  return {
-    contentEnvelope,
-    file: fileMetadata,
-    retryExpiresAt: value.retryExpiresAt,
-  };
+  return { contentEnvelope, files, retryExpiresAt: value.retryExpiresAt };
 }
 
 export type ViewerState =
@@ -209,7 +211,11 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [shareStatus, setShareStatus] = useState<ShareStatus | null>(null);
   const [linkSecret, setLinkSecret] = useState<string | null>(null);
   const [content, setContent] = useState<ContentPayload | null>(null);
-  const [attachedFile, setAttachedFile] = useState<FilePayload | null>(null);
+  interface DecryptedAttachment {
+    readonly name: string;
+    readonly payload: FilePayload;
+  }
+  const [attachments, setAttachments] = useState<DecryptedAttachment[]>([]);
   const [requestToken, setRequestToken] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
@@ -385,30 +391,25 @@ export function Viewer({ publicId }: { publicId: string }) {
         currentFactorOptions()
       );
 
-      let decryptedAttachment: FilePayload | null = null;
-      if (revealPayload.file) {
-        const fileRes = await fetch(revealPayload.file.downloadUrl, {
-          cache: "no-store",
-        });
-        if (!fileRes.ok) {
-          throw new Error("file_download_failed");
-        }
+      const decryptedFiles: { name: string; payload: FilePayload }[] = [];
+      for (const fileMeta of revealPayload.files ?? []) {
+        const fileRes = await fetch(fileMeta.downloadUrl, { cache: "no-store" });
+        if (!fileRes.ok) throw new Error("file_download_failed");
         const arrayBuf = await fileRes.arrayBuffer();
         const downloadedBytes = new Uint8Array(arrayBuf);
-        if (downloadedBytes.length !== revealPayload.file.ciphertextSize) {
-          throw new Error("file_size_mismatch");
-        }
-        decryptedAttachment = await openFile(
-          revealPayload.file.envelope,
+        if (downloadedBytes.length !== fileMeta.ciphertextSize) throw new Error("file_size_mismatch");
+        const payload = await openFile(
+          fileMeta.envelope,
           downloadedBytes,
           publicId,
           linkSecret,
           currentFactorOptions()
         );
+        decryptedFiles.push({ name: payload.filename, payload });
       }
 
       setContent(plaintext);
-      setAttachedFile(decryptedAttachment);
+      setAttachments(decryptedFiles);
       setState("opened");
       clearRequestToken();
       setPasswordInput("");
@@ -660,9 +661,9 @@ export function Viewer({ publicId }: { publicId: string }) {
               </div>
             )}
 
-            {attachedFile && (
-              <FilePreview file={attachedFile} />
-            )}
+            {attachments.map((attachment, index) => (
+              <FilePreview key={`${attachment.name}-${index}`} file={attachment.payload} />
+            ))}
           </div>
         )}
 
