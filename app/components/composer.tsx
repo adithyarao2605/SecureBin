@@ -2,7 +2,9 @@
 
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import type { CodeLanguage } from "../../lib/crypto/payload";
+import { DISCUSSION_CAPABILITY_BYTES } from "../../lib/crypto/payload";
 import { MAX_FILE_PLAINTEXT_BYTES } from "../../lib/crypto/file";
+import { randomBytes } from "../../lib/crypto/encoding";
 import {
   defaultPolicyDraft,
   validatePolicyDraft,
@@ -51,10 +53,15 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   const [revokedMessage, setRevokedMessage] = useState("");
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   const [protection, setProtection] = useState<ProtectionState>(EMPTY_PROTECTION);
+  const [enableDiscussion, setEnableDiscussion] = useState(false);
   const [unlockCodeShown, setUnlockCodeShown] = useState("");
   const [receiptData, setReceiptData] = useState<PrivacyReceiptData | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // Discussion capability minted once per share attempt so a staged retry
+  // reuses the identical capability and digest instead of invalidating the
+  // already-sealed content frame.
+  const discussionCapabilityRef = useRef<Uint8Array | null>(null);
   // Last valid attempt, reused until any composer input changes. Re-running
   // prepareCreateAttempt on a retry would mint a fresh unlock code that no
   // longer matches the already-sealed staged attempt.
@@ -151,11 +158,16 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
     if (onPhaseChange) onPhaseChange("creating");
 
     try {
+      let capability = discussionCapabilityRef.current;
+      if (enableDiscussion && !capability) {
+        capability = randomBytes(DISCUSSION_CAPABILITY_BYTES);
+        discussionCapabilityRef.current = capability;
+      }
       const outcome = await stage({
         contentPayload: buildContentPayload(mode, draft, language),
         factors: attempt.factors,
         password: protection.password || undefined,
-        discussionCapability: null,
+        discussionCapability: enableDiscussion ? capability : null,
         files: attachedFiles,
         policy: attempt.policy,
         mask: attempt.mask,
@@ -224,6 +236,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
     setShowRevokeConfirm(false);
     setRevokedMessage("");
     setErrorMessage("");
+    setEnableDiscussion(false);
+    discussionCapabilityRef.current = null;
     discard();
     lastAttemptRef.current = null;
     if (onPhaseChange) onPhaseChange("draft");
@@ -296,6 +310,20 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
           onChange={handleProtectionChange}
           disabled={isPending}
         />
+
+        <label className="policy-radio-label discussion-toggle">
+          <input
+            type="checkbox"
+            checked={enableDiscussion}
+            disabled={isPending}
+            onChange={(e) => {
+              setEnableDiscussion(e.target.checked);
+              discussionCapabilityRef.current = null;
+              resetPrepared();
+            }}
+          />
+          <span>Enable encrypted discussion (revealed recipients can post encrypted replies)</span>
+        </label>
 
         {errorMessage && (
           <div className="composer-error" role="alert">

@@ -131,4 +131,27 @@ describe("composer staged creation flow", () => {
     if (!minted) throw new Error("prepareFactors never returned");
     expect(container.querySelector(".unlock-code")?.textContent).toBe(minted.unlockCode);
   });
+
+  it("seals a discussion capability into the frame and sends only its digest", async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/shares")) {
+        return Promise.resolve(jsonResponse(201, { publicId: "AQEBAQEBAQEBAQEBAQEBAQ", created: true }));
+      }
+      return Promise.reject(new Error(`unexpected fetch ${url}`));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Composer />);
+
+    fireEvent.change(screen.getByLabelText("Note content"), { target: { value: "discussion probe" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: /Enable encrypted discussion/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Create share" }));
+
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Share link" })).toBeVisible());
+
+    const [create] = callsTo(fetchMock, "/api/shares");
+    // The digest travels; the raw capability never leaves the browser.
+    expect(typeof create.discussionCapabilityHash).toBe("string");
+    expect(create.discussionCapabilityHash).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  });
 });

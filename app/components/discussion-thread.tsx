@@ -103,11 +103,12 @@ export function DiscussionThread({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [mutating, setMutating] = useState(false);
-  const loadInFlight = useRef(false);
+  // Monotonic sequence for list loads: a slower earlier response must never
+  // clobber the result of a newer one (poll vs. post-edit-delete refetch).
+  const loadSeq = useRef(0);
 
   const loadComments = useCallback(async () => {
-    if (loadInFlight.current) return;
-    loadInFlight.current = true;
+    const seq = ++loadSeq.current;
     try {
       const key = await keyPromise;
       const response = await fetch(
@@ -117,8 +118,10 @@ export function DiscussionThread({
           headers: { "x-discussion-capability": bytesToBase64Url(capability) },
         }
       );
+      if (seq !== loadSeq.current) return;
       if (!response.ok) throw new Error("comments_fetch_failed");
       const raw = parseComments(await response.json());
+      if (seq !== loadSeq.current) return;
       const decrypted: DecryptedComment[] = [];
       for (const entry of raw) {
         try {
@@ -142,12 +145,11 @@ export function DiscussionThread({
           // cannot happen for comments posted under the same discussion key.
         }
       }
+      if (seq !== loadSeq.current) return;
       setComments(decrypted);
       setLoadError("");
     } catch {
-      setLoadError("Comments could not be loaded right now.");
-    } finally {
-      loadInFlight.current = false;
+      if (seq === loadSeq.current) setLoadError("Comments could not be loaded right now.");
     }
   }, [keyPromise, publicId, capability]);
 

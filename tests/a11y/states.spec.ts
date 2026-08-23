@@ -46,3 +46,28 @@ test("the fully opened share has no critical accessibility violations", async ({
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((violation) => violation.impact === "critical")).toEqual([]);
 });
+
+test("the discussion thread has no critical accessibility violations", async ({ page }) => {
+  test.setTimeout(90_000);
+
+  await page.goto("/new");
+  await page.getByLabel("Note content").fill("A11y discussion probe note.");
+  await page.getByRole("checkbox", { name: /Enable encrypted discussion/i }).check();
+  await page.getByRole("button", { name: "Create share" }).click();
+  const shareLinkInput = page.getByRole("textbox", { name: "Share link" });
+  await expect(shareLinkInput).toBeVisible({ timeout: 30_000 });
+
+  await page.goto(await shareLinkInput.inputValue());
+  const revealButton = page.getByRole("button", { name: "Reveal" });
+  await expect(revealButton).toBeVisible({ timeout: 20_000 });
+  await revealButton.click();
+
+  const thread = page.getByLabel("Encrypted discussion");
+  await expect(thread).toBeVisible({ timeout: 20_000 });
+  await thread.getByPlaceholder("Write a reply…").fill("A11y probe reply");
+  await thread.getByRole("button", { name: "Post" }).click();
+  await expect(thread.getByText("A11y probe reply")).toBeVisible({ timeout: 15_000 });
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => violation.impact === "critical")).toEqual([]);
+});

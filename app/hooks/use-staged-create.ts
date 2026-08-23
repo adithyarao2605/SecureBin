@@ -7,7 +7,7 @@ import {
   type SealedContent,
   type SealedFactorArgs,
 } from "../../lib/crypto/content";
-import { bytesToArrayBuffer, randomBytes } from "../../lib/crypto/encoding";
+import { bytesToArrayBuffer, randomBytes, sha256Base64Url } from "../../lib/crypto/encoding";
 import { MAX_CONTENT_BYTES } from "../../lib/crypto/envelope";
 import { sealFile, type SealedFile } from "../../lib/crypto/file";
 import { prepareFactors, type PreparedFactors } from "../../lib/crypto/factors";
@@ -218,6 +218,12 @@ export function useStagedCreate() {
         passwordRequired: request.mask.includes("password"),
         unlockRequired: request.mask.includes("unlock"),
       };
+
+      if (request.discussionCapability) {
+        // The server stores sha256 over the RAW capability bytes; hash the
+        // bytes, never their base64url encoding.
+        payload.discussionCapabilityHash = await sha256Base64Url(request.discussionCapability);
+      }
 
       prepared = { context, factors, sealedContent, files: stagedFiles, payload };
       preparedRef.current = prepared;
