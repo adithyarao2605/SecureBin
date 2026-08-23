@@ -1,134 +1,105 @@
 # SecureBin Handoff
 
-Updated: 2026-08-24 (Asia/Kolkata) — **handoff to the next agent**
+Updated: 2026-08-24 (Asia/Kolkata) — **post–Day 6 handoff**
 
 ## Read this first
 
-- Active roadmap: **`info/plan_v3.md`** (Phases A–G, in order, green gates
-  between phases). **Phases A–D are complete.** The next agent starts with
-  Phase E pre-Day-6 hardening.
-- Day 6/7 detail: `docs/DAY-6-PLAN.md` / `docs/DAY-7-PLAN.md` (referenced by
-  plan_v3 Phases F/G). Historical day plans and the resolved incident:
-  `docs/archive/`.
+- Active roadmap: **`info/plan_v3.md`**. Status: **Phases A–F complete**
+  (Days 1–5 + the full Day 6 batch). Phase G (Day 7 freeze/validation/
+  submission) is next; detail in `docs/DAY-7-PLAN.md`.
 - Branch model: develop on `dev` (Vercel preview); `main` is production.
-  Keep them identical at each push. Commit messages: short conventional
-  subjects, **no day references**.
-- Stitch MCP: project `SecureBin Quiet Proof Design System v1`
-  (`projects/12991627127209989717`) holds the approved design system. A
-  landing-screen generation attempt hit a service "entity not found" error —
-  retry, or create a fresh project if it persists.
+  Commit messages: short conventional subjects, **no day references**.
+- Deferred by owner decision (do not build without approval): Secure Drop
+  request links (ECDH P-256 + HKDF), recipient acknowledgment button.
+- **Deferred by explicit HANDOFF decision (Day 6 §8): ciphertext-size
+  padding.** Bucketed-length framing would rush a protocol change for
+  marginal metadata concealment; revisit only if a rubric item demands it,
+  and then via a new versioned envelope decision per AGENTS.md.
 
-## Current state (Phases A–D complete; Phase E production slice complete; latest code is uncommitted)
+## Current state (all committed on `dev`, pushed)
 
-- `/` is now the screenshot-led landing page: black/teal two-column hero,
-  three-tab header (`New share`, `My shares`, `How it works`), right-aligned
-  `Create share`, local aurora canvas, composer mock, self-hosting section,
-  and compact footer.
-- `/new` owns the working composer, history desk, and how-it-works app panel.
-  Landing tab links open `/new`, `/new#history`, and `/new#how-it-works`.
-- The old root composer was extracted to `app/components/app-workspace.tsx`;
-  route-specific tests now use `/new`. Duplicate `public/icon.svg` was
-  removed because `app/icon.svg` already owns that route.
-- Phase B is complete: Code language selector is grouped directly beside Code,
-  QR content is centered, Markdown preview styles are scoped, and Privacy
-  Receipt is a native collapsible disclosure directly under Copy link.
-- Phase C is complete: comment edit/delete uses random client-held proof tokens,
-  SHA-256 digests server-side, `edited_at`, and orphan reply markers.
-- Phase D is complete: `POST /api/shares/status-batch` and
-  `get_share_status_batch(text[])` refresh the visible history desk in one
-  capped request with localStorage merge and one refreshing indicator.
-- Phase E production slice is complete: `pnpm test:e2e:prod` runs all 12
-  Playwright flows against `next start`; the remaining Phase E backlog is not
-  yet a green Day 6 entry gate.
+- Days 1–5 shipped previously (crypto core, lifecycle, attachments,
+  factors, discussions data layer, batch status sync, landing/app split).
+- Day 6 batch now shipped:
+  - **Encrypted discussions enabled end-to-end**: composer toggle seals the
+    SBCT `0x02` discussion capability into the content frame; only its
+    SHA-256 digest (over the RAW 32 bytes — string-hashing caused and fixed
+    a real mismatch) reaches the server. Browser round trip covered by E2E;
+    thread has an Axe scan.
+  - **Reveal window**: presets none/10s/30s/1m/5m/custom ≤24h. Migration
+    `20260831000000_reveal_window.sql`: nullable window columns, 11-arg
+    `create_share`, `reveal_share` stamps `first_released_at`/`window_ends_at`
+    atomically at first release and enforces uniform unavailability after the
+    close while preserving the original token's 5-minute retry lease.
+  - **Privacy veil**: local hide on the opened view (toggle/Esc/window blur),
+    `inert` while hidden, honest "not screenshot prevention" copy.
+  - **Self-host**: `pnpm local:setup | local | local:stop` +
+    `docs/self-hosting.md`. Verified end-to-end on this machine from setup
+    through create→reveal on http://127.0.0.1:3101.
+  - **`.securebin` parcels** (SBPX v1): export offered at creation; strict
+    offline restore panel on `/new` (magic/version/length-exact, trailing
+    bytes rejected). Carries envelopes+ciphertexts+non-secret metadata incl.
+    the AAD public id; never keys/passwords/codes/revocation abilities.
+  - **Manager upgrades**: history-desk labels + policy view; expanded
+    privacy receipt (content type, attachment count, discussion state,
+    release window, what-stayed-local row, .txt download).
+- Audit-driven fixes landed this run (see commits): attachment-slot
+  forwarding to the reservation RPC, SBCT v0x02 decode acceptance + error
+  wrapping, streamed-body caps with early abort, stale-poll clobbering in
+  the discussion list (sequence numbers), CI (dev-branch runs, prod-build
+  E2E job, deploy-trigger concurrency), and a latent production bug where
+  `validateFileEnvelope` clobbered masked factor blocks — protected shares
+  WITH attachments decrypt correctly again.
 
-## Previous shipped state (before Phase A)
+## Validation (exact results at last green, 2026-08-24)
 
-- **Days 1–5 shipped and live in production**
-  (https://secure-bin.vercel.app). Day 4: password factor (PBKDF2 600k),
-  two-channel unlock codes, factor gates, QR/share actions, Privacy Receipt,
-  pre-flight disclosure. Day 5: custom reveals 1–100, Never expiry, Markdown
-  Edit/Split/Preview, code mode (detection/line numbers/download), multi-file
-  attachments (≤5, slot-staged, Download-all ZIP), drag-and-drop, encrypted
-  discussions (capability model, SBCT 0x02 trailer), policy presets removed
-  by owner decision.
-- **Prod verified live** via Playwright MCP: three-tab app restored, styled
-  Markdown reveal, health 200. All migrations `20260826000000`–`20260829000000`
-  applied to hosted Supabase (verified via `migration list`).
-- **Refactors landed**: composer 753→~298-line shell + `app/components/composer/*`
-  + `app/hooks/use-staged-create.ts`; viewer 749→~283 shell +
-  `viewer-contracts.ts`/`viewer-parts/*`; `app/globals.css` split into
-  `app/styles/*.css` partials (note: the split dropped the viewer header and
-  markdown typography blocks — both restored; if styles ever "vanish", diff
-  partials against the pre-split monolith).
-- **UI decisions**: three-tab layout restored (owner preference); language
-  selector is grouped next to the Code tab; Privacy Receipt is a native
-  collapsible disclosure directly below Copy link.
+- `pnpm validate` (lint, typecheck, **170 unit tests / 27 files**, build) ✓
+- `pnpm test:integration` — **16** ✓
+- `pnpm supabase:test` — **145 pgTAP across 9 files** ✓
+- `pnpm test:e2e` — **17** ✓ · `pnpm test:e2e:prod` — **17** ✓
+- `pnpm test:a11y` — **7** ✓
+- `.venv/bin/python scripts/verify-reproducibility.py` ✓
+- `pnpm audit --audit-level=high` clean ✓
 
-## Validation (rerun these; numbers recorded at last green)
+Gotchas that still apply: kill stray listeners on :3100 before E2E
+(`fuser -k 3100/tcp`); Playwright workers stay at **1**; self-host serves on
+**:3101** so it never fights the suites.
 
-`pnpm validate` (lint, typecheck, 170 unit tests, build) · `pnpm test:integration`
-(16) · `pnpm supabase:test` (145 pgTAP, 9 files) · `pnpm test:e2e` (12,
-**workers: 1 — do not raise**, dev-server compile races flake parallel runs)
-· `pnpm test:e2e:prod` (12) · `pnpm test:a11y` (3) · reproducibility script ·
-`pnpm audit --audit-level=high` clean. Final rerun: all listed gates green on
-2026-08-24.
+## Owner actions before production promotion
 
-## Known limitations (accepted, documented)
+1. Apply the two newest migrations to hosted Supabase:
+   `supabase migration list`, then `supabase db push`
+   (`20260830000000_discussion_comment_edit_delete.sql`,
+   `20260831000000_reveal_window.sql`). Hosted DB last verified applied
+   through `20260829000000_encrypted_discussions.sql`.
+2. Redeploy production from `dev` after verifying on the preview URL.
+3. Re-run the demo rehearsal checklist (`docs/evidence/demo-rehearsal-checklist.md`)
+   against production once deployed.
 
-- Wrong client-only factors consume an authorization (server cannot verify
-  without breaking zero-knowledge).
-- Reveal lease is consumed before the signed URL is minted; after the 5-minute
-  lease window a retry spends a second authorization.
-- Rate limiting trusts client-forwarded headers off Vercel.
-- The default E2E suite runs against `next dev`; `pnpm test:e2e:prod` now
-  covers the same flow against `next start`.
-- Discussion capability is a bearer secret held by revealed recipients.
+## Next steps (Phase G / Day 7)
 
-## Phase E decision blocker
+1. Follow `docs/DAY-7-PLAN.md`: fresh-clone verification, production smoke
+   matrix, concurrency evidence refresh under `docs/evidence/`, Chromium/
+   Firefox/mobile passes, repo cleanup, judge-first README pass.
+2. Keep every gate green between slices; freeze means freeze.
 
-- Secure Drop has not been implemented. It needs an explicit protocol decision
-  before code changes because recipient-bound sharing is currently deferred in
-  `docs/architecture.md`.
-- The proposed shape is a separate ECDH P-256 + HKDF-SHA-256 drop envelope,
-  requester private key retained in IndexedDB, one response per request,
-  bounded request expiry, and atomic request/response lifecycle RPCs. It must
-  not extend the existing share envelope.
-- Owner decisions required: IndexedDB-only private key persistence versus an
-  encrypted recovery export; one response versus multiple responses; request
-  expiry/revocation policy; and whether the public key is carried in the URL
-  versus trusted from the server record.
+## Key decisions recorded this run
 
-Delegated exploration on 2026-08-24 confirmed the above boundary and listed
-the required crypto, API, database, storage, UI, test, and documentation
-surfaces. No files were edited by the delegate.
+- Discussions capability digest convention: SHA-256 over raw capability
+  bytes (matches pgTAP/RPC); never hash the base64url string form.
+- Veil starts REVEALED; hiding is user-initiated (Esc/blur/toggle).
+- Parcel format SBPX v1: length-prefixed sections, exact-consume parsing,
+  publicId carried as AAD context (not a secret).
+- Self-host port :3101; secrets generated locally into `.env.local`.
 
-## Gotchas
+## Recent Commits (this run)
 
-- `pnpm test:e2e` starts its own dev server on :3100 — kill stray listeners
-  (`fuser -k 3100/tcp`) or it fails with EADDRINUSE.
-- Playwright browser build must match the pinned `@playwright/test`; if
-  install hangs at "extracting archive", unzip manually into
-  `~/.cache/ms-playwright/<build>` and touch `INSTALLATION_COMPLETE`.
-- `supabase status -o env` emits quoted values — strip quotes when exporting.
-- CI extracts the local service key at runtime from `supabase status`; no
-  repository secret is needed. Never reintroduce key material into the tree
-  or history (a filter-repo scrub already happened once).
-
-## Next steps (in order)
-
-1. Continue `info/plan_v3.md` Phase E: Secure Drop, recipient acknowledgment,
-   self-host commands, expanded Axe/perf coverage, and evidence pack.
-2. Start Phase F / Day 6 only after the pre-Day-6 entry gate is green; then
-   follow `docs/DAY-6-PLAN.md` and `docs/DAY-7-PLAN.md` (Day 6 exit gate
-   before Day 7; freeze means freeze).
-3. Keep `info/HANDOFF.md` updated at the end of every run.
-
-## Recent Commits
-
-- `b4947a4` docs(day6): plan comment edit/delete, my-shares batch status sync, rubric backlog
-- `60aa696` feat: add landing route and app split
-- `029833c` docs: record landing handoff
-- `1961f79` docs(handoff): production migrations applied and live flow verified
-- `c730535` fix(ui): restore three-tab layout, markdown preview typography, preset/unlock explanations
-- `4658c5e` fix(day5): audit remediation batch
-- `963ab8c` fix(e2e): single Playwright worker + doc count refresh
+- `ce2c04d` fix: masked file envelopes validate end-to-end; audit remediation
+- `7cff9b1` feat: sender manager upgrades and expanded privacy receipt
+- `fe71b30` feat: one-command self-hosting with runbook
+- `b26e41d` feat: portable .securebin parcels with offline decryption
+- `82cb5be` feat: local privacy veil on the opened view
+- `929ec0f` feat: reveal window from first opening to uniform close
+- `d470dc2` feat: enable encrypted discussions from the composer
+- `ab43021` test: receipt unit, multi-file drag-drop e2e, expanded axe coverage
+- `1d28009` fix(security): forward attachment slots, decode SBCT v0x02 frames…
