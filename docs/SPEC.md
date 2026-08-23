@@ -27,7 +27,7 @@ Days 1 through 5 are implemented and fully green across local gates: reproducibl
 The production incident is closed.
 
 Scope reconciliation: SPEC Day 4 shipped exactly as planned. Where this SPEC's Day 5 called only for polish, validation, deployment, and demo evidence, the implementation also deliberately delivered `info/plan_v2.md` §3 (custom reveal counts, "Never" expiry, presets, rich Markdown authoring, code detection, multi-file attachments, encrypted discussions) after the Day 4 factors were green. That decision is recorded in `info/HANDOFF.md`, and this SPEC's former
-preset-only restriction is retired with it. `info/plan_v2.md` Days 6–7 remain gated future work behind the Day 6 entry gate in [`DAY-6-PLAN.md`](DAY-6-PLAN.md).
+preset-only restriction is retired with it. Remaining scope (reveal window, veil, self-host, parcels, discussions v1.1, batch status sync) is phased in [`info/plan_v3.md`](../info/plan_v3.md), with detail in [`DAY-6-PLAN.md`](DAY-6-PLAN.md) / [`DAY-7-PLAN.md`](DAY-7-PLAN.md).
 
 When another maintainer or friend continues the schedule, hand them the exact commit and [`docs/deployment.md`](deployment.md), have them reproduce the gates from a fresh clone, and exchange provider access through team membership rather than copied secrets.
 
@@ -167,7 +167,7 @@ plain-text share.
 ### Day 2 — Lifecycle policy, concurrency, and operational correctness
 
 Detailed execution: [`DAY-2-PLAN.md`](DAY-2-PLAN.md) and
-[`DAY-2-UI.md`](DAY-2-UI.md).
+[`DAY-2-UI.md`](/docs/archive/DAY-2-UI.md).
 
 **Outcome:** access policy is server-enforced and remains correct under
 retries, simultaneous requests, and lifecycle races.
@@ -321,7 +321,7 @@ handoff and README rather than silently presenting roadmap work as shipped.
 
 Recipient-bound accounts/passkeys, Secure Rooms, device-key management, localization, service-worker caching, alternate storage adapters, SDKs/extensions, interoperability import, Argon2id, padding, key transparency, sender signatures, and richer traffic-analysis defenses are future roadmap work. They must not destabilize the judged release and must never be represented as implemented in the demo or submission evidence. Encrypted discussions, custom reveal counts, "Never" expiry, multi-file attachments, code auto-detection, and the Day 4 factor work are no longer deferred: they are implemented and tested as recorded above.
 
-`info/plan_v2.md` continues past this point with its Days 4–7 (§3 shipped deliberately; §4–§6 remain). That plan is a read-only roadmap source: its remaining scope starts only through [`DAY-6-PLAN.md`](DAY-6-PLAN.md) once the Day 5 exit gate is green, followed by the Day 7 freeze.
+The remaining roadmap lives in [`info/plan_v3.md`](../info/plan_v3.md): Phases A–E are near-term, Phase F maps to `DAY-6-PLAN.md`, and Phase G is the Day 7 release freeze. plan_v2 remains a read-only source.
 
 ## Per-day handoff checklist
 

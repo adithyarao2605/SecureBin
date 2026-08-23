@@ -1,70 +1,88 @@
 # SecureBin Handoff
 
-Updated: 2026-08-23 (Asia/Kolkata) — branch `dev`, HEAD `4658c5e30e3f`
+Updated: 2026-08-23 (Asia/Kolkata) — **handoff to the next agent**
 
-## Completed
+## Read this first
 
-- **Days 4 and 5 are fully implemented, tested, and audited.**
-  * Day 4: PBKDF2-HMAC-SHA-256 password factor (600,000 iterations, 16-byte salt), 27-character Crockford unlock codes with check symbol, all four factor masks with per-mask HKDF input keying material (`linkSecret ‖ passwordKey ‖ unlockBytes`), viewer factor gates, QR + native share + email actions, Privacy Receipt with ciphertext fingerprint and infrastructure-visibility note, and the pre-flight "What will SecureBin see?" disclosure.
-  * Day 5: custom reveal counts 1–100 (constraint + UI + concurrency proof at a custom limit), "Never" expiry (nullable `expires_at`, revocable, cleanup-skipping), Markdown Edit/Split/Preview, code mode with local language detection, multi-file attachments (≤5, `share_attachments` child table, slot-staged reservations, reveal `files[]`, drag-and-drop, Download-all ZIP via `fflate`), and encrypted discussions (append-only `share_comments`, capability-digest model, SBCT `0x02` trailer, `securebin/v2/{mask}/discussion` HKDF label, lifecycle inheritance, route + database rate limits).
-  * Migrations through `20260829000000_encrypted_discussions.sql` (also `20260826000000` stale-constraint drop, `20260827000000` custom policies, `20260828000000` multi-file attachments).
-  * Refactors: composer is now a ~317-line shell over `app/components/composer/*` modules and the `use-staged-create` hook; viewer is a 283-line shell over `viewer-parts/*`; `globals.css` split into seven partials under `app/styles/`.
-  * Friend's UI polish (language-select theme, decrypted viewer alignment) merged into the modular architecture (`ce7a950`).
-  * Day 4/5 audit remediation batch landed (`4658c5e`): discussion lifecycle gating centralized in `securebin_discussion_share`, comment envelope size CHECKs, stale Day-2 reservation-pair constraint dropped, comment capability moved from query param to `x-discussion-capability` header, UUID pre-validation on parent comment ids, thread-component in-flight/polling guards.
-- **Documentation sweep (this run):** README, AGENTS, SPEC, architecture, diagrams, threat model, deployment, policy-state, and the four DAY plan files synchronized with the shipped surface and verified test counts. `info/plan.md`, `info/plan_v2.md`, and the other read-only references untouched.
+- Active roadmap: **`info/plan_v3.md`** (Phases A–G, in order, green gates
+  between phases). Your first task is **Phase A: landing page at `/`** and
+  moving the app to `/new`.
+- Day 6/7 detail: `docs/DAY-6-PLAN.md` / `docs/DAY-7-PLAN.md` (referenced by
+  plan_v3 Phases F/G). Historical day plans and the resolved incident:
+  `docs/archive/`.
+- Branch model: develop on `dev` (Vercel preview); `main` is production.
+  Keep them identical at each push. Commit messages: short conventional
+  subjects, **no day references**.
+- Stitch MCP: project `SecureBin Quiet Proof Design System v1`
+  (`projects/12991627127209989717`) holds the approved design system. A
+  landing-screen generation attempt hit a service "entity not found" error —
+  retry, or create a fresh project if it persists.
 
-## Validation Status
+## Current state (all green at `1961f79` + doc commit)
 
-All green locally against Docker-backed Supabase at `4658c5e30e3f`:
+- **Days 1–5 shipped and live in production**
+  (https://secure-bin.vercel.app). Day 4: password factor (PBKDF2 600k),
+  two-channel unlock codes, factor gates, QR/share actions, Privacy Receipt,
+  pre-flight disclosure. Day 5: custom reveals 1–100, Never expiry, Markdown
+  Edit/Split/Preview, code mode (detection/line numbers/download), multi-file
+  attachments (≤5, slot-staged, Download-all ZIP), drag-and-drop, encrypted
+  discussions (capability model, SBCT 0x02 trailer), policy presets removed
+  by owner decision.
+- **Prod verified live** via Playwright MCP: three-tab app restored, styled
+  Markdown reveal, health 200. All migrations `20260826000000`–`20260829000000`
+  applied to hosted Supabase (verified via `migration list`).
+- **Refactors landed**: composer 753→~298-line shell + `app/components/composer/*`
+  + `app/hooks/use-staged-create.ts`; viewer 749→~283 shell +
+  `viewer-contracts.ts`/`viewer-parts/*`; `app/globals.css` split into
+  `app/styles/*.css` partials (note: the split dropped the viewer header and
+  markdown typography blocks — both restored; if styles ever "vanish", diff
+  partials against the pre-split monolith).
+- **UI decisions**: three-tab layout restored (owner preference); language
+  selector themed next to the Code tab; Privacy Receipt currently a card —
+  plan_v3 Phase B converts it to a dropdown under Copy link.
 
-- `pnpm test`: 145 tests, 21 files, all passing (policy-presets slice removed by owner decision).
-- `pnpm test:integration`: 14 tests, 4 files, all passing.
-- `pnpm supabase:reset` + `pnpm supabase:test`: 7 files, 115 pgTAP tests, PASS.
-- `pnpm test:e2e`: 10 passed. `pnpm test:a11y`: 2 passed.
+## Validation (rerun these; numbers recorded at last green)
 
-## Known Limitations (documented, accepted)
+`pnpm validate` (lint, typecheck, 145 unit tests, build) · `pnpm test:integration`
+(14) · `pnpm supabase:test` (115 pgTAP, 7 files) · `pnpm test:e2e` (10,
+**workers: 1 — do not raise**, dev-server compile races flake parallel runs)
+· `pnpm test:a11y` (2) · reproducibility script · `pnpm audit` clean.
 
-- A plausible-but-wrong client-only factor (password/unlock) cannot be verified by the zero-knowledge server: it authorizes — and consumes — a reveal lease, then fails local decryption. Format-level errors are rejected client-side before any network call.
-- The reveal lease is consumed before signed-URL minting; returning after the 5-minute lease window spends a second authorization.
-- Rate-limit discriminator falls back to client-forwarded headers off Vercel.
-- E2E runs against `next dev`, not the production build.
-- The discussion capability is a bearer secret: anyone who holds it can read or post until the share's lifecycle closes the thread. It travels in the `x-discussion-capability` header (moved out of the query string), never in URLs.
+## Known limitations (accepted, documented)
 
-- 2026-08-23 (owner): the Day 5 **policy-presets** feature was removed after
-  live evaluation - the individual controls already express every policy it
-  covered. Code, tests and docs scrubbed.
+- Wrong client-only factors consume an authorization (server cannot verify
+  without breaking zero-knowledge).
+- Reveal lease is consumed before the signed URL is minted; after the 5-minute
+  lease window a retry spends a second authorization.
+- Rate limiting trusts client-forwarded headers off Vercel.
+- E2E runs against `next dev`, not the production build (plan_v3 Phase E #1).
+- Discussion capability is a bearer secret held by revealed recipients.
 
-## Project Decisions
+## Gotchas
 
-- **Branch model (2026-08-23):** development happens on `dev` (Vercel preview); `main` is production. Promotion to `main` is an owner step after preview verification.
-- **Friend merge strategy (2026-08-23):** friend UI-polish contributions were rebased onto the modular composer/viewer architecture and merged as `ce7a950`; contract behavior was preserved and the full gate re-run.
-- **plan_v2 §3 shipped deliberately (2026-08-23):** after SPEC Day 4 factors were green, the implementation delivered plan_v2 §3 (custom reveals, Never expiry, rich authoring, code detection, multi-file, discussions) instead of a polish-only SPEC Day 5. The preset-only restriction in `docs/SPEC.md` no longer applies.
-- 2026-08-22 (owner): zero key material policy — no credentials anywhere in tracked files or history; CI extracts the local service key at runtime from `supabase status -o env`.
-- 2026-08-22 (owner): scoped UI redesign remains in-scope at Day 6 if real usage shows the interface itself is insufficient; quiet-proof direction and all gates stay the safety net.
+- `pnpm test:e2e` starts its own dev server on :3100 — kill stray listeners
+  (`fuser -k 3100/tcp`) or it fails with EADDRINUSE.
+- Playwright browser build must match the pinned `@playwright/test`; if
+  install hangs at "extracting archive", unzip manually into
+  `~/.cache/ms-playwright/<build>` and touch `INSTALLATION_COMPLETE`.
+- `supabase status -o env` emits quoted values — strip quotes when exporting.
+- CI extracts the local service key at runtime from `supabase status`; no
+  repository secret is needed. Never reintroduce key material into the tree
+  or history (a filter-repo scrub already happened once).
 
-## Production Status (end of run)
+## Next steps (in order)
 
-- All four Day 4–5 migrations (`20260826000000`–`20260829000000`) were applied to the hosted Supabase project via `supabase db push` from the linked CLI (verified via `migration list`).
-- Production verified live on https://secure-bin.vercel.app with browser automation: three-tab layout, Markdown create → reveal with styled headings/bullets, health 200, CI success on the deployed commit.
-- `dev` mirrors production and receives Vercel preview deployments for continued work.
-
-## Next Steps
-
-Start `docs/DAY-6-PLAN.md` (plan_v2 §4–§5): reveal window, privacy veil, one-command self-hosting, `.securebin` parcels, local sender manager, expanded Privacy Receipt — entry gate is green at the current commit. The Day 7 release freeze follows and stays gated until the Day 6 exit gate is green.
+1. Implement `info/plan_v3.md` Phase A (landing at `/`, app at `/new`),
+   including the e2e path updates.
+2. Phase B UI fixes, then C/D/E with green gates.
+3. Phases F/G per `docs/DAY-6-PLAN.md` / `DAY-7-PLAN.md` (Day 6 exit gate
+   before Day 7; freeze means freeze).
+4. Keep `info/HANDOFF.md` updated at the end of every run.
 
 ## Recent Commits
 
+- `b4947a4` docs(day6): plan comment edit/delete, my-shares batch status sync, rubric backlog
+- `1961f79` docs(handoff): production migrations applied and live flow verified
+- `c730535` fix(ui): restore three-tab layout, markdown preview typography, preset/unlock explanations
 - `4658c5e` fix(day5): audit remediation batch
-- `ce7a950` merge: incorporate friend's UI polish into modular architecture
-- `3fbd793` chore: trigger deploy [skip ci]
-- `4c3cfd6` feat(day5): policy presets, landing reorder, CSS module split, multi-file e2e fixes
-- `28a5c62` docs: update handoff with UI improvements commit
-- `1735dbf` feat(ui): match code dropdown theme and align decrypted viewer
-- `5ec7785` feat(day5): discussion threads, drag-drop attachments, ZIP download-all
-- `c8c359a` feat(day5): multi-file staged uploads end-to-end
-
-## History
-
-- **2026-08-22 audit + stabilization:** base64url >76-char create fix (`20260825000000`), CSP `connect-src` storage origin, audit logging wired, log redaction, attachment round-trip e2e, full-history secret scrub with SHA remap.
-- **2026-08-22 independent review pass:** stale Day-3 size constraints dropped (`20260826000000`), create_share client-class rejections map to 400, history-desk terminal-404 fix, viewer failure notices + retryable network errors, staged-upload component tests.
-- **2026-08-23 discussion/attachment audit:** superseded by the remediation batch recorded above; its validation numbers (115 pgTAP / 151 unit) carried into this run.
+- `963ab8c` fix(e2e): single Playwright worker + doc count refresh

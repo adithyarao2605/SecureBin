@@ -15,7 +15,7 @@ templates, or visual identity.
 
 Days 1 through 5 are implemented and fully verified. That covers the core cryptographic engine, lifecycle policy correctness with concurrency proofs, safe multi-mode content (plain notes, sanitized Markdown, syntax-highlighted code) with SBCT binary framing, encrypted attachments up to five files per share with drag-and-drop and Download-all ZIP, password factors (PBKDF2-HMAC-SHA-256, 600,000 iterations), two-channel unlock codes (Crockford Base32 with check symbol), custom reveal counts from 1 to 100, "Never" expiry, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions, QR + native share + email actions, and the Privacy Receipt with a pre-flight "What will SecureBin see?" disclosure.
 
-All gates pass locally: 145 unit tests (21 files), 14 integration tests, 115 pgTAP database tests (7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md)).
+All gates pass locally: 145 unit tests (21 files), 14 integration tests, 115 pgTAP database tests (7 files), 10 Playwright E2E tests, and 2 Axe accessibility tests. The previous production incident is closed (see [`docs/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md)).
 
 Development happens on the `dev` branch, which deploys as a Vercel preview; `main` remains production. CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request.
 
@@ -60,21 +60,21 @@ and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-p
 - [`docs/policy-state.md`](docs/policy-state.md) — atomic lifecycle state model.
 - [`docs/deployment.md`](docs/deployment.md) — fresh-clone, environment, and
   deployment checklist.
-- [`docs/PRODUCTION-INCIDENT.md`](docs/PRODUCTION-INCIDENT.md) — resolved
+- [`docs/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md) — resolved
   2026-08-21 create-failure incident record and investigation order.
-- [`docs/DAY-4-PLAN.md`](docs/DAY-4-PLAN.md) and
-  [`docs/DAY-5-PLAN.md`](docs/DAY-5-PLAN.md) — executed Day 4 and Day 5
+- [`docs/DAY-4-PLAN.md`](docs/archive/DAY-4-PLAN.md) and
+  [`docs/DAY-5-PLAN.md`](docs/archive/DAY-5-PLAN.md) — executed Day 4 and Day 5
   plans, each with an appended outcome record.
 - [`docs/DAY-6-PLAN.md`](docs/DAY-6-PLAN.md) and
   [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) — locked, gated plans for the
   remaining roadmap days.
 - [`docs/SPEC.md`](docs/SPEC.md) — five-day delivery schedule and the quiet-proof
   visual/copy direction.
-- [`docs/DAY-2-PLAN.md`](docs/DAY-2-PLAN.md) — detailed lifecycle, concurrency,
+- [`docs/DAY-2-PLAN.md`](docs/archive/DAY-2-PLAN.md) — detailed lifecycle, concurrency,
   cleanup, and verification sequence.
-- [`docs/DAY-2-UI.md`](docs/DAY-2-UI.md) — implementation-ready quiet-proof UI
+- [`docs/DAY-2-UI.md`](docs/archive/DAY-2-UI.md) — implementation-ready quiet-proof UI
   contract for Day 2.
-- [`docs/DAY-3-PLAN.md`](docs/DAY-3-PLAN.md) — detailed safe-content and encrypted
+- [`docs/DAY-3-PLAN.md`](docs/archive/DAY-3-PLAN.md) — detailed safe-content and encrypted
   attachment sequence.
 - [`info/plan.md`](info/plan.md) — product priorities, delivery order, and
   future roadmap (read-only planning source).
@@ -175,7 +175,7 @@ authorized at a non-preset limit).
 | Rubric area | Evidence location | Status |
 | --- | --- | --- |
 | Problem understanding | This README, local planning references, threat model | Foundation documented |
-| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions, Privacy Receipt | Implemented through Day 5; plan_v2 Days 6–7 gated |
+| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions, custom policies, Privacy Receipt | Implemented through Day 5; plan_v3 Phases C–G in flight |
 | Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented through discussions and multi-file model |
 | UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Composer, viewer, factor prompts, receipt, and discussions covered |
 | Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local + CI gates green: 145 unit / 14 integration / 115 pgTAP / 10 E2E / 2 Axe |

@@ -39,7 +39,7 @@ contract, not optional decoration:
 - `package.json` scripts define executable validation commands.
 
 Update the documents in the same change whenever a public contract or security invariant changes.
-The five-day SPEC plan (Days 1–5) is complete. Day 6 of `info/plan_v2.md` (reveal window, privacy veil, self-hosting, parcels, local manager, per `docs/DAY-6-PLAN.md`) is the active milestone, followed by the Day 7 release freeze; do not start Day 7 until the Day 6 exit gate is green.
+The five-day SPEC plan (Days 1–5) is complete. `info/plan_v3.md` is the single active roadmap (landing page at `/`, app at `/new`, UI fixes, discussion edit/delete, batch status sync, rubric backlog; Day 6/7 detail stays in `docs/DAY-6-PLAN.md`/`DAY-7-PLAN.md`). Implement plan_v3 phase by phase with green gates between phases. Historical day plans and the resolved incident live in `docs/archive/`.
 `info/plan.md` serves as product priorities reference; record any project decisions in `info/HANDOFF.md`.
 
 ## Reference Boundary
