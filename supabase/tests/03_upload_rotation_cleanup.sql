@@ -131,8 +131,7 @@ select * from ins;
 
 insert into public.shares (
   public_id, content_envelope, expires_at, max_reveals,
-  delete_token_hash, password_required, unlock_required,
-  file_object_path, file_envelope, file_ciphertext_size, idempotency_key_hash
+  delete_token_hash, password_required, unlock_required, idempotency_key_hash
 ) values (
   'DQ0NDQ0NDQ0NDQ0NDQ0NDA',
   '{"version":2,"objectType":"content","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link","ciphertext":"AAAAAAAAAAAAAAAAAAAAAA"}'::jsonb,
@@ -141,11 +140,14 @@ insert into public.shares (
   decode(repeat('55', 32), 'hex'),
   false,
   false,
-  'objects/cccccccccccccccccccccccccccccccccccccccccccccccc.bin',
-  '{"version":2,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
-  1024,
   decode(repeat('56', 32), 'hex')
 );
+
+insert into public.share_attachments (share_id, attachment_slot, object_path, file_envelope, file_ciphertext_size)
+select id, 0, 'objects/cccccccccccccccccccccccccccccccccccccccccccccccc.bin',
+  '{"version":2,"objectType":"file","algorithm":"AES-256-GCM","nonce":"AAAAAAAAAAAAAAAA","hkdfSalt":"AAAAAAAAAAAAAAAAAAAAAA","passwordSalt":null,"kdf":"none","kdfParameters":{},"factorMask":"link"}'::jsonb,
+  1024
+from public.shares where public_id = 'DQ0NDQ0NDQ0NDQ0NDQ0NDA';
 
 select is(
   (select count(*)::integer from public.list_cleanup_candidates()

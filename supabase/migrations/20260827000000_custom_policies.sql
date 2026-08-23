@@ -135,7 +135,17 @@ begin
       return query select existing.id, existing.public_id, false;
       return;
     end if;
-    raise exception using errcode = '23505', message = 'idempotency_conflict: public id already used with a different key';
+    raise exception using errcode = '23505', message = 'idempotency_conflict';
+  end if;
+
+  -- A hash is unique across ALL shares: reuse with another public id is a conflict.
+  if exists (
+    select 1 from public.shares s
+     where s.idempotency_key_hash = p_idempotency_key_hash
+       and s.public_id <> p_public_id
+     limit 1
+  ) then
+    raise exception using errcode = '23505', message = 'idempotency_conflict';
   end if;
 
   begin

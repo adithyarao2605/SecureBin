@@ -3,8 +3,8 @@ begin;
 select plan(29);
 
 -- 1. Check function signatures
-select has_function('public', 'create_upload_reservation', array['text','bytea','jsonb','bigint'], 'tuple upload reservation RPC exists');
-select has_function('public', 'create_share', array['text','jsonb','timestamp with time zone','timestamp with time zone','integer','bytea','boolean','boolean','bytea','jsonb','bigint'], '11-arg create_share RPC exists');
+select has_function('public', 'create_upload_reservation', array['text','bytea','jsonb','bigint','integer'], 'tuple upload reservation RPC exists');
+select has_function('public', 'create_share', array['text','jsonb','timestamp with time zone','timestamp with time zone','integer','bytea','boolean','boolean','bytea'], '9-arg create_share RPC exists');
 
 -- Verify old overloads are dropped
 select ok(
@@ -63,9 +63,7 @@ select * from public.create_share(
   decode(repeat('02', 32), 'hex'),
   false,
   false,
-  decode(repeat('02', 32), 'hex'),
-  null,
-  null
+  decode(repeat('02', 32), 'hex')
 );
 
 select is(
@@ -85,9 +83,7 @@ select * from public.create_share(
   decode(repeat('02', 32), 'hex'),
   false,
   false,
-  decode(repeat('02', 32), 'hex'),
-  null,
-  null
+  decode(repeat('02', 32), 'hex')
 );
 
 select is(
@@ -108,9 +104,7 @@ select throws_ok(
       decode(repeat('02', 32), 'hex'),
       false,
       false,
-      decode(repeat('02', 32), 'hex'),
-      null,
-      null
+      decode(repeat('02', 32), 'hex')
     )
   $$,
   '23505',
@@ -173,9 +167,7 @@ select * from public.create_share(
   decode(repeat('04', 32), 'hex'),
   false,
   false,
-  decode(repeat('04', 32), 'hex'),
-  null,
-  null
+  decode(repeat('04', 32), 'hex')
 );
 
 -- First reveal

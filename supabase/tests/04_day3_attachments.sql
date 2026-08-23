@@ -183,11 +183,10 @@ select throws_ok(
   'content ciphertext above 524315 bytes is rejected'
 );
 
--- 13. File ciphertext at exactly 10486422 bytes passes.
+-- 13. Attachment ciphertext at exactly 10486422 bytes passes (child table).
 insert into public.shares (
   public_id, content_envelope, available_at, expires_at, max_reveals,
-  delete_token_hash, password_required, unlock_required, idempotency_key_hash,
-  file_object_path, file_envelope, file_ciphertext_size, reveal_count
+  delete_token_hash, password_required, unlock_required, idempotency_key_hash
 ) values (
   'CCCCCCCCCCCCCCCCCCCCCA',
   jsonb_build_object(
@@ -197,19 +196,26 @@ insert into public.shares (
     'factorMask', 'link', 'ciphertext', 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
   ),
   null, now() + interval '24 hours', null,
-  gen_random_bytes(32), false, false, gen_random_bytes(32),
-  'objects/' || repeat('a', 48) || '.bin',
+  gen_random_bytes(32), false, false, gen_random_bytes(32)
+);
+
+insert into public.share_attachments (
+  share_id, attachment_slot, object_path, file_envelope, file_ciphertext_size
+)
+select id, 0, 'objects/' || repeat('c', 48) || '.bin',
   jsonb_build_object(
     'version', 2, 'objectType', 'file', 'algorithm', 'AES-256-GCM',
     'nonce', 'AAAAAAAAAAAAAAAA', 'hkdfSalt', 'AAAAAAAAAAAAAAAAAAAAAA',
     'passwordSalt', null, 'kdf', 'none', 'kdfParameters', '{}'::jsonb, 'factorMask', 'link'
   ),
-  10486422, 0
-);
+  10486422
+from public.shares where public_id = 'CCCCCCCCCCCCCCCCCCCCCA';
+
 select is(
   (
-    select count(*) from public.shares
-    where file_ciphertext_size = 10486422 and public_id = 'CCCCCCCCCCCCCCCCCCCCCA'
+    select count(*) from public.share_attachments a
+    join public.shares s on s.id = a.share_id
+    where a.file_ciphertext_size = 10486422 and s.public_id = 'CCCCCCCCCCCCCCCCCCCCCA'
   ),
   1::bigint,
   'attachment at exactly 10486422-byte ciphertext size inserts'
@@ -218,33 +224,21 @@ select is(
 -- 14. File size above the maximum violates the constraint.
 select throws_ok(
   $$
-    insert into public.shares (
-      public_id, content_envelope, available_at, expires_at, max_reveals,
-      delete_token_hash, password_required, unlock_required, idempotency_key_hash,
-      file_object_path, file_envelope, file_ciphertext_size, reveal_count
-    ) values (
-      'DDDDDDDDDDDDDDDDDDDDDA',
-      jsonb_build_object(
-        'version', 2, 'objectType', 'content', 'algorithm', 'AES-256-GCM',
-        'nonce', 'AAAAAAAAAAAAAAAA', 'hkdfSalt', 'AAAAAAAAAAAAAAAAAAAAAA',
-        'passwordSalt', null, 'kdf', 'none', 'kdfParameters', '{}'::jsonb,
-        'factorMask', 'link', 'ciphertext', 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
-      ),
-      null, now() + interval '24 hours', null,
-      gen_random_bytes(32), false, false, gen_random_bytes(32),
-      'objects/' || repeat('b', 48) || '.bin',
+    insert into public.share_attachments (
+      share_id, attachment_slot, object_path, file_envelope, file_ciphertext_size
+    )
+    select id, 1, 'objects/' || repeat('d', 48) || '.bin',
       jsonb_build_object(
         'version', 2, 'objectType', 'file', 'algorithm', 'AES-256-GCM',
         'nonce', 'AAAAAAAAAAAAAAAA', 'hkdfSalt', 'AAAAAAAAAAAAAAAAAAAAAA',
         'passwordSalt', null, 'kdf', 'none', 'kdfParameters', '{}'::jsonb, 'factorMask', 'link'
       ),
-      10486423, 0
-    )
+      10486423
+    from public.shares where public_id = 'CCCCCCCCCCCCCCCCCCCCCA'
   $$,
   NULL, NULL,
   'file ciphertext above 10486422 bytes is rejected'
 );
 
-reset role;
 select * from finish();
 rollback;

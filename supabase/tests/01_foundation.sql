@@ -1,6 +1,6 @@
 begin;
 
-select plan(28);
+select plan(30);
 
 select has_table('public', 'shares', 'shares table exists');
 select has_table('public', 'upload_reservations', 'upload reservations table exists');
@@ -60,8 +60,10 @@ select is(
   'base64url above the maximum byte budget is rejected'
 );
 
-select has_function('public', 'create_upload_reservation', array['text','bytea','jsonb','bigint'], 'reservation RPC exists');
-select has_function('public', 'create_share', array['text','jsonb','timestamp with time zone','timestamp with time zone','integer','bytea','boolean','boolean','bytea','jsonb','bigint'], 'share creation RPC exists');
+select has_function('public', 'create_upload_reservation', array['text','bytea','jsonb','bigint','integer'], 'reservation RPC exists');
+select has_table('public', 'share_attachments', 'share attachments table exists');
+select has_column('public', 'share_attachments', 'attachment_slot', 'attachment slot column exists');
+select has_function('public', 'create_share', array['text','jsonb','timestamp with time zone','timestamp with time zone','integer','bytea','boolean','boolean','bytea'], '9-arg share creation RPC exists');
 select has_function('public', 'get_share_status', array['text'], 'status RPC exists');
 select has_function('public', 'reveal_share', array['text','bytea'], 'atomic reveal RPC exists');
 select has_function('public', 'revoke_share', array['text','bytea'], 'revocation RPC exists');
