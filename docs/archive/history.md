@@ -1,6 +1,6 @@
 # Delivery history
 
-This is the compact historical record for completed delivery work. Git history retains the former per-day plans in full; they are not active contracts.
+This is the compact historical record for completed delivery work. Full superseded plans, standalone contracts, and evidence snapshots are retained under [`legacy/`](legacy/); they are historical records, not active contracts, and their original relative links may describe the former layout.
 
 - Foundation: reproducible tooling, browser cryptography, strict envelopes, uniform recipient failures, CI, and deployment scaffolding.
 - Lifecycle: atomic reveal authorization, expiry/revocation, retry leases, upload reservations, cleanup, observability, and local share history.
