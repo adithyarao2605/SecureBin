@@ -98,33 +98,33 @@ export function EditorPane({
             <label htmlFor="draft-textarea" className="sr-only">
               {mode === "note" ? "Note content" : mode === "markdown" ? "Markdown content" : "Code content"}
             </label>
-            {mode === "code" ? <div className="code-editor-wrap">
-              <pre className="code-editor-highlight" aria-hidden="true"><code>{highlightCode(draft, language)}</code></pre>
+            {mode === "code" ? (
+              <div className="code-editor-wrap">
+                <textarea
+                  id="draft-textarea"
+                  className="composer-textarea code-editor-input"
+                  placeholder="Paste code snippet…"
+                  value={draft}
+                  disabled={disabled}
+                  wrap="off"
+                  spellCheck={false}
+                  onChange={(e) => onDraftChange(e.target.value)}
+                />
+              </div>
+            ) : (
               <textarea
                 id="draft-textarea"
-                className="composer-textarea code-editor-input"
-                placeholder="Paste code snippet…"
+                className="composer-textarea"
+                placeholder={
+                  mode === "note"
+                    ? "Start typing your note here..."
+                    : "Write Markdown (# heading, **bold**, - list)…"
+                }
                 value={draft}
                 disabled={disabled}
-                wrap="off"
-                spellCheck={false}
-                onScroll={(event) => { const target = event.currentTarget; const layer = target.previousElementSibling; if (layer instanceof HTMLElement) { layer.scrollTop = target.scrollTop; layer.scrollLeft = target.scrollLeft; } }}
                 onChange={(e) => onDraftChange(e.target.value)}
               />
-            </div> : <textarea
-              id="draft-textarea"
-              className="composer-textarea"
-              placeholder={
-                mode === "note"
-                  ? "Start typing your note here..."
-                  : mode === "markdown"
-                  ? "Write Markdown (# heading, **bold**, - list)…"
-                : "Paste code snippet…"
-              }
-              value={draft}
-              disabled={disabled}
-              onChange={(e) => onDraftChange(e.target.value)}
-            />}
+            )}
           </>
         )}
         {mode === "markdown" && markdownView !== "edit" && (
