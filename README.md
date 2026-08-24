@@ -1,202 +1,66 @@
 # SecureBin
 
-SecureBin is an independently implemented, browser-encrypted sharing platform
-for sensitive text, Markdown, code, and files. It combines a zero-knowledge
-storage boundary with server-enforced expiry, scheduled availability,
-revocation, and atomic reveal limits. Optional two-channel unlock and a Privacy
-Receipt make the protection model visible to both sender and recipient.
+SecureBin is an independently implemented, browser-encrypted platform for sharing notes, Markdown, code, and files. The browser owns encryption and decryption; the service stores ciphertext plus bounded lifecycle metadata and atomically enforces availability, expiry, revocation, and reveal limits.
 
-This repository is being built for CloneFest 2.0's “Legacy Modernisation:
-PrivateBin” challenge. It preserves the underlying problem—controlled sharing
-of sensitive information—without copying PrivateBin source, wire formats,
-templates, or visual identity.
+It modernises the problem behind CloneFest 2.0's PrivateBin challenge without copying PrivateBin source, formats, templates, or visual identity.
 
-## Current status
+## Release status
 
-Days 1–5 plus the Day 6 batch (encrypted discussions end-to-end from the composer, a reveal window counted from the first opening, a local privacy veil on the opened view, portable `.securebin` parcels with fully offline restore, one-command self-hosting, history-desk labels and policy view, and an expanded privacy receipt) are implemented and fully verified. That covers the core cryptographic engine, lifecycle policy correctness with concurrency proofs, safe multi-mode content (plain notes, sanitized Markdown, syntax-highlighted code) with SBCT binary framing, encrypted attachments up to five files per share with drag-and-drop and Download-all ZIP, password factors (PBKDF2-HMAC-SHA-256, 600,000 iterations), two-channel unlock codes (Crockford Base32 with check symbol), custom reveal counts from 1 to 100, "Never" expiry, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions, QR + native share + email actions, and the Privacy Receipt with a pre-flight "What will SecureBin see?" disclosure.
+Days 1–5 are implemented. The Day 6 surfaces—release windows, privacy veil, portable `.securebin` parcels, local share management, expanded receipts, and self-host tooling—are present on `dev`, but the audit found lifecycle, compatibility, recovery, accessibility, and evidence gaps. Day 6 is **not yet a green release gate**. Complete [`docs/before-day-7.md`](docs/before-day-7.md) and the quiet-proof UI overhaul before starting the release freeze.
 
-All gates pass locally: 170 unit tests (27 files), 16 integration tests, 145 pgTAP database tests (9 files), 17 Playwright E2E tests, and 7 Axe accessibility tests. The production-build E2E gate also passes. The previous production incident is closed (see [`docs/archive/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md)). The current route split is `/` for the landing page and `/new` for the sharing app.
+The last full local baseline passed 170 unit, 16 integration, 145 pgTAP, 17 development E2E, 17 production-build E2E, and 7 Axe tests. Those tests do not cover every audited regression; the pre-freeze plan names the missing cases. Production promotion and verification of the newest migrations remain owner-operated. Development is on `dev`; `main` is not the current audit target.
 
-Development happens on the `dev` branch, which deploys as a Vercel preview; `main` remains production. CI automatically validates all gates against local Supabase and Playwright browsers on every commit and pull request.
+## Why the design matters
 
-## Product and UX direction
+- Content keys, passwords, unlock codes, filenames, and plaintext remain in the browser.
+- Reveal limits and lifecycle state are database transactions, not UI claims.
+- Optional two-channel unlock means the URL fragment alone is insufficient.
+- Decrypted Markdown and attachments cross explicit safe-render boundaries.
+- The product states its limits: a compromised browser can capture plaintext, recipients can save copies, and infrastructure can observe traffic metadata.
 
-SecureBin uses a light-first **quiet proof** visual language for the app and a
-dark OLED landing variant: a warm Linen
-canvas, Ink typography, Mineral actions, a restrained Copper accent, and an
-asymmetrical single-surface layout. A small “proofline” connects browser,
-sealed parcel, and recipient as a visual explanation of the flow. It is not a
-cryptographic proof or a threat meter. The interface should feel calm and
-precise, with a cybersecurity subject expressed through evidence and data
-movement rather than neon, hacker-terminal, matrix, shield, or lock clichés.
+The UI contract is light-first **quiet proof**: Linen, Ink, Mineral, Copper, and Mist; one primary surface plus a narrow evidence rail; a compact mobile status strip; and one restrained browser → sealed parcel → recipient proofline. It avoids cyberpunk decoration and never presents a visual as cryptographic evidence. See [`docs/SPEC.md`](docs/SPEC.md).
 
-Headings, body text, and receipt labels have distinct typographic roles; fonts
-are bundled or system-fallback only because secret routes must not fetch remote
-assets. State is always communicated with words and accessible structure in
-addition to color or motion. See the detailed tokens, layout, motion rules,
-and copy guidance in [`docs/SPEC.md`](docs/SPEC.md#experience-direction--quiet-proof).
+## Documentation
 
-## Why judges should care
+- [`docs/architecture.md`](docs/architecture.md) — protocol, trust model, lifecycle state, schemas, APIs, diagrams, and residual risks.
+- [`docs/SPEC.md`](docs/SPEC.md) — standing product and experience contract.
+- [`docs/deployment.md`](docs/deployment.md) — fresh clone, local/self-hosted, preview, production, and owner handoff.
+- [`docs/evidence.md`](docs/evidence.md) — reproducible test, concurrency, performance, and demo evidence.
+- [`docs/before-day-7.md`](docs/before-day-7.md) — required remediation and UI gate.
+- [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) — final release-freeze checklist.
+- [`info/plan_v3.md`](info/plan_v3.md) — active roadmap and scope decisions.
+- [`info/HANDOFF.md`](info/HANDOFF.md) — branch, validation, owner actions, and recent work.
+- [`docs/archive/history.md`](docs/archive/history.md) and [`docs/archive/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md) — delivery history and the resolved production incident.
 
-- Content keys, passwords, unlock codes, filenames, and plaintext stay in the
-  browser; infrastructure receives ciphertext and bounded lifecycle metadata.
-- Availability, expiry, revocation, and reveal limits are transactional policy,
-  not client-side suggestions.
-- Two-channel shares require both the URL fragment and an independently
-  shared unlock code; either component alone cannot decrypt.
-- The Privacy Receipt explains what was protected and what metadata remains
-  visible, before the share is created.
-- The design explicitly documents residual risks: browser compromise,
-  recipient copying, and network metadata are not solved by zero-knowledge
-  storage.
-
-## Documentation map
-
-- [`docs/architecture.md`](docs/architecture.md) — protocol, schemas, API contracts, and
-  lifecycle semantics.
-- [`docs/threat-model.md`](docs/threat-model.md) — assets, trust boundaries,
-  threats, controls, and limitations.
-- [`docs/architecture-diagrams.md`](docs/architecture-diagrams.md) — standalone
-  system, sequence, and trust-boundary diagrams.
-- [`docs/policy-state.md`](docs/policy-state.md) — atomic lifecycle state model.
-- [`docs/deployment.md`](docs/deployment.md) — fresh-clone, environment, and
-  deployment checklist.
-- [`docs/archive/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md) — resolved
-  2026-08-21 create-failure incident record and investigation order.
-- [`docs/DAY-4-PLAN.md`](docs/archive/DAY-4-PLAN.md) and
-  [`docs/DAY-5-PLAN.md`](docs/archive/DAY-5-PLAN.md) — executed Day 4 and Day 5
-  plans, each with an appended outcome record.
-- [`docs/DAY-6-PLAN.md`](docs/DAY-6-PLAN.md) and
-  [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) — locked, gated plans for the
-  remaining roadmap days.
-- [`docs/SPEC.md`](docs/SPEC.md) — five-day delivery schedule and the quiet-proof
-  visual/copy direction.
-- [`docs/DAY-2-PLAN.md`](docs/archive/DAY-2-PLAN.md) — detailed lifecycle, concurrency,
-  cleanup, and verification sequence.
-- [`docs/DAY-2-UI.md`](docs/archive/DAY-2-UI.md) — implementation-ready quiet-proof UI
-  contract for Day 2.
-- [`docs/DAY-3-PLAN.md`](docs/archive/DAY-3-PLAN.md) — detailed safe-content and encrypted
-  attachment sequence.
-- [`info/plan_v3.md`](info/plan_v3.md) — active implementation roadmap, phases,
-  gates, and Day 6/7 handoff.
-- [`info/plan.md`](info/plan.md) — product priorities and historical delivery
-  order (read-only planning source).
+`info/plan.md`, `info/Challenge_1.md`, `info/clonefest.md`, and `info/PrivateBin/` are read-only references, not implementation contracts.
 
 ## Reproducible setup
 
-The repository check is intentionally dependency-free Python. Run it in the
-repo-local virtual environment:
+Use Node `22.23.2`, Corepack, and committed `pnpm@10.15.1`:
 
 ```bash
 python3 -m venv .venv
 .venv/bin/python scripts/verify-reproducibility.py
-```
-
-When the Node application is present, use the exact pins committed in
-`.nvmrc`/`.node-version` (`Node 22.23.2`) and `package.json`
-(`pnpm@10.15.1`). Corepack provides the pnpm shim, so a globally installed pnpm
-binary is not required:
-
-```bash
-node --version  # v22.23.2
 corepack enable
 corepack install
-pnpm --version  # 10.15.1
 pnpm install --frozen-lockfile
 pnpm validate
 pnpm test:integration
+pnpm supabase:test
 pnpm exec playwright install chromium
 pnpm test:e2e
 pnpm test:e2e:prod
 pnpm test:a11y
 ```
 
-On a fresh Linux host that lacks Chromium system libraries, use
-`pnpm exec playwright install --with-deps chromium` instead.
-
-Do not create a second package manager lockfile. Copy `.env.example` to an
-untracked `.env` only when local application work requires configuration. Keep
-server-only values out of browser imports and logs.
-
-## Demo smoke check
-
-The smoke script is a safe, read-only health check. It does not create a share,
-handle a secret, or prove the cryptographic and database acceptance criteria.
+The smoke script only checks health; it does not prove cryptographic or database behavior:
 
 ```bash
 APP_URL=http://localhost:3000 scripts/demo-smoke.sh
 ```
 
-PowerShell users can run `.\scripts\demo-smoke.ps1` with `$env:APP_URL` set.
-The `/api/health` endpoint is included in the application.
+## Judge demo
 
-## Give this repository to a friend
+After the pre-freeze gate is green, demonstrate one end-to-end story: create a protected Markdown share with files, inspect the Privacy Receipt, show that a fragment alone cannot open a two-channel share, reveal with both factors, show release-window/veil behavior, cite concurrency evidence, revoke a second share, and finish with the uniform unavailable state and honest limitations. Use synthetic content only.
 
-Send your friend the GitHub repository URL, the exact commit SHA you want them
-to review, and [`docs/deployment.md`](docs/deployment.md). Do not send an
-`.env` file or any Supabase/Vercel secret. From a fresh clone, they should use
-Node `22.23.2`, Corepack, and the committed `pnpm@10.15.1`, then run:
-
-```bash
-git checkout <commit-sha>
-python3 -m venv .venv
-.venv/bin/python scripts/verify-reproducibility.py
-corepack enable
-corepack install
-pnpm install --frozen-lockfile
-pnpm validate
-pnpm test:integration
-pnpm test:e2e
-pnpm test:e2e:prod
-pnpm test:a11y
-```
-
-For review only, no provider access is necessary. For deployment, either add
-them to the Vercel and Supabase projects through provider team access or let
-them create independent projects; never copy service-role, rate-limit, cron,
-password, unlock, fragment, or deletion secrets through chat. The complete
-owner deployment, production verification, and return-evidence checklist is in
-the deployment runbook.
-
-## Judge demo flow
-
-Every step of the rehearsed 60–90 second path is now implemented and covered
-by tests; only the production redeploy of the newest migrations is an owner
-step:
-
-1. Create a Markdown share with encrypted files and a chosen reveal policy.
-2. Show the Privacy Receipt and ciphertext-only server record.
-3. Demonstrate that the URL fragment alone cannot decrypt a two-channel share.
-4. Provide the unlock code through a separate channel and reveal successfully.
-5. Show the concurrency test never exceeds the configured reveal limit.
-6. Revoke a second share and show the uniform `unavailable` response.
-7. Finish with CI, accessibility, architecture, and limitation evidence.
-
-The concurrency step can cite the dedicated custom-limit test (exactly N of M
-authorized at a non-preset limit).
-
-## Rubric evidence
-
-| Rubric area | Evidence location | Status |
-| --- | --- | --- |
-| Problem understanding | This README, local planning references, threat model | Foundation documented |
-| Innovation | Browser-only encryption, atomic reveal authorization, password/unlock factors, encrypted discussions with edit/delete, custom policies, Privacy Receipt | plan_v3 Phases A–F shipped (Secure Drop + recipient acknowledgment deferred by owner decision); Phase G freeze pending |
-| Architecture | [`docs/architecture.md`](docs/architecture.md), diagrams | Documented through discussions and multi-file model |
-| UX/accessibility | Playwright keyboard, mobile viewport, and axe tests | Composer, viewer, factor prompts, receipt, and discussions covered |
-| Reliability/demo | CI, unit/integration/browser tests, smoke script, deployment runbook | Local gates green: 170 unit / 16 integration / 145 pgTAP / 17 E2E / 7 Axe / production E2E |
-| Documentation | This README, threat model, architecture, runbook | Present |
-
-## Security and limitations
-
-Read [`docs/threat-model.md`](docs/threat-model.md) before handling sensitive data. SecureBin is not
-DRM and cannot protect plaintext after it is rendered or copied. A malicious
-application deployment can capture browser plaintext and keys. Infrastructure
-can still observe ciphertext size, timestamps, network metadata, and access
-patterns. These boundaries are part of the product's honest security story.
-
-## License and reference boundary
-
-The `info/Challenge_1.md`, `info/clonefest.md`, and nested `info/PrivateBin`
-material are read-only references. SecureBin must remain an independent
-implementation; do not copy source, wire formats, templates, or visual
-identity from the reference checkout.
+For handoff, send the repository URL, an exact reviewed commit, and [`docs/deployment.md`](docs/deployment.md). Never send environment files, provider secrets, capabilities, passwords, unlock codes, or real fragment URLs.

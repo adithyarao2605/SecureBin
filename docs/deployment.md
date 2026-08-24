@@ -2,7 +2,7 @@
 
 The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md)). All database migrations through `20260831000000_reveal_window.sql` are committed; those through `20260829000000_encrypted_discussions.sql` are verified applied to the hosted database, and the two newest (`20260830000000_discussion_comment_edit_delete.sql`, `20260831000000_reveal_window.sql`) must be confirmed by the owner (`supabase migration list`, then `supabase db push`) before discussion edit/delete and the reveal window work in production. The current Phase A landing/app route split also needs the owner-operated production redeploy.
 
-For a fully local stack see [`self-hosting.md`](self-hosting.md): `pnpm local:setup | local | local:stop`.
+Local/self-hosted operation is documented below. The current scripts exist, but their environment isolation, loopback checks, production server mode, and PID ownership remain pre-freeze remediation items; do not aim them at production credentials.
 
 Branch model: development happens on `dev`, which Vercel builds as a preview deployment; `main` is production. Verify features on the preview URL before promoting to `main`.
 
@@ -51,8 +51,8 @@ dependency installation and runs the same Python repository check.
 - This runbook and the current [`../info/HANDOFF.md`](../info/HANDOFF.md).
 - A statement of scope: Days 1–5 are implemented and gated in CI with local
   verification (170 unit, 16 integration, 145 pgTAP, 17 E2E, 7 Axe tests);
-  the newest migrations are already applied; the current landing/app code
-  still requires an owner production redeploy.
+   hosted migration state and the current landing/app deployment still require
+   owner verification. Do not claim production is current without provider evidence.
 
 Do **not** send `.env`/`.env.local`, Supabase service-role credentials,
 `RATE_LIMIT_HMAC_KEY`, `CRON_SECRET`, real share URLs or URL fragments,
@@ -190,8 +190,8 @@ the provider stores, never in a tracked file.
    well as the legacy service-role JWT under its variable name. Mark the
    service-role, rate-limit, and cron values as sensitive. Never use the
    service-role value in a `NEXT_PUBLIC_*` variable.
-6. Deploy `main`. If the final Vercel hostname differs from the value supplied
-   for `NEXT_PUBLIC_APP_URL`, correct it and redeploy.
+6. After preview verification and owner approval, promote the reviewed `dev`
+   commit to `main` and deploy it. Record the exact deployed SHA.
 7. Run the production checks below, then record the URL, deployed commit SHA,
    timestamp, and results in `info/HANDOFF.md` and the README.
 
@@ -250,3 +250,31 @@ Return these non-secret facts to the repository maintainer:
 
 No step above is evidence that deployment has happened until its result is
 recorded from the actual provider.
+
+## Local and self-hosted operation
+
+Prerequisites are the pinned Node version, Corepack pnpm, Docker, and the
+repository-local Supabase CLI invoked through `pnpm exec supabase`.
+
+```bash
+pnpm local:setup
+pnpm local
+pnpm local:stop
+```
+
+The intended result is an app at `http://127.0.0.1:3101` backed only by a local
+Supabase stack. Local runtime secrets must live in a dedicated ignored file
+with restrictive permissions; production `.env.local` values must never be
+retained, read, or overwritten. The URL must be loopback, the app must use a
+production build with `next start`, and stop must target only a validated
+SecureBin-owned PID.
+
+The current scripts are development-shaped and do not yet satisfy all of
+those safeguards. Complete the self-hosting slice in
+[`before-day-7.md`](before-day-7.md) before presenting one-command self-hosting
+as release-ready. Until then, inspect environment values manually and use only
+an isolated development checkout with synthetic content.
+
+After remediation, the clean-clone proof is: setup, start, create a synthetic
+share, reveal it, verify private Storage and local-only URLs, stop the owned
+process, and confirm no unrelated listener or production environment changed.

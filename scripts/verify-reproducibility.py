@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the repository's Day 1 reproducibility and documentation contract.
+"""Check the repository's reproducibility and documentation contract.
 
 This intentionally uses only the Python standard library so a fresh clone can
 run it from the documented .venv without downloading an additional toolchain.
@@ -23,17 +23,14 @@ REQUIRED_FILES = (
     ".github/workflows/ci.yml",
     ".github/dependabot.yml",
     "docs/SPEC.md",
-    "docs/archive/DAY-2-PLAN.md",
-    "docs/archive/DAY-2-UI.md",
-    "docs/archive/DAY-3-PLAN.md",
+    "docs/before-day-7.md",
+    "docs/DAY-7-PLAN.md",
+    "docs/evidence.md",
+    "docs/archive/history.md",
     "docs/archive/PRODUCTION-INCIDENT.md",
     "info/plan_v3.md",
     "docs/architecture.md",
-    "docs/threat-model.md",
-    "docs/architecture-diagrams.md",
-    "docs/policy-state.md",
     "docs/deployment.md",
-    "docs/self-hosting.md",
     "info/HANDOFF.md",
     "scripts/demo-smoke.sh",
     "scripts/demo-smoke.ps1",

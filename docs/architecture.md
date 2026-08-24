@@ -7,13 +7,13 @@ This document is the technical source of truth for the judged SecureBin release.
 
 ### Current implementation status
 
-Day 1 (Core Cryptographic Engine & Foundation), Day 2 (Lifecycle Policy Correctness, Database Row Locking, Concurrency Proofs, Upload Reservations, Cleanup Operation, Safe Observability, and Browser-Local Share History Desk), Day 3 (Multi-Mode Content with SBCT Binary Framing, Encrypted Attachments, Storage URL Normalization, Safe Local Previews), Day 4 (Password Factor with PBKDF2-HMAC-SHA-256 at 600,000 iterations, Two-Channel Unlock Codes, QR + Native Share + Email Actions, Privacy Receipt, Pre-flight Disclosure, Complete Non-Happy-Path States), and Day 5 (Custom Reveal Counts 1–100, "Never" Expiry, Markdown Edit/Split/Preview, Code Mode with Local Language Detection, Multi-File Encrypted Attachments ≤5 with Download-all ZIP, Drag-and-Drop Zone, and Encrypted Discussions) are **implemented and fully verified**: 170 unit tests (27 files), 16 integration tests, 145 pgTAP tests (9 files), 17 Playwright E2E tests, and 7 Axe accessibility tests pass locally. The public landing is `/`; the sharing app is `/new`. Phases B–D of plan_v3 are also complete.
+Days 1–5 are implemented. Day 6 surfaces exist on `dev`, but the pre-freeze audit found lifecycle, cleanup, recovery, parcel-validation, accessibility, and evidence gaps. The authoritative open gate is [`before-day-7.md`](before-day-7.md); the UI overhaul is part of that gate. The last baseline passed 170 unit, 16 integration, 145 pgTAP, 17 development E2E, 17 production-build E2E, and 7 Axe tests, but those suites do not yet cover every audited regression.
 
 Development happens on the `dev` branch (Vercel preview); `main` is production.
 
 SecureBin provides anonymous, browser-encrypted sharing with server-enforced availability, expiry (including "Never"), revocation, and reveal limits from 1 to unlimited. The server stores ciphertext, a discussion-capability digest, and lifecycle metadata but never receives content keys, passwords, unlock codes, discussion capabilities, filenames, plaintext MIME types, or plaintext content.
 
-The release boundary is intentionally narrow enough to harden thoroughly. Recipient-bound sharing, passkeys, Secure Rooms, richer previews, localization, Argon2id, size padding, alternate storage adapters, and SDKs remain compatible future phases (`info/plan_v3.md` Phases F–G cover the reveal window, privacy veil, self-hosting, parcels, and local manager).
+The release boundary excludes recipient-bound sharing, passkeys, Secure Rooms, richer active previews, localization, Argon2id, size padding, alternate storage adapters, and SDKs.
 
 ## 2. Trust and Threat Model
 
@@ -63,7 +63,7 @@ The browser owns key generation, derivation, encryption, decryption, content ren
 ### Experience layer (non-authoritative)
 
 The browser surface follows the quiet-proof direction in
-[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof), [`archive/DAY-2-UI.md`](archive/DAY-2-UI.md), and the Stitch MCP project **`SecureBin Quiet Proof Design System v1`** (`projects/12991627127209989717`): a light-first
+[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof): a light-first
 Linen/Ink/Mineral/Copper palette, a single compose or reveal surface, and one
 proofline connecting the browser, sealed parcel, and recipient. The proofline is
 only an explanation of the client flow. It must never be used as evidence that
@@ -108,13 +108,13 @@ Password input is encoded as UTF-8 without Unicode normalization, limited to 1,0
 2. Build the HKDF input keying material by concatenation in factor-mask order: `linkSecret` (32 bytes) ‖ `passwordKey` (32 bytes, only when the mask includes password) ‖ `unlockBytes` (16 bytes, only when the mask includes unlock). The raw password and the printable unlock code are never used as HKDF input directly.
 3. Derive independent 32-byte AES keys from that IKM with HKDF-SHA-256 and `hkdfSalt`, using labels per envelope version:
    - v1: `securebin/v1/{factorMask}/content` and `/file`
-   - v2: `securebin/v2/{factorMask}/content` and `/file`
+   - v2: `securebin/v2/link/content` and `securebin/v2/link/file`. Optional factor material remains in the IKM and the factor mask remains authenticated in AAD; deployed labels do not vary by mask.
    - Discussions (v2 only): `securebin/v2/{factorMask}/discussion`, derived from the raw 32-byte discussion capability instead of the share IKM, with the comment thread's own random HKDF salt.
 4. Future object types receive new labels; a label is never repurposed.
 
 ### Unlock code format
 
-Two-channel unlock codes encode 128 random bits as 26 Crockford Base32 characters plus one trailing check character computed over the digit sum modulo 27 — 27 characters total. The alphabet excludes `I L O U`. Codes are normalized to uppercase before validation; a wrong check symbol is rejected client-side before any network call. Only the 16 decoded bytes enter key derivation.
+Two-channel unlock codes carry 124 random bits as 26 canonical base-28 body characters plus one checksum character — 27 characters total. Codes are normalized to uppercase before validation; non-canonical body digits or a wrong checksum are rejected before network access. Only the decoded 16 bytes enter key derivation.
 
 ### Envelope
 
@@ -387,7 +387,7 @@ The public API deliberately collapses expired, exhausted, revoked, and missing r
 
 - Render plain text with text nodes, never `innerHTML`.
 - Parse Markdown with an established library, sanitize with an allowlist, strip remote images, and add `rel="noopener noreferrer"` to links.
-- Syntax highlighting uses browser-only `lowlight@3.3.0` with fixed registered languages and no auto-detection. Its HAST is rebuilt as React from only text/root and `span` nodes with allowlisted `hljs-*` classes; any other node/property falls back to plaintext. No HTML serialization or `dangerouslySetInnerHTML` is allowed.
+- Syntax highlighting currently uses browser-only `lowlight@3.3.0` with language IDs `0–8`. A detector helper exists but is not wired into the composer; overlay highlighting, conservative detection, and append-only IDs `9–20` are pre-freeze work. Its HAST is rebuilt as React from only text/root and `span` nodes with allowlisted `hljs-*` classes; any other node/property falls back to plaintext.
 - Server-only `@supabase/supabase-js@2.50.0` implements signed private Storage operations so credential/header details are not reimplemented. It is instantiated only in server modules with session persistence and refresh disabled; the dependency is advisory-checked before installation.
 - Preview only raster image formats decoded through Blob URLs and plain text rendered as text. Never inline SVG, HTML, or active documents.
 - Revoke Blob URLs when views unmount, before replacing an existing URL, and immediately after a download click completes.
@@ -425,3 +425,16 @@ Reveal limits cannot prevent a recipient from copying already released ciphertex
 - Concurrent final-reveal tests proving exact limits, including custom non-preset limits (e.g., exactly 7 of M authorized).
 - Browser tests for creation, reveal, wrong factors, single- and multi-file attachments, ZIP download, discussions, two-channel mode, mobile, keyboard, and failure recovery.
 - Manual production smoke test plus automated lint, typecheck, unit, integration, E2E, accessibility, and build gates.
+
+## 14. Residual-risk register
+
+| Threat | Control | Residual risk |
+| --- | --- | --- |
+| Curious database/storage operator | Browser encryption; private random object paths | Size, timing, lifecycle policy, and access patterns remain visible. |
+| Stolen link fragment | Optional password and separately delivered unlock factor | A complete factor set authorizes local decryption. |
+| Replay/racing reveals | Row-locked atomic RPC and request-token lease | Authorization cannot prevent copying after release. |
+| Malicious content | Strict frames, Markdown sanitization, allowlisted syntax tree, safe previews | Downloaded files may be unsafe in external applications. |
+| Compromised application/browser/device | CSP, no remote assets on secret routes, reviewed Web Crypto boundary | Runtime compromise can capture plaintext and keys. |
+| Logs and diagnostics | Redacted structured logging and no-store responses | Provider network metadata remains visible. |
+
+The lifecycle and sequence sections above replace the former standalone diagram, threat-model, and policy-state documents. Intended release-window semantics are contractual: revocation and expiry override retry leases immediately; the same authorized token may retry across reveal exhaustion or window closure only during its five-minute lease. Current `dev` code must be brought back to this contract by the pre-freeze remediation migration and regression tests.

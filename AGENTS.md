@@ -40,7 +40,7 @@ contract, not optional decoration:
 - `package.json` scripts define executable validation commands.
 
 Update the documents in the same change whenever a public contract or security invariant changes.
-The five-day SPEC plan (Days 1–5) is complete. `info/plan_v3.md` is the single active roadmap (landing page at `/`, app at `/new`, UI fixes, discussion edit/delete, batch status sync, rubric backlog; Day 6/7 detail stays in `docs/DAY-6-PLAN.md`/`DAY-7-PLAN.md`). Implement plan_v3 phase by phase with green gates between phases. Historical day plans and the resolved incident live in `docs/archive/`.
+The five-day SPEC plan (Days 1–5) is complete. `info/plan_v3.md` is the single active roadmap. Day 6 surfaces exist, but `docs/before-day-7.md` and the UI-overhaul gate must be green before the release freeze in `docs/DAY-7-PLAN.md`. Historical work is summarized in `docs/archive/history.md`; the resolved incident remains a separate record.
 `info/plan.md` serves as product priorities reference; record any project decisions in `info/HANDOFF.md`.
 
 ## Reference Boundary
@@ -138,7 +138,7 @@ Keep this list synchronized with `package.json`. Use `pnpm validate` as the fina
 - **API:** test schemas, size limits, authorization, rate limiting, idempotency, and uniform failures.
 - **UI:** run the primary Playwright flow, mobile viewport, keyboard flow, and axe checks.
 - **Attachments:** test encrypted upload, object-size validation, reveal lease retry, safe preview, download, and cleanup.
-- **Documentation or public behavior:** synchronize `docs/architecture.md`, README, `docs/SPEC.md`, and submission evidence without modifying or committing `info/plan.md`.
+- **Documentation or public behavior:** synchronize `docs/architecture.md`, README, `docs/SPEC.md`, `docs/evidence.md`, and submission evidence without modifying or committing `info/plan.md`.
 
 Run the smallest relevant checks while iterating and `pnpm validate` before handoff.
 

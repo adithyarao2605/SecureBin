@@ -22,11 +22,11 @@ clearly marked as future work.
 
 ## Progress snapshot
 
-Days 1 through 5 are implemented and fully green across local gates: reproducible tooling, multi-mode browser encryption (plain note, sanitized Markdown, and syntax-highlighted code with binary `SBCT` framing), encrypted attachments up to five files per share with staged reservations, drag-and-drop, safe previews, and Download-all ZIP, atomic database lifecycle policy with upload reservations and a rotation cleanup queue, clean local history desk, password factors (PBKDF2-HMAC-SHA-256 at 600,000 iterations), two-channel unlock codes (27-character Crockford codes with check symbol), custom reveal counts (1–100), "Never" expiry, Markdown Edit/Split/Preview authoring, code mode with local language detection, encrypted discussions with lifecycle inheritance, QR + native share + email actions, the Privacy Receipt with ciphertext fingerprint, the pre-flight "What will SecureBin see?" disclosure, production build, 170 unit tests (27 files), 16 integration tests, 145 pgTAP database tests (9 files), 17 Playwright E2E tests, and 7 Axe accessibility tests. Phase A subsequently split the public landing route `/` from the sharing app at `/new`; Phases B–D then completed the UI, discussion, and batch-status gates.
+Days 1 through 5 are implemented. Day 6 surfaces exist on `dev`, but audited lifecycle, recovery, validation, accessibility, and evidence gaps keep its exit gate open. The last baseline passed 170 unit, 16 integration, 145 pgTAP, 17 development E2E, 17 production-build E2E, and 7 Axe tests; missing regression cases are listed in [`before-day-7.md`](before-day-7.md). The code-language detector helper is not yet wired, and the agreed Markdown/code composer improvements remain pre-freeze work.
 
 The production incident is closed.
 
-Scope reconciliation: SPEC Day 4 shipped exactly as planned. Where this SPEC's Day 5 called only for polish, validation, deployment, and demo evidence, the implementation also deliberately delivered `info/plan_v2.md` §3 (custom reveal counts, "Never" expiry, rich Markdown authoring, code detection, multi-file attachments, encrypted discussions) after the Day 4 factors were green. Named policy presets were later removed by owner decision; custom policy controls remain. Remaining scope (reveal window, veil, self-host, parcels) is phased in [`info/plan_v3.md`](../info/plan_v3.md), with detail in [`DAY-6-PLAN.md`](DAY-6-PLAN.md) / [`DAY-7-PLAN.md`](DAY-7-PLAN.md).
+Later work added custom reveal counts, Never expiry, Markdown authoring, multi-file attachments, encrypted discussions, release-window, veil, self-host, and parcel surfaces. Named policy presets were removed by owner decision; custom controls remain. Current completion status lives in [`info/plan_v3.md`](../info/plan_v3.md), remediation in [`before-day-7.md`](before-day-7.md), and final freeze work in [`DAY-7-PLAN.md`](DAY-7-PLAN.md).
 
 When another maintainer or friend continues the schedule, hand them the exact commit and [`docs/deployment.md`](deployment.md), have them reproduce the gates from a fresh clone, and exchange provider access through team membership rather than copied secrets.
 
@@ -165,8 +165,7 @@ plain-text share.
 
 ### Day 2 — Lifecycle policy, concurrency, and operational correctness
 
-Historical execution: [`DAY-2-PLAN.md`](archive/DAY-2-PLAN.md) and
-[`DAY-2-UI.md`](archive/DAY-2-UI.md).
+Historical execution is summarized in [`archive/history.md`](archive/history.md).
 
 **Outcome:** access policy is server-enforced and remains correct under
 retries, simultaneous requests, and lifecycle races.
@@ -200,7 +199,7 @@ retries, simultaneous requests, and lifecycle races.
 
 ### Day 3 — Content breadth and safe encrypted attachments
 
-Historical execution: [`DAY-3-PLAN.md`](archive/DAY-3-PLAN.md).
+Historical execution is summarized in [`archive/history.md`](archive/history.md).
 
 **Outcome:** the core share supports the judged content types without weakening
 the zero-knowledge boundary.
@@ -320,7 +319,7 @@ handoff and README rather than silently presenting roadmap work as shipped.
 
 Recipient-bound accounts/passkeys, Secure Rooms, device-key management, localization, service-worker caching, alternate storage adapters, SDKs/extensions, interoperability import, Argon2id, padding, key transparency, sender signatures, and richer traffic-analysis defenses are future roadmap work. They must not destabilize the judged release and must never be represented as implemented in the demo or submission evidence. Encrypted discussions, custom reveal counts, "Never" expiry, multi-file attachments, code auto-detection, and the Day 4 factor work are no longer deferred: they are implemented and tested as recorded above.
 
-The remaining roadmap lives in [`info/plan_v3.md`](../info/plan_v3.md): Phase E is the pre-Day-6 hardening gate, Phase F maps to `DAY-6-PLAN.md`, and Phase G is the Day 7 release freeze. plan_v2 remains a read-only source.
+The remaining roadmap lives in [`info/plan_v3.md`](../info/plan_v3.md). The required pre-freeze gate is [`before-day-7.md`](before-day-7.md); only then does the final release freeze begin.
 
 ## Per-day handoff checklist
 

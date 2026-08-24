@@ -20,7 +20,7 @@ required is already green.
 ## 1. Fresh-clone verification
 
 From a clean checkout: `corepack enable` → `pnpm install --frozen-lockfile` →
-`pnpm validate` → self-host commands from `docs/DAY-6-PLAN.md` → smoke create/
+`pnpm validate` → remediated self-host commands from `docs/deployment.md` → smoke create/
 reveal/file/discussion/revoke locally.
 
 ## 2. Production smoke matrix
@@ -31,7 +31,7 @@ password; two-channel; combined factors; scheduled; custom expiry; Never;
 window; revoke; parcel export/import; direct and hard-refreshed share URLs;
 header/UI assets on cold load.
 
-## 3. Hero concurrency/fault evidence (saved to `docs/evidence/`)
+## 3. Hero concurrency/fault evidence (recorded in `docs/evidence.md`)
 
 - 100 concurrent reveals on a 1-reveal share → exactly 1 authorized.
 - 100 concurrent on a 3-reveal share → exactly 3.
@@ -65,7 +65,7 @@ measurements demand it.
   mistake history for open problems.
 - Git tracks no `node_modules/`, `test-results/`, `*.tsbuildinfo`, local
   Supabase state, secrets, decrypted fixtures, or temp build output.
-- Curated evidence under `docs/evidence/`.
+- Curated evidence in `docs/evidence.md`.
 
 ## 7. Code cleanup
 
