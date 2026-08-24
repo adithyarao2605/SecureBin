@@ -22,8 +22,15 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
   const [history, setHistory] = useState<ShareHistoryItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [clipboardFallbackId, setClipboardFallbackId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null);
+  const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null);
+  const [clearConfirm, setClearConfirm] = useState(false);
+  const [filter, setFilter] = useState<"all" | "active" | "scheduled" | "expired" | "revoked">("all");
+  const [query, setQuery] = useState("");
+  const [feedback, setFeedback] = useState("");
   const refreshInFlight = useRef(false);
 
   useEffect(() => {
@@ -74,11 +81,16 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
 
   async function handleCopy(item: ShareHistoryItem) {
     try {
+      if (!navigator.clipboard) throw new Error("clipboard_unavailable");
       await navigator.clipboard.writeText(item.shareUrl);
       setCopiedId(item.publicId);
+      setClipboardFallbackId(null);
+      setFeedback("Link copied.");
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      // Clipboard fallback
+      setCopiedId(null);
+      setClipboardFallbackId(item.publicId);
+      setFeedback("Clipboard access is unavailable. Select the link and copy it manually.");
     }
   }
 
@@ -95,10 +107,14 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
       if (response.ok) {
         updateShareInHistory(item.publicId, { status: "revoked", deleteCapability: null });
         setHistory(loadShareHistory());
+        setRevokeConfirmId(null);
+        setFeedback("Share revoked. Future ciphertext releases are unavailable.");
         void refreshStatuses();
+      } else {
+        setFeedback("The share could not be revoked. Try again.");
       }
     } catch {
-      // Revoke error
+      setFeedback("The share could not be revoked. Check your connection and try again.");
     } finally {
       setRevokingId(null);
     }
@@ -107,11 +123,15 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
   function handleRemove(publicId: string) {
     removeShareFromHistory(publicId);
     setHistory(loadShareHistory());
+    setRemoveConfirmId(null);
+    setFeedback("Removed from this browser's local history. The share is still available to anyone with its link.");
   }
 
   function handleClearAll() {
     clearShareHistory();
     setHistory([]);
+    setClearConfirm(false);
+    setFeedback("Local history cleared. Existing shares were not revoked.");
   }
 
   if (!mounted) {
@@ -126,10 +146,12 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
             <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
+        <p className="history-eyebrow">Local index · 0 shares</p>
         <h2 className="surface-heading" id="history-heading">No shares created yet</h2>
         <p className="history-empty-text">
-          Shares you seal and create on this browser will appear here so you can check live reveal limits, copy links, or revoke them anytime.
+          Shares created on this browser will appear here. No account is required.
         </p>
+        {feedback && <p className="history-feedback" role="status" aria-live="polite">{feedback}</p>}
         {onSwitchToCreate && (
           <button
             type="button"
@@ -143,30 +165,58 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
     );
   }
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredHistory = history.filter((item) => {
+    const expired = item.expiresAt !== null && new Date(item.expiresAt).getTime() < Date.now();
+    const status = item.status ?? (expired ? "unavailable" : "active");
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "expired" ? status === "unavailable" : status === filter);
+    const searchable = `${item.label ?? ""} ${item.publicId}`.toLowerCase();
+    return matchesFilter && (!normalizedQuery || searchable.includes(normalizedQuery));
+  });
+
   return (
     <section className="history-section" aria-labelledby="history-heading">
       <div className="history-header">
         <div>
-          <h2 id="history-heading" className="history-heading">
-            Shares created on this device
-          </h2>
+          <p className="history-eyebrow">Local management · {history.length} {history.length === 1 ? "share" : "shares"}</p>
+          <h2 id="history-heading" className="history-heading">My shares</h2>
           <p className="history-sub">
-            Stored locally in your browser. Track reveals, copy links, or revoke access.
+            Shares created on this browser can be managed here. No account is required.
           </p>
         </div>
         {isRefreshing && <p className="history-refreshing" role="status" aria-live="polite">Refreshing</p>}
-        <button
-          type="button"
-          className="history-clear-btn"
-          onClick={handleClearAll}
-          title="Clear all local history"
-        >
-          Clear history
-        </button>
+        {!clearConfirm ? (
+          <button type="button" className="history-clear-btn" onClick={() => setClearConfirm(true)} title="Clear all local history">
+            Clear history
+          </button>
+        ) : (
+          <div className="history-confirm history-confirm-clear" role="alert">
+            <span>Clear local history? This will not revoke shares.</span>
+            <button type="button" className="history-confirm-btn danger" onClick={handleClearAll}>Clear</button>
+            <button type="button" className="history-confirm-btn" onClick={() => setClearConfirm(false)}>Cancel</button>
+          </div>
+        )}
       </div>
 
+      <div className="history-controls" role="group" aria-label="Filter local shares">
+        <label className="history-search-label" htmlFor="history-search">Search shares</label>
+        <input id="history-search" className="history-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search label or ID" />
+        <label className="history-filter-label" htmlFor="history-filter">Status</label>
+        <select id="history-filter" className="history-filter" value={filter} onChange={(event) => setFilter(event.target.value as typeof filter)}>
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="expired">Expired</option>
+          <option value="revoked">Revoked</option>
+        </select>
+      </div>
+
+      {feedback && <p className="history-feedback" role="status" aria-live="polite">{feedback}</p>}
+
       <div className="history-list" role="list">
-        {history.map((item) => {
+        {filteredHistory.map((item) => {
           const isExpired = item.expiresAt !== null && new Date(item.expiresAt).getTime() < Date.now();
           const displayStatus = item.status ?? (isExpired ? "unavailable" : "active");
 
@@ -187,7 +237,7 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
                       : item.remainingReveals !== undefined && item.remainingReveals !== null
                       ? `${item.remainingReveals} / ${item.maxReveals} reveals remaining`
                       : item.maxReveals === 1
-                      ? "1 reveal (burns after open)"
+                      ? "One-time reveal"
                       : `${item.maxReveals} reveals limit`}
                   </span>
                 </div>
@@ -253,6 +303,7 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
               </div>
 
               <div className="history-card-actions">
+                <a className="history-action-btn secondary" href={item.shareUrl}>Open</a>
                 <button
                   type="button"
                   className="history-action-btn primary"
@@ -261,31 +312,37 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
                   {copiedId === item.publicId ? "Copied" : "Copy link"}
                 </button>
 
-                {item.deleteCapability && displayStatus !== "revoked" && displayStatus !== "unavailable" && (
-                  <button
-                    type="button"
-                    className="history-action-btn danger"
-                    disabled={revokingId === item.publicId}
-                    onClick={() => handleRevoke(item)}
-                  >
-                    {revokingId === item.publicId ? "Revoking…" : "Revoke"}
-                  </button>
+                {clipboardFallbackId === item.publicId && (
+                  <input className="history-copy-fallback" aria-label={`Manual copy link for ${item.publicId}`} readOnly value={item.shareUrl} onFocus={(event) => event.currentTarget.select()} />
                 )}
 
-                <button
-                  type="button"
-                  className="history-remove-btn"
-                  onClick={() => handleRemove(item.publicId)}
-                  title="Remove from local history"
-                  aria-label={`Remove share ${item.publicId} from history`}
-                >
-                  ✕
-                </button>
+                {item.deleteCapability && displayStatus !== "revoked" && displayStatus !== "unavailable" && (
+                  revokeConfirmId === item.publicId ? (
+                    <div className="history-confirm history-confirm-revoke" role="alert">
+                      <span>Stop future releases? Saved copies cannot be erased.</span>
+                      <button type="button" className="history-confirm-btn danger" disabled={revokingId === item.publicId} onClick={() => void handleRevoke(item)}>{revokingId === item.publicId ? "Revoking…" : "Confirm revoke"}</button>
+                      <button type="button" className="history-confirm-btn" disabled={revokingId === item.publicId} onClick={() => setRevokeConfirmId(null)}>Cancel</button>
+                    </div>
+                  ) : (
+                    <button type="button" className="history-action-btn danger" onClick={() => setRevokeConfirmId(item.publicId)}>Revoke</button>
+                  )
+                )}
+
+                {removeConfirmId === item.publicId ? (
+                  <div className="history-confirm history-confirm-remove" role="alert">
+                    <span>Remove only from local history?</span>
+                    <button type="button" className="history-confirm-btn danger" onClick={() => handleRemove(item.publicId)}>Remove</button>
+                    <button type="button" className="history-confirm-btn" onClick={() => setRemoveConfirmId(null)}>Cancel</button>
+                  </div>
+                ) : (
+                  <button type="button" className="history-remove-btn" onClick={() => setRemoveConfirmId(item.publicId)} title="Remove from local history" aria-label={`Remove share ${item.publicId} from history`}>✕</button>
+                )}
               </div>
             </article>
           );
         })}
       </div>
+      {filteredHistory.length === 0 && <p className="history-filter-empty" role="status">No local shares match this filter.</p>}
     </section>
   );
 }

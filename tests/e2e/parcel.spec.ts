@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// .securebin parcels (Day 6 §5): export a portable encrypted bundle at create
+// .securebin parcels: export a portable encrypted bundle at create
 // time, then restore it fully offline — every /api and Storage request is
 // blocked during import to prove no round-trip exists.
 
@@ -38,14 +38,15 @@ test("exports a parcel at creation and restores it offline", async ({ page }) =>
   });
 
   await offline.goto("/new");
-  await offline.evaluate(() => document.querySelector<HTMLElement>(".parcel-import")?.scrollIntoView());
+  await offline.getByRole("button", { name: "Open parcel" }).click();
+  await expect(offline.getByRole("heading", { name: "Open a .securebin parcel" })).toBeVisible();
   await offline.setInputFiles("#parcel-file-input", {
     name: "probe.securebin",
     mimeType: "application/octet-stream",
     buffer: Buffer.from((await import("node:fs")).readFileSync(parcelPath!)),
   });
 
-  await expect(offline.getByText(/Parcel for public ID/u)).toBeVisible({ timeout: 15_000 });
+  await expect(offline.getByText(/SBPX v1 · sealed content/u)).toBeVisible({ timeout: 15_000 });
   await offline.getByLabel("Fragment key (the text after # in the share link)").fill(fragmentKey);
   await offline.getByRole("button", { name: "Decrypt offline" }).click();
 
@@ -59,12 +60,12 @@ test("exports a parcel at creation and restores it offline", async ({ page }) =>
     mimeType: "application/octet-stream",
     buffer: Buffer.from((await import("node:fs")).readFileSync(parcelPath!)),
   });
-  await expect(offline.getByText(/Parcel for public ID/u)).toBeVisible({ timeout: 15_000 });
+  await expect(offline.getByText(/SBPX v1 · sealed content/u)).toBeVisible({ timeout: 15_000 });
   await offline
     .getByLabel("Fragment key (the text after # in the share link)")
     .fill("A".repeat(43));
   await offline.getByRole("button", { name: "Decrypt offline" }).click();
   await expect(
-    offline.getByText(/Decryption failed\. Check the fragment key/iu)
+    offline.getByText(/Could not decrypt with the supplied local factors/iu)
   ).toBeVisible({ timeout: 20_000 });
 });

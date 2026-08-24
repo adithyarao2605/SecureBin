@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// Real-backend Day 4 protection round trip: password + two-channel unlock.
+// Real-backend protection round trip: password + two-channel unlock.
 // Asserts the password and unlock code NEVER cross the network, and that the
 // viewer demands factors before any reveal authorization happens.
 
@@ -49,7 +49,7 @@ test("creates a password + unlock protected share and reveals with both factors"
   await page.getByLabel(/Unlock code/iu).fill(code);
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Reveal" }).click();
-  await expect(page.getByText(/reveal attempt failed/iu).first()).toBeVisible();
+  await expect(page.getByText(/Could not decrypt with the supplied local factors/iu).first()).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
 
   // Correct factors succeed.

@@ -3,13 +3,18 @@
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const stored = window.localStorage.getItem("securebin-theme");
-    const initial = stored === "light" ? "light" : "dark";
+    let stored: string | null = null;
+    try {
+      stored = window.localStorage?.getItem("securebin-theme") ?? null;
+    } catch {
+      // Some embedded and test environments expose no usable storage.
+    }
+    const initial = stored === "dark" ? "dark" : "light";
     setTheme(initial);
     applyThemeToDom(initial);
   }, []);
@@ -18,11 +23,8 @@ export function ThemeToggle() {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
     root.dataset.theme = next;
-    if (next === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    root.classList.remove("light", "dark");
+    root.classList.add(next);
   }
 
   function toggleTheme() {

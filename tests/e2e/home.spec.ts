@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("the Day 2 composer explains the browser-side trust boundary and defaults to dark theme", async ({ page }) => {
+test("the composer explains the browser-side trust boundary and defaults to light theme", async ({ page }) => {
   await page.goto("/new");
 
   await expect(page.getByRole("heading", { name: "Create a private share" })).toBeVisible();
@@ -9,9 +9,9 @@ test("the Day 2 composer explains the browser-side trust boundary and defaults t
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Create share" })).toBeEnabled();
 
-  // Dark mode is default
+  // The quiet-proof experience is light-first.
   const rootClass = await page.locator("html").getAttribute("class");
-  expect(rootClass).toContain("dark");
+  expect(rootClass).toContain("light");
 });
 
 test("the user can toggle between dark and light theme", async ({ page }) => {
@@ -20,13 +20,14 @@ test("the user can toggle between dark and light theme", async ({ page }) => {
   const toggleBtn = page.getByRole("button", { name: /switch to light theme|switch to dark theme/i });
   await expect(toggleBtn).toBeVisible();
 
-  // Click to switch to light theme
-  await toggleBtn.click();
-  await expect(page.locator("html")).not.toHaveClass(/dark/);
-
-  // Click to switch back to dark theme
+  // Click to switch to dark theme.
   await toggleBtn.click();
   await expect(page.locator("html")).toHaveClass(/dark/);
+
+  // Click to switch back to light theme.
+  await toggleBtn.click();
+  await expect(page.locator("html")).toHaveClass(/light/);
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
 });
 
 test("the user can navigate between application tabs", async ({ page }) => {
@@ -55,6 +56,7 @@ test("the user can navigate between application tabs", async ({ page }) => {
 test("the user can select custom expiration duration", async ({ page }) => {
   await page.goto("/new");
 
+  await page.getByText("Customize policy", { exact: true }).click();
   const expirySelect = page.getByLabel("Expires after");
   await expirySelect.selectOption("custom");
 
@@ -73,6 +75,7 @@ test("the user can select custom expiration duration", async ({ page }) => {
 test("the user can select a supported reveal limit", async ({ page }) => {
   await page.goto("/new");
 
+  await page.getByText("Customize policy", { exact: true }).click();
   const tenReveals = page.getByLabel("10 reveals", { exact: true });
   await tenReveals.click();
   await expect(tenReveals).toBeChecked();
@@ -116,7 +119,7 @@ test("created share appears in the local history desk with live actions", async 
 
   // Switch to My shares tab to view history desk
   await page.getByRole("tab", { name: "My shares" }).click();
-  await expect(page.getByRole("heading", { name: "Shares created on this device" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "My shares" })).toBeVisible();
   await expect(page.getByText("● Active")).toBeVisible();
   await expect(page.getByRole("button", { name: "Copy link" }).first()).toBeVisible();
 });

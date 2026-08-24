@@ -52,6 +52,7 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [discussionCapability, setDiscussionCapability] = useState<Uint8Array | null>(null);
   const [discussionSalt, setDiscussionSalt] = useState<Uint8Array | null>(null);
   const [releaseWindowEndsAt, setReleaseWindowEndsAt] = useState<string | null>(null);
+  const [releaseWindowRemainingMs, setReleaseWindowRemainingMs] = useState<number | null>(null);
   const requestTokenRef = useRef<string | null>(null);
   const revealInFlightRef = useRef(false);
 
@@ -168,6 +169,41 @@ export function Viewer({ publicId }: { publicId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, shareStatus]);
 
+  // The release window is a local privacy boundary too: once it closes, drop
+  // decrypted references, key material, factors, and attachment payloads from
+  // this React tree. Visibility changes re-sample the wall clock so a sleeping
+  // tab cannot keep showing a stale countdown.
+  useEffect(() => {
+    if (!releaseWindowEndsAt || state !== "opened") return;
+    const closeLocally = () => {
+      setContent(null);
+      setAttachments([]);
+      setDiscussionCapability(null);
+      setDiscussionSalt(null);
+      setLinkSecret(null);
+      setPasswordInput("");
+      setUnlockInput("");
+      setFactorsProvided(false);
+      setFactorError("");
+      requestTokenRef.current = null;
+      setRequestToken(null);
+      setReleaseWindowRemainingMs(0);
+      setNotice("This release window closed. New releases stopped and this browser hid its copy; saved copies cannot be erased.");
+    };
+    const sync = () => {
+      const remaining = Math.max(0, Date.parse(releaseWindowEndsAt) - Date.now());
+      setReleaseWindowRemainingMs(remaining);
+      if (remaining === 0) closeLocally();
+    };
+    sync();
+    const timer = window.setInterval(sync, 1000);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, [releaseWindowEndsAt, state]);
+
   async function handleReveal() {
     if (
       revealInFlightRef.current ||
@@ -262,12 +298,18 @@ export function Viewer({ publicId }: { publicId: string }) {
       // with the previous entries kept for editing.
       if (shareStatus.passwordRequired || shareStatus.unlockRequired) {
         setFactorsProvided(false);
+        setFactorError("Could not decrypt with the supplied local factors.");
+      } else {
+        setFactorError("");
       }
-      setFactorError("");
       setNotice(
         shareStatus.maxReveals === null
-          ? "This reveal attempt failed. Check your connection and try again."
-          : "This reveal attempt failed. The counts below show whether an authorization was consumed."
+          ? shareStatus.passwordRequired || shareStatus.unlockRequired
+            ? "A server-authorized release may already have been consumed. Check the local factors and try again."
+            : "This reveal attempt failed. Check your connection and try again."
+          : shareStatus.passwordRequired || shareStatus.unlockRequired
+            ? "A server-authorized release may already have been consumed. Check the local factors and try again."
+            : "This reveal attempt failed. The counts below show whether an authorization was consumed."
       );
       void checkShare(true);
     } finally {
@@ -301,6 +343,7 @@ export function Viewer({ publicId }: { publicId: string }) {
       discussionSalt={discussionSalt}
       discussionMask={currentFactorOptions()?.mask ?? "link"}
       releaseWindowEndsAt={releaseWindowEndsAt}
+      releaseWindowRemainingMs={releaseWindowRemainingMs}
     />
   );
 }

@@ -161,8 +161,7 @@ test("the composer remains usable from the keyboard on a narrow viewport", async
   await page.goto("/new");
 
   const textarea = page.getByLabel("Note content");
-  await textarea.focus();
-  await page.keyboard.type("Keyboard check");
+  await textarea.pressSequentially("Keyboard check");
   await expect(textarea).toHaveValue("Keyboard check");
 
   const createButton = page.getByRole("button", { name: "Create share" });

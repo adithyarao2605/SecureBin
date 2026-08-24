@@ -4,10 +4,22 @@ import type { FactorMask } from "../../../../lib/crypto/factors";
 import type { ContentPayload } from "../../../../lib/crypto/payload";
 import { formatLocalizedDateTime, type ProoflinePhase } from "../../../../lib/shares/policy-ui";
 import { DiscussionThread } from "../../../components/discussion-thread";
+import { ProductBrand } from "../../../components/product-brand";
 import { Proofline } from "../../../components/proofline";
+import { ThemeToggle } from "../../../components/theme-toggle";
 import { FactorGate } from "../factor-gate";
 import { RevealedContent, type DecryptedAttachment } from "../revealed-content";
 import type { ShareStatus, ViewerState } from "../viewer-contracts";
+
+function formatCountdown(milliseconds: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return hours > 0
+    ? `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+    : `${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
+}
 
 export type ViewerViewProps = {
   publicId: string;
@@ -29,9 +41,10 @@ export type ViewerViewProps = {
   onReveal: () => void;
   onCancelConfirm: () => void;
         discussionCapability: Uint8Array | null;
-        discussionSalt: Uint8Array | null;
-        discussionMask: FactorMask;
+      discussionSalt: Uint8Array | null;
+      discussionMask: FactorMask;
       releaseWindowEndsAt: string | null;
+      releaseWindowRemainingMs: number | null;
       };
 
 export function ViewerView({
@@ -57,14 +70,15 @@ export function ViewerView({
    discussionSalt,
    discussionMask,
    releaseWindowEndsAt,
+   releaseWindowRemainingMs,
 }: ViewerViewProps) {
   const activeStatus = shareStatus?.status === "active" ? shareStatus : null;
 
   return (
     <main className="viewer-shell" role="main">
       <header className="brand-header">
-        <h1 className="brand-title">SecureBin</h1>
-        <p className="brand-subtitle">Zero-knowledge secure sharing</p>
+        <ProductBrand className="viewer-brand" nameClassName="brand-title" status="private by design" statusClassName="brand-subtitle" />
+        <ThemeToggle />
       </header>
 
       <section className="evidence-rail" aria-label="Evidence rail">
@@ -191,18 +205,25 @@ export function ViewerView({
           </div>
         )}
 
+        {state === "opened" && releaseWindowEndsAt && releaseWindowRemainingMs !== null && releaseWindowRemainingMs > 0 && (
+          <div className="release-window-status" role="status" aria-live="polite">
+            <p className="viewer-status-text">
+              Release window · <strong>{formatCountdown(releaseWindowRemainingMs)} remaining</strong>
+            </p>
+            <p className="policy-hint">
+              New ciphertext releases stop when this window closes. This browser
+              hides its decrypted copy at that time; SecureBin cannot erase copies
+              a recipient has already saved. Closes at{" "}
+              <time dateTime={releaseWindowEndsAt}>
+                {formatLocalizedDateTime(releaseWindowEndsAt)}
+              </time>
+              .
+            </p>
+          </div>
+        )}
+
         {state === "opened" && content !== null && (
           <RevealedContent content={content} attachments={attachments}>
-            {releaseWindowEndsAt && (
-              <p className="viewer-status-text policy-hint" role="status">
-                The sender set a release window: further ciphertext releases
-                stop at{" "}
-                <time dateTime={releaseWindowEndsAt}>
-                  {formatLocalizedDateTime(releaseWindowEndsAt)}
-                </time>
-                . Copies already saved cannot be erased.
-              </p>
-            )}
             {discussionCapability && discussionSalt && (
               <DiscussionThread
                 publicId={publicId}
@@ -212,6 +233,15 @@ export function ViewerView({
               />
             )}
           </RevealedContent>
+        )}
+
+        {state === "opened" && content === null && releaseWindowEndsAt && (
+          <div className="viewer-message-box" role="status">
+            <p className="viewer-status-text">
+              This release window closed at {formatLocalizedDateTime(releaseWindowEndsAt)}.
+              New releases stopped and this browser hid its copy; saved copies cannot be erased.
+            </p>
+          </div>
         )}
 
         {state === "unavailable" && (

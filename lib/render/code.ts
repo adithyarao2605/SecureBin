@@ -2,7 +2,7 @@ import React, { type ReactNode } from "react";
 import { common, createLowlight } from "lowlight";
 import type { CodeLanguage } from "../crypto/payload";
 
-// Create lowlight instance registered with ONLY the 8 fixed languages
+// Keep this registry explicit: payload language IDs are a deployed contract.
 const lowlight = createLowlight();
 lowlight.register("javascript", common.javascript);
 lowlight.register("typescript", common.typescript);
@@ -12,6 +12,18 @@ lowlight.register("bash", common.bash);
 lowlight.register("sql", common.sql);
 lowlight.register("css", common.css);
 lowlight.register("html", common.xml); // html syntax is handled by xml in highlight.js
+lowlight.register("java", common.java);
+lowlight.register("c", common.c);
+lowlight.register("cpp", common.cpp);
+lowlight.register("csharp", common.csharp);
+lowlight.register("go", common.go);
+lowlight.register("rust", common.rust);
+lowlight.register("ruby", common.ruby);
+lowlight.register("php", common.php);
+lowlight.register("kotlin", common.kotlin);
+lowlight.register("yaml", common.yaml);
+lowlight.register("xml", common.xml);
+lowlight.register("ini", common.ini);
 
 const HLJS_CLASS_PATTERN = /^hljs-[a-z0-9_-]+$/;
 

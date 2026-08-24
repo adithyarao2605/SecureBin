@@ -6,7 +6,7 @@ import { openContent } from "../../lib/crypto/content";
 import { validateLinkSecret } from "../../lib/crypto/envelope";
 import { openFile, type FilePayload } from "../../lib/crypto/file";
 import type { ContentPayload } from "../../lib/crypto/payload";
-import { decodeParcel, ParcelError, type Parcel } from "../../lib/shares/parcel";
+import { decodeParcel, MAX_PARCEL_BYTES, ParcelError, type Parcel } from "../../lib/shares/parcel";
 import { RevealedContent, type DecryptedAttachment } from "../s/[publicId]/revealed-content";
 
 interface DecryptedParcel {
@@ -29,6 +29,7 @@ export function ParcelImport() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<DecryptedParcel | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   function reset() {
     setParcel(null);
@@ -37,6 +38,7 @@ export function ParcelImport() {
     setUnlockCode("");
     setError("");
     setResult(null);
+    setDragging(false);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -45,6 +47,12 @@ export function ParcelImport() {
     if (!file) return;
     setError("");
     setResult(null);
+    setDragging(false);
+    if (file.size > MAX_PARCEL_BYTES) {
+      setParcel(null);
+      setError(`This parcel is too large. Choose a file no larger than ${MAX_PARCEL_BYTES / (1024 * 1024)} MB.`);
+      return;
+    }
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       setParcel(decodeParcel(bytes));
@@ -107,7 +115,7 @@ export function ParcelImport() {
       }
       setResult({ parcel, content, attachments });
     } catch {
-      setError("Decryption failed. Check the fragment key and any required factors.");
+      setError("Could not decrypt with the supplied local factors. Check the fragment key and any required factors.");
     } finally {
       setBusy(false);
     }
@@ -120,6 +128,9 @@ export function ParcelImport() {
         Opens an exported encrypted bundle fully offline — nothing is uploaded.
         You still need the original link’s fragment key; the parcel never
         contains it.
+      </p>
+      <p className="policy-hint parcel-offline-status" role="status">
+        Offline restore · no upload or network request
       </p>
 
       <input
@@ -134,10 +145,24 @@ export function ParcelImport() {
       {!parcel && !result && (
         <button
           type="button"
-          className="action-button secondary-button"
+          className={`action-button secondary-button parcel-drop-zone${dragging ? " is-dragging" : ""}`}
+          aria-label="Choose or drop a .securebin parcel"
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setDragging(true);
+          }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={(event) => {
+            if (event.currentTarget === event.target) setDragging(false);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            void handleFileChange(event.dataTransfer.files);
+          }}
           onClick={() => inputRef.current?.click()}
         >
-          Choose a .securebin file
+          <span>Choose or drop a .securebin file</span>
+          <small>Maximum {MAX_PARCEL_BYTES / (1024 * 1024)} MB · stays in this browser</small>
         </button>
       )}
 
@@ -150,9 +175,15 @@ export function ParcelImport() {
       {parcel && !result && (
         <div className="policy-input-group">
           <p className="policy-hint">
-            Parcel for public ID <code>{parcel.policy.publicId}</code> with{" "}
+            SBPX v{parcel.version} · sealed content with{" "}
             {parcel.attachments.length} attachment{parcel.attachments.length === 1 ? "" : "s"}.
           </p>
+          <dl className="parcel-policy-summary" aria-label="Parcel policy snapshot">
+            <div><dt>Availability</dt><dd>{parcel.policy.availableAt ? new Date(parcel.policy.availableAt).toLocaleString() : "Available now"}</dd></div>
+            <div><dt>Expires</dt><dd>{parcel.policy.expiresAt ? new Date(parcel.policy.expiresAt).toLocaleString() : "Never"}</dd></div>
+            <div><dt>Releases</dt><dd>{parcel.policy.maxReveals === null ? "Unlimited" : parcel.policy.maxReveals}</dd></div>
+            <div><dt>Factors</dt><dd>{parcel.contentEnvelope.factorMask.replaceAll("+", " · ")}</dd></div>
+          </dl>
           <label htmlFor="parcel-key" className="policy-input-label">
             Fragment key (the text after # in the share link)
           </label>

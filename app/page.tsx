@@ -1,79 +1,29 @@
 import Link from "next/link";
-import { AuroraCanvas } from "./components/aurora-canvas";
+import { ProductBrand } from "./components/product-brand";
+import { ThemeToggle } from "./components/theme-toggle";
 
-export const metadata = {
-  title: "SecureBin — private sharing, by design",
-  description: "Browser-encrypted sharing for sensitive notes and files.",
-};
+export const metadata = { title: "SecureBin — private sharing, by design", description: "Browser-encrypted sharing for sensitive notes and files." };
 
-function ArrowIcon() {
-  return <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 10h11m-5-5 5 5-5 5" /></svg>;
+function ArrowIcon() { return <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 10h11m-5-5 5 5-5 5" /></svg>; }
+function FeatureIcon({ type }: { type: "key" | "policy" | "code" }) {
+  if (type === "key") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="8" cy="15" r="3.5" /><path d="m10.6 12.4 8-8m-2.1 2.1 2 2m-5-1 2 2" /></svg>;
+  if (type === "policy") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M5 7h9M5 12h6M5 17h9M17 14l2 2 3-4" /></svg>;
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m8 8-4 4 4 4m8-8 4 4-4 4m-3-9-2 10" /></svg>;
 }
-
-function Icon({ type }: { type: "browser" | "key" | "flame" }) {
-  if (type === "browser") return <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9h18M7 6.5h.01M10 6.5h.01" /></svg>;
-  if (type === "key") return <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="8.5" cy="15.5" r="3.5" /><path d="m11 13 8-8m-2 2 2 2m-5-1 2 2" /></svg>;
-  return <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 21c4.5-2.2 6.4-5.2 5.6-9.2-.4-2-1.7-3.7-3.8-5.3.2 2-1 3.1-2.3 3.9.1-2.8-1.2-4.6-3.1-5.5.4 3.1-2.1 5.1-2.1 8.1C6.3 16.8 8.8 19.6 12 21Z" /></svg>;
-}
+function Check() { return <span className="landing-check" aria-hidden="true">✓</span>; }
 
 export default function LandingPage() {
-  return (
-    <div className="landing-shell">
-      <AuroraCanvas />
-      <header className="landing-header">
-        <Link className="landing-brand" href="/" aria-label="SecureBin home">
-          <span className="landing-brand-name">SecureBin</span>
-        </Link>
-        <nav className="landing-nav" aria-label="Primary navigation">
-          <div className="landing-nav-pills">
-            <Link className="landing-nav-pill landing-nav-pill-active" href="/new">New share</Link>
-            <Link className="landing-nav-pill" href="/new#history">My shares</Link>
-            <Link className="landing-nav-pill" href="/new#how-it-works">How it works</Link>
-          </div>
-        </nav>
-        <Link className="landing-header-cta" href="/new">Create share</Link>
-      </header>
-
-      <main>
-        <section className="landing-hero" aria-labelledby="landing-title">
-          <div className="landing-hero-copy">
-            <h1 id="landing-title">Share sensitive information.<br /><em>Stay in control.</em></h1>
-            <p className="landing-lede">Zero-knowledge, client-side encryption. Secure your text, code, and files with a browser-boundary protocol where the key never leaves your device.</p>
-            <div className="landing-actions">
-              <Link className="landing-primary-action" href="/new">Create a Secure Share <ArrowIcon /></Link>
-              <a className="landing-secondary-action" href="#self-hosting">Self-Hosting <ArrowIcon /></a>
-            </div>
-            <div className="landing-proof-pills" id="features" aria-label="SecureBin properties">
-              <span><Icon type="browser" />Client-side encryption</span>
-              <span><Icon type="key" />Zero-knowledge</span>
-              <span><Icon type="flame" />Burn after reading</span>
-            </div>
-          </div>
-
-          <div className="landing-mock-wrap" aria-label="Preview of the SecureBin share composer">
-            <div className="landing-orbit landing-orbit-one" aria-hidden="true" />
-            <div className="landing-orbit landing-orbit-two" aria-hidden="true" />
-            <div className="landing-mock-card">
-              <div className="landing-mock-top"><span className="landing-mock-eyebrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" /><path d="M15 3v5h5M9 13h6M9 17h6" /></svg>New Secure Share</span><span className="landing-mock-dots" aria-hidden="true"><i /><i /><i /></span></div>
-              <div className="landing-mock-field"><span>Paste your text, secrets, or drop files here...</span><span className="landing-caret" aria-hidden="true" /></div>
-              <div className="landing-mock-options"><span><small>EXPIRES IN</small>1 hour</span><span><small>VIEW LIMIT</small>1 view <b>(burn)</b></span></div>
-              <Link className="landing-mock-submit" href="/new">Encrypt &amp; Generate Link</Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="landing-how" id="how-it-works" aria-labelledby="landing-how-title">
-          <div><p className="landing-section-label">The boundary matters</p><h2 id="landing-how-title">Private by default,<br /><span>honest by design.</span></h2></div>
-          <div className="landing-how-copy"><p>SecureBin keeps encryption and decryption in your browser. Access policy is enforced atomically on the server, so you can see exactly what each side knows.</p><Link href="/new#how-it-works">Read how it works <ArrowIcon /></Link></div>
-        </section>
-
-        <section className="landing-self-host" id="self-hosting" aria-labelledby="self-hosting-title">
-          <div><p className="landing-section-label">Own the boundary</p><h2 id="self-hosting-title">Run SecureBin<br /><span>on your terms.</span></h2></div>
-          <p>Self-hosting keeps the storage, policy, and deployment boundary in your hands. The same browser-first protocol, without a hosted dependency.</p>
-        </section>
-      </main>
-
-      <footer className="landing-footer"><div><strong>SecureBin</strong><span>Zero-knowledge by design.</span></div><nav aria-label="Footer navigation"><a href="#features">Features</a><Link href="/new#how-it-works">Docs</Link><a href="#self-hosting">Self-Hosting</a><a href="https://github.com/adithyarao2605/SecureBin" rel="noreferrer">GitHub</a></nav></footer>
-    </div>
-  );
+  return <div className="landing-shell">
+    <header className="landing-header">
+      <div className="landing-identity"><ProductBrand className="landing-brand" nameClassName="landing-brand-name" /><span className="landing-tagline">PRIVATE BY DESIGN</span></div>
+      <nav className="landing-nav" aria-label="Primary navigation"><Link className="landing-nav-link landing-nav-link-active" href="#features">Features</Link><Link className="landing-nav-link" href="#security">Security</Link><Link className="landing-nav-link" href="#self-hosting">Self-Host</Link><Link className="landing-nav-link" href="/new#how-it-works">Docs</Link></nav>
+      <ThemeToggle />
+    </header>
+    <main>
+      <section className="landing-hero" aria-labelledby="landing-title"><div className="landing-hero-copy"><h1 id="landing-title">Share sensitive<br />information.<br /><em>Stay in control.</em></h1><p className="landing-lede">End-to-end encrypted, zero-knowledge sharing for notes and files. Your data remains secure, even from us.</p><div className="landing-actions"><Link className="landing-primary-action" href="/new">Create secure share <ArrowIcon /></Link><a className="landing-secondary-action" href="#security">How it works</a></div><div className="landing-proof-pills" aria-label="SecureBin properties"><span>♙ Client-side encryption</span><span>⌁ Zero-knowledge</span><span>◷ Timed expiry</span></div></div><div className="landing-composer-preview" aria-label="Preview of the SecureBin share composer"><div className="landing-preview-tabs"><span className="active">Plain</span><span>MD</span><span>Code</span><span className="landing-preview-settings" aria-hidden="true">⚙</span></div><p className="landing-preview-placeholder">Paste sensitive credentials, API keys, or notes here...</p><div className="landing-preview-footer"><span>♧ &nbsp;Burns in 1hr</span><Link href="/new">♙&nbsp; Encrypt</Link></div></div></section>
+      <section className="landing-section landing-why" id="features" aria-labelledby="why-title"><div className="landing-section-intro"><h2 id="why-title">Why SecureBin</h2><p>Built on robust cryptographic primitives to ensure your data stays yours. Zero trust architecture by default.</p></div><div className="landing-feature-grid" id="security"><article><FeatureIcon type="key" /><h3>Encryption stays local</h3><p>Data is encrypted in your browser before it ever leaves your device. The server only receives cipher-text.</p></article><article><FeatureIcon type="policy" /><h3>Explicit access policy</h3><p>Set strict burn-after-reading rules, time-based expiry, or password protection for every share.</p></article><article className="landing-feature-wide"><FeatureIcon type="code" /><h3>Transparent by design</h3><p>Inspect the independently implemented client and server, or deploy SecureBin on your own infrastructure.</p></article></div></section>
+      <section className="landing-section landing-capabilities" id="self-hosting" aria-labelledby="capabilities-title"><div><h2 id="capabilities-title">Technical Capabilities</h2><div className="landing-capability-list"><span><Check />AES-256-GCM</span><span><Check />Burn after read</span><span><Check />Password auth</span><span><Check />Syntax highlight</span><span><Check />Markdown render</span><span><Check />No plaintext logs</span></div></div><div><h2>Run it your way</h2><div className="landing-terminal" aria-label="Self-hosting command preview"><div className="landing-terminal-dots"><i /><i /><i /></div><code><span># Start the verified local stack</span><br /><b>pnpm local:setup</b><br /><b>pnpm local</b></code></div></div></section>
+    </main>
+    <footer className="landing-footer"><div><strong>SecureBin</strong><span>Zero-knowledge by design.</span></div><nav aria-label="Footer navigation"><a href="#features">Features</a><Link href="/new#how-it-works">Docs</Link><a href="#self-hosting">Self-Hosting</a><a href="https://github.com/adithyarao2605/SecureBin" rel="noreferrer">GitHub</a></nav></footer>
+  </div>;
 }

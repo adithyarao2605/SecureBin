@@ -81,7 +81,7 @@ describe("DiscussionThread", () => {
     expect(screen.getByText("Second sealed note")).toBeInTheDocument();
     expect(screen.getByText("Ada")).toBeInTheDocument();
     expect(screen.getAllByText("Anonymous")).toHaveLength(2);
-    expect(screen.getByText("[comment removed]")).toBeInTheDocument();
+    expect(screen.getByText("Comment deleted")).toBeInTheDocument();
     expect(screen.getByText("(edited)")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Encrypted discussion" })).toBeInTheDocument();
     expect(

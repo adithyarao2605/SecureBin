@@ -7,11 +7,14 @@ import { ALLOWED_MARKDOWN_ELEMENTS, safeUrlTransform } from "../../lib/render/ma
 
 export interface MarkdownViewProps {
   readonly markdown: string;
+  /** Authoring preview uses a flat surface so it does not look nested. */
+  readonly className?: string;
+  readonly ariaLabel?: string;
 }
 
-export function MarkdownView({ markdown }: MarkdownViewProps) {
+export function MarkdownView({ markdown, className = "decrypted-markdown-content", ariaLabel = "Decrypted Markdown" }: MarkdownViewProps) {
   return (
-    <article className="decrypted-markdown-content" aria-label="Decrypted Markdown">
+    <article className={className} aria-label={ariaLabel}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         skipHtml={true}

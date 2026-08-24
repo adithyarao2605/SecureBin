@@ -14,13 +14,6 @@ test("revealed recipients hold an encrypted discussion", async ({ page }) => {
   page.on("request", (request) => {
     if (request.method() === "POST" && new URL(request.url()).pathname.endsWith("/comments")) {
       postBodies.push(request.postData() ?? "");
-      console.log(`[diag] comment POST body: ${(request.postData() ?? "").slice(0, 220)}`);
-    }
-  });
-  page.on("response", async (response) => {
-    if (response.url().includes("/comments")) {
-      const text = await response.text().catch(() => "");
-      console.log(`[diag] comments ${response.request().method()} ${response.status()} ${text.slice(0, 300)}`);
     }
   });
 
@@ -71,15 +64,17 @@ test("revealed recipients hold an encrypted discussion", async ({ page }) => {
 
   // Both comments are fully rendered (with their action rows) before any
   // further interaction, so mutations never race a refetch mid-render.
-  await expect(parentActions.getByRole("button", { name: "Delete" })).toBeVisible();
-  await expect(childActions.getByRole("button", { name: "Delete" })).toBeVisible();
+  await expect(parentActions.getByRole("button", { name: "Delete comment" })).toBeVisible();
+  await expect(childActions.getByRole("button", { name: "Delete comment" })).toBeVisible();
 
-  await parentActions.getByRole("button", { name: "Delete" }).click();
-  await expect(thread.getByText("[comment removed]")).toBeVisible({ timeout: 15_000 });
+  await parentActions.getByRole("button", { name: "Delete comment" }).click();
+  await expect(parentActions.getByRole("button", { name: "Delete comment" })).toBeVisible();
+  await parentActions.getByRole("button", { name: "Delete comment" }).click();
+  await expect(thread.getByText("Comment deleted")).toBeVisible({ timeout: 15_000 });
   await expect(thread.getByText("Nested answer")).toBeVisible();
 
   // Edit the surviving comment; "(edited)" appears after save.
-  await childActions.getByRole("button", { name: "Edit" }).click();
+  await childActions.getByRole("button", { name: "Edit comment" }).click();
   await page.getByLabel("Edit comment").fill("Nested answer (revised)");
   await thread.getByRole("button", { name: "Save edit" }).click();
   await expect(thread.getByText("Nested answer (revised)")).toBeVisible({ timeout: 15_000 });

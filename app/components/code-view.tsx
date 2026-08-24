@@ -19,10 +19,22 @@ const LANGUAGE_TO_EXTENSION: Record<CodeLanguage, string> = {
   sql: "sql",
   css: "css",
   html: "html",
+  java: "java",
+  c: "c",
+  cpp: "cpp",
+  csharp: "cs",
+  go: "go",
+  rust: "rs",
+  ruby: "rb",
+  php: "php",
+  kotlin: "kt",
+  yaml: "yaml",
+  xml: "xml",
+  ini: "ini",
 };
 
 export function CodeView({ code, language }: CodeViewProps) {
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -40,7 +52,7 @@ export function CodeView({ code, language }: CodeViewProps) {
       setCopyStatus("copied");
       setTimeout(() => setCopyStatus("idle"), 2000);
     } catch {
-      // Fallback
+      setCopyStatus("failed");
     }
   }
 
@@ -87,6 +99,7 @@ export function CodeView({ code, language }: CodeViewProps) {
           </button>
         </div>
       </div>
+      {copyStatus === "failed" && <p className="code-copy-fallback" role="alert">Clipboard unavailable. Select the code and copy it manually.</p>}
       <div className="code-view-body">
         <span className="code-line-numbers" aria-hidden="true">
           {Array.from({ length: lineCount }, (_, i) => (

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import type { CodeLanguage } from "../../lib/crypto/payload";
 import { DISCUSSION_CAPABILITY_BYTES } from "../../lib/crypto/payload";
 import { MAX_FILE_PLAINTEXT_BYTES } from "../../lib/crypto/file";
@@ -27,6 +27,7 @@ import { ModeTabs, type ComposerMode } from "./composer/mode-tabs";
 import { EditorPane, type MarkdownViewMode } from "./composer/editor-pane";
 import { AttachmentZone } from "./composer/attachment-zone";
 import { ShareResultCard } from "./composer/share-result-card";
+import { detectCodeLanguage } from "../../lib/render/detect-language";
 
 export type { ComposerMode, MarkdownViewMode };
 
@@ -51,12 +52,13 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   const [isRevoking, setIsRevoking] = useState(false);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [revokedMessage, setRevokedMessage] = useState("");
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [protection, setProtection] = useState<ProtectionState>(EMPTY_PROTECTION);
   const [enableDiscussion, setEnableDiscussion] = useState(false);
   const [unlockCodeShown, setUnlockCodeShown] = useState("");
   const [receiptData, setReceiptData] = useState<PrivacyReceiptData | null>(null);
   const [parcel, setParcel] = useState<Uint8Array | null>(null);
+  const manualLanguageRef = useRef(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Discussion capability minted once per share attempt so a staged retry
@@ -69,6 +71,14 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   const lastAttemptRef = useRef<CreateAttempt | null>(null);
   const { stage, discard } = useStagedCreate();
 
+  useEffect(() => {
+    // Desktop has enough room for a live side-by-side authoring view. Keep
+    // mobile focused on editing and let the explicit Preview tab reveal the
+    // rendered result.
+    const desktop = window.matchMedia?.("(min-width: 768px)").matches ?? false;
+    setMarkdownView(desktop ? "split" : "edit");
+  }, []);
+
   function resetPrepared() {
     discard();
     lastAttemptRef.current = null;
@@ -77,6 +87,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
 
   function handleDraftChange(value: string) {
     setDraft(value);
+    if (mode === "code" && value.length === 0) manualLanguageRef.current = false;
     resetPrepared();
   }
 
@@ -88,8 +99,15 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
 
   function handleLanguageChange(newLang: CodeLanguage) {
     setLanguage(newLang);
+    manualLanguageRef.current = true;
     resetPrepared();
   }
+
+  useEffect(() => {
+    if (mode !== "code" || !draft || manualLanguageRef.current) return;
+    const timer = window.setTimeout(() => setLanguage(detectCodeLanguage(draft)), 350);
+    return () => window.clearTimeout(timer);
+  }, [draft, mode]);
 
   function acceptFiles(candidates: File[]): boolean {
     for (const file of candidates) {
@@ -187,8 +205,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
       setProtection(EMPTY_PROTECTION);
       if (onPhaseChange) onPhaseChange("created");
       if (onShareChange) onShareChange();
-    } catch (err) {
-      console.error("[SecureBin] Share creation halted:", err instanceof Error ? err.message : String(err));
+    } catch {
       setErrorMessage("This share could not be created. Your draft is still only on this device.");
       if (onPhaseChange) onPhaseChange("draft");
     } finally {
@@ -203,7 +220,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
       setCopyStatus("copied");
       setTimeout(() => setCopyStatus("idle"), 2000);
     } catch {
-      // Fallback
+      setCopyStatus("failed");
     }
   }
 
@@ -289,6 +306,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
           mode={mode}
           markdownView={markdownView}
           draft={draft}
+          language={language}
           disabled={isPending}
           onDraftChange={handleDraftChange}
           onMarkdownViewChange={setMarkdownView}
@@ -315,19 +333,23 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
           disabled={isPending}
         />
 
-        <label className="policy-radio-label discussion-toggle">
-          <input
-            type="checkbox"
-            checked={enableDiscussion}
-            disabled={isPending}
-            onChange={(e) => {
-              setEnableDiscussion(e.target.checked);
-              discussionCapabilityRef.current = null;
-              resetPrepared();
-            }}
-          />
-          <span>Enable encrypted discussion (revealed recipients can post encrypted replies)</span>
-        </label>
+        <fieldset className="collaboration-section">
+          <legend>Collaboration</legend>
+          <label className="policy-radio-label discussion-toggle">
+            <input
+              type="checkbox"
+              checked={enableDiscussion}
+              disabled={isPending}
+              onChange={(e) => {
+                setEnableDiscussion(e.target.checked);
+                discussionCapabilityRef.current = null;
+                resetPrepared();
+              }}
+            />
+            <span>Enable encrypted discussion</span>
+          </label>
+          <p className="policy-hint">Revealed recipients can post encrypted replies. SecureBin does not provide activity or read receipts.</p>
+        </fieldset>
 
         {errorMessage && (
           <div className="composer-error" role="alert">

@@ -100,3 +100,26 @@
   margin-top: 0.9rem;
 }
 .qr-panel { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%; text-align: center; }
+
+@media print {
+  @page { margin: 1.5cm; }
+  body { background: #fff !important; color: #17242D !important; }
+  .site-header,
+  .site-footer,
+  .receipt-download,
+  .receipt-print,
+  .share-actions-extra,
+  .share-actions-row,
+  .revoke-confirmation-box { display: none !important; }
+  .privacy-receipt {
+    display: block;
+    border: 0;
+    margin: 0;
+    background: #fff;
+  }
+  .privacy-receipt:not([open]) .receipt-body { display: block; }
+  .receipt-heading { padding: 0 0 0.75rem; font-size: 1.15rem; }
+  .receipt-heading::after { display: none; }
+  .receipt-body { border-top: 1px solid #b9c6c0; padding: 0.75rem 0 0; }
+  .receipt-note { color: #2D4148; }
+}

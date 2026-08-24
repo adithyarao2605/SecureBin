@@ -103,6 +103,7 @@ export function DiscussionThread({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [mutating, setMutating] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   // Monotonic sequence for list loads: a slower earlier response must never
   // clobber the result of a newer one (poll vs. post-edit-delete refetch).
   const loadSeq = useRef(0);
@@ -263,6 +264,7 @@ export function DiscussionThread({
         setEditingId(null);
         setEditText("");
       }
+      setDeleteConfirmId(null);
       setPostStatus("");
       await loadComments();
     } catch {
@@ -283,7 +285,7 @@ export function DiscussionThread({
     const isEditing = editingId === comment.id;
     return (
       <li key={comment.id} className="discussion-comment">
-        {orphaned && <p className="discussion-meta">[comment removed]</p>}
+        {orphaned && <p className="discussion-meta">Comment deleted</p>}
         <p className="discussion-meta">
           <strong>{comment.nickname ?? "Anonymous"}</strong>{" "}
           <time dateTime={comment.createdAt}>
@@ -337,16 +339,38 @@ export function DiscussionThread({
                   setEditText(comment.body);
                 }}
               >
-                Edit
+                Edit comment
               </button>
-              <button
-                type="button"
-                className="discussion-reply-button action-button tertiary-button"
-                onClick={() => void handleDelete(comment.id)}
-                disabled={mutating}
-              >
-                Delete
-              </button>
+              {deleteConfirmId === comment.id ? (
+                <span className="discussion-delete-confirm" role="group" aria-label="Confirm comment deletion">
+                  <span className="discussion-meta">Delete this comment?</span>
+                  <button
+                    type="button"
+                    className="discussion-reply-button action-button tertiary-button"
+                    onClick={() => void handleDelete(comment.id)}
+                    disabled={mutating}
+                  >
+                    {mutating ? "Deleting…" : "Delete comment"}
+                  </button>
+                  <button
+                    type="button"
+                    className="discussion-reply-button action-button tertiary-button"
+                    onClick={() => setDeleteConfirmId(null)}
+                    disabled={mutating}
+                  >
+                    Keep comment
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="discussion-reply-button action-button tertiary-button"
+                  onClick={() => setDeleteConfirmId(comment.id)}
+                  disabled={mutating}
+                >
+                  Delete comment
+                </button>
+              )}
             </>
           )}
         </div>

@@ -11,7 +11,7 @@ interface ShareResultCardProps {
   readonly activeDeleteCapability: string | null;
   readonly revokedMessage: string;
   readonly showRevokeConfirm: boolean;
-  readonly copyStatus: "idle" | "copied";
+  readonly copyStatus: "idle" | "copied" | "failed";
   readonly isRevoking: boolean;
   readonly parcel: Uint8Array | null;
   setShowRevokeConfirm: (show: boolean) => void;
@@ -106,12 +106,15 @@ export function ShareResultCard({
           {copyStatus === "copied" ? "Copied" : "Copy link"}
         </button>
       </div>
+      {copyStatus === "failed" && <p className="composer-error" role="alert">Clipboard access is unavailable. Select the link above and copy it manually.</p>}
 
       {receiptData && <PrivacyReceipt data={receiptData} />}
 
       <ShareActions shareUrl={shareUrl} />
 
       <div className="share-actions-row">
+
+        <a className="action-button secondary-button" href={shareUrl}>Open</a>
 
         {activeDeleteCapability && !revokedMessage && !showRevokeConfirm && (
           <button

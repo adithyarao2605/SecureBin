@@ -1,56 +1,18 @@
 "use client";
-
+import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { CODE_LANGUAGES, type CodeLanguage } from "../../../lib/crypto/payload";
 import { MAX_CONTENT_BYTES } from "../../../lib/crypto/envelope";
 import { formatBytes } from "./format";
-
 export type ComposerMode = "note" | "markdown" | "code";
-
-interface ModeTabsProps {
-  readonly mode: ComposerMode;
-  readonly language: CodeLanguage;
-  readonly draftByteCount: number;
-  readonly disabled: boolean;
-  onModeChange: (mode: ComposerMode) => void;
-  onLanguageChange: (language: CodeLanguage) => void;
+interface ModeTabsProps { readonly mode: ComposerMode; readonly language: CodeLanguage; readonly draftByteCount: number; readonly disabled: boolean; onModeChange: (mode: ComposerMode) => void; onLanguageChange: (language: CodeLanguage) => void; }
+export function ModeTabs({ mode, language, draftByteCount, disabled, onModeChange, onLanguageChange }: ModeTabsProps) {
+  const tabs: ComposerMode[] = ["note", "markdown", "code"]; const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  function onKeyDown(event: KeyboardEvent<HTMLButtonElement>) { const index = tabs.indexOf(mode); const next = event.key === "ArrowRight" || event.key === "ArrowDown" ? (index + 1) % tabs.length : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1; if (next < 0) return; event.preventDefault(); onModeChange(tabs[next]); refs.current[next]?.focus(); }
+  return <div className="composer-toolbar"><div className="mode-tabs-group"><div className="mode-tabs" role="tablist" aria-label="Share mode">{tabs.map((item, index) => <button key={item} ref={(node) => { refs.current[index] = node; }} type="button" role="tab" tabIndex={mode === item ? 0 : -1} aria-selected={mode === item} className={`mode-tab ${mode === item ? "active" : ""}`} onKeyDown={onKeyDown} onClick={() => onModeChange(item)}>{item === "note" ? "Plain note" : item[0].toUpperCase() + item.slice(1)}</button>)}</div>{mode === "code" && <LanguagePicker language={language} disabled={disabled} onChange={onLanguageChange} />}</div><span className="character-count" aria-live="polite">{formatBytes(draftByteCount)} / {formatBytes(MAX_CONTENT_BYTES)}</span></div>;
 }
-
-export function ModeTabs({
-  mode,
-  language,
-  draftByteCount,
-  disabled,
-  onModeChange,
-  onLanguageChange,
-}: ModeTabsProps) {
-  return (
-    <div className="composer-toolbar">
-      <div className="mode-tabs-group">
-        <div className="mode-tabs" role="tablist" aria-label="Share mode">
-          <button type="button" role="tab" aria-selected={mode === "note"} className={`mode-tab ${mode === "note" ? "active" : ""}`} onClick={() => onModeChange("note")}>
-            Plain note
-          </button>
-          <button type="button" role="tab" aria-selected={mode === "markdown"} className={`mode-tab ${mode === "markdown" ? "active" : ""}`} onClick={() => onModeChange("markdown")}>
-            Markdown
-          </button>
-          <button type="button" role="tab" aria-selected={mode === "code"} className={`mode-tab ${mode === "code" ? "active" : ""}`} onClick={() => onModeChange("code")}>
-            Code
-          </button>
-        </div>
-
-        {mode === "code" && (
-          <div className="language-selector-wrapper">
-            <label htmlFor="code-language-select" className="sr-only">Programming language</label>
-            <select id="code-language-select" className="language-select" value={language} disabled={disabled} onChange={(e) => onLanguageChange(e.target.value as CodeLanguage)}>
-              {CODE_LANGUAGES.map((lang) => <option key={lang} value={lang}>{lang}</option>)}
-            </select>
-          </div>
-        )}
-      </div>
-
-      <span className="character-count" aria-live="polite">
-        {formatBytes(draftByteCount)} / {formatBytes(MAX_CONTENT_BYTES)}
-      </span>
-    </div>
-  );
+function LanguagePicker({ language, disabled, onChange }: { language: CodeLanguage; disabled: boolean; onChange: (language: CodeLanguage) => void }) {
+  const id = useId(); const [open, setOpen] = useState(false); const [query, setQuery] = useState(""); const options = CODE_LANGUAGES.filter((item) => item.includes(query.trim().toLowerCase())); const [active, setActive] = useState(0);
+  function choose(item: CodeLanguage) { onChange(item); setOpen(false); setQuery(""); }
+  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) { if (event.key === "ArrowDown") { event.preventDefault(); setOpen(true); setActive((value) => Math.min(value + 1, Math.max(options.length - 1, 0))); } else if (event.key === "ArrowUp") { event.preventDefault(); setOpen(true); setActive((value) => Math.max(value - 1, 0)); } else if (event.key === "Home") { event.preventDefault(); setActive(0); } else if (event.key === "End") { event.preventDefault(); setActive(Math.max(options.length - 1, 0)); } else if (event.key === "Enter" && open && options[active]) { event.preventDefault(); choose(options[active]); } else if (event.key === "Escape") { setOpen(false); setQuery(""); } }
+  return <div className="language-selector-wrapper" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) { setOpen(false); setQuery(""); } }}><label htmlFor={`${id}-input`} className="sr-only">Programming language</label><input id={`${id}-input`} className="language-select language-combobox" role="combobox" aria-controls={`${id}-list`} aria-expanded={open} aria-autocomplete="list" aria-activedescendant={open && options[active] ? `${id}-${options[active]}` : undefined} value={open ? query : language} disabled={disabled} onFocus={() => setOpen(true)} onChange={(event) => { setQuery(event.target.value); setOpen(true); setActive(0); }} onKeyDown={onKeyDown} placeholder="Language" />{open && <ul id={`${id}-list`} className="language-options" role="listbox" aria-label="Programming languages">{options.length === 0 ? <li className="language-empty" role="option" aria-selected="false" aria-disabled="true">No matching language</li> : options.map((item, index) => <li id={`${id}-${item}`} key={item} role="option" aria-selected={item === language} className={index === active ? "active" : ""} onMouseDown={(event) => event.preventDefault()} onClick={() => choose(item)}>{item}</li>)}</ul>}</div>;
 }

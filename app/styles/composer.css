@@ -80,6 +80,45 @@
   border-radius: 16px;
 }
 
+.policy-summary {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.policy-summary-eyebrow {
+  margin: 0;
+  color: var(--mineral);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.policy-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem 1rem;
+  margin: 0;
+}
+
+.policy-summary-grid div { min-width: 0; }
+.policy-summary-grid dt { color: var(--muted-ink); font-size: 0.75rem; }
+.policy-summary-grid dd { margin: 0.15rem 0 0; font-size: 0.9rem; overflow-wrap: anywhere; }
+
+.policy-advanced {
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+}
+
+.policy-advanced summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.policy-advanced summary::marker { color: var(--mineral); }
+.policy-advanced-body { display: grid; gap: 1.25rem; margin-top: 1rem; }
+
 .policy-fieldset {
   border: none;
   padding: 0;
@@ -95,6 +134,33 @@
   font-weight: 600;
   margin-bottom: 0.25rem;
   color: var(--ink);
+}
+
+.policy-label-with-info { display: flex; align-items: center; gap: .5rem; }
+.policy-info-button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-subtle);
+  color: var(--mineral-hover);
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  font-weight: 800;
+}
+.policy-info-button:hover { border-color: var(--mineral); background: var(--mist); }
+.policy-info-panel {
+  margin: .15rem 0 .25rem;
+  padding: .75rem .85rem;
+  border-left: 3px solid var(--mineral);
+  background: var(--surface-subtle);
+  color: var(--muted-ink);
+  font-size: .82rem;
+  line-height: 1.55;
 }
 
 .policy-radio-group {
@@ -266,6 +332,8 @@
   margin-bottom: 0.6rem;
 }
 
+.md-view-toggle [role="tab"] { min-height: 36px; }
+
 .md-view-option {
   border: none;
   background: transparent;
@@ -281,6 +349,13 @@
   background: var(--surface-subtle);
   color: var(--ink);
   font-weight: 600;
+}
+
+.md-view-option:focus-visible,
+.mode-tab:focus-visible,
+.language-combobox:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .md-split {
@@ -304,7 +379,20 @@
   background: var(--surface-subtle);
 }
 
+.composer-markdown-rendered ul,
+.composer-markdown-rendered ol {
+  margin: 0.75rem 0;
+  padding-left: 1.6rem;
+  list-style-position: outside;
+}
+
+.composer-markdown-rendered ul { list-style-type: disc; }
+.composer-markdown-rendered ol { list-style-type: decimal; }
+.composer-markdown-rendered li + li { margin-top: 0.25rem; }
+
 @media (max-width: 767px) {
+  .md-view-option.split-option { display: none; }
+
   .md-split {
     grid-template-columns: 1fr;
   }
@@ -312,6 +400,31 @@
   .md-split .composer-md-preview {
     max-height: 300px;
   }
+}
+
+.code-editor-wrap { position: relative; min-height: 260px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-subtle); }
+.code-editor-wrap .composer-textarea,
+.code-editor-highlight { box-sizing: border-box; margin: 0; min-height: 260px; width: 100%; padding: 1rem; border: 0; border-radius: 0; font-family: var(--font-mono); font-size: .9rem; line-height: 1.6; tab-size: 2; white-space: pre; overflow: auto; }
+.code-editor-highlight { position: absolute; inset: 0; pointer-events: none; color: var(--ink); }
+.code-editor-input { position: relative; z-index: 1; background: transparent; color: transparent; caret-color: var(--ink); resize: vertical; }
+.code-editor-input::selection { background: color-mix(in srgb, var(--mineral) 30%, transparent); color: transparent; }
+.language-options { position: absolute; z-index: 4; top: calc(100% + .25rem); left: 0; min-width: 12rem; max-height: 14rem; overflow: auto; margin: 0; padding: .25rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-bg); box-shadow: 0 8px 24px rgba(23,36,45,.16); list-style: none; }
+.language-options li { padding: .45rem .6rem; border-radius: 5px; font-family: var(--font-mono); font-size: .78rem; cursor: pointer; }
+.language-options li.active, .language-options li:hover { background: var(--surface-subtle); color: var(--ink); }
+.language-empty { color: var(--muted-ink); cursor: default !important; }
+
+.collaboration-section {
+  display: grid;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+}
+
+.collaboration-section legend {
+  padding: 0 0.35rem;
+  font-family: var(--font-display);
+  font-weight: 650;
 }
 
 /* Composer file drop zone */
@@ -472,59 +585,44 @@
   color: var(--muted-ink);
 }
 
-.markdown-link {
-  color: var(--mineral);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  transition: color 150ms ease;
-}
-
-.markdown-link:hover {
-  color: var(--mineral-hover);
-}
-
 /* File Attachment & Preview */
 
 /* Composer preview mirrors the same typography */
-.composer-md-preview {
-  background: var(--surface-subtle);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 1.5rem;
+.composer-markdown-rendered {
   line-height: 1.7;
   color: var(--ink);
   font-size: 0.95rem;
 }
 
-.composer-md-preview h1,
-.composer-md-preview h2,
-.composer-md-preview h3,
-.composer-md-preview h4,
-.composer-md-preview h5,
-.composer-md-preview h6 {
+.composer-markdown-rendered h1,
+.composer-markdown-rendered h2,
+.composer-markdown-rendered h3,
+.composer-markdown-rendered h4,
+.composer-markdown-rendered h5,
+.composer-markdown-rendered h6 {
   font-family: var(--font-display);
   font-weight: 700;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
 }
 
-.composer-md-preview h1:first-child,
-.composer-md-preview h2:first-child,
-.composer-md-preview h3:first-child {
+.composer-markdown-rendered h1:first-child,
+.composer-markdown-rendered h2:first-child,
+.composer-markdown-rendered h3:first-child {
   margin-top: 0;
 }
 
-.composer-md-preview p {
+.composer-markdown-rendered p {
   margin: 0.5rem 0;
 }
 
-.composer-md-preview ul,
-.composer-md-preview ol {
+.composer-markdown-rendered ul,
+.composer-markdown-rendered ol {
   padding-left: 1.5rem;
   margin: 0.5rem 0;
 }
 
-.composer-md-preview code {
+.composer-markdown-rendered code {
   font-family: var(--font-mono);
   font-size: 0.85em;
   background: var(--surface-bg);
@@ -533,13 +631,13 @@
   border: 1px solid var(--line);
 }
 
-.composer-md-preview pre code {
+.composer-markdown-rendered pre code {
   padding: 0;
   border: none;
   background: transparent;
 }
 
-.composer-md-preview blockquote {
+.composer-markdown-rendered blockquote {
   border-left: 3px solid var(--mineral);
   padding-left: 1rem;
   margin: 0.75rem 0;

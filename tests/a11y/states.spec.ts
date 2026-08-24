@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 const PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
-test("the factor gate has no critical accessibility violations", async ({ page }) => {
+test("the factor gate has no serious or critical accessibility violations", async ({ page }) => {
   test.setTimeout(60_000);
 
   await page.goto("/new");
@@ -19,10 +19,10 @@ test("the factor gate has no critical accessibility violations", async ({ page }
   await page.goto(shareLink);
   await expect(page.getByLabel("Password")).toBeVisible({ timeout: 20_000 });
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter((violation) => violation.impact === "critical")).toEqual([]);
+  expect(results.violations.filter((violation) => violation.impact === "critical" || violation.impact === "serious")).toEqual([]);
 });
 
-test("the fully opened share has no critical accessibility violations", async ({ page }) => {
+test("the fully opened share has no serious or critical accessibility violations", async ({ page }) => {
   test.setTimeout(60_000);
 
   await page.goto("/new");
@@ -44,10 +44,10 @@ test("the fully opened share has no critical accessibility violations", async ({
 
   await expect(page.getByText("A11y opened-view probe note.")).toBeVisible({ timeout: 20_000 });
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter((violation) => violation.impact === "critical")).toEqual([]);
+  expect(results.violations.filter((violation) => violation.impact === "critical" || violation.impact === "serious")).toEqual([]);
 });
 
-test("the discussion thread has no critical accessibility violations", async ({ page }) => {
+test("the discussion thread has no serious or critical accessibility violations", async ({ page }) => {
   test.setTimeout(90_000);
 
   await page.goto("/new");
@@ -69,5 +69,5 @@ test("the discussion thread has no critical accessibility violations", async ({ 
   await expect(thread.getByText("A11y probe reply")).toBeVisible({ timeout: 15_000 });
 
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter((violation) => violation.impact === "critical")).toEqual([]);
+  expect(results.violations.filter((violation) => violation.impact === "critical" || violation.impact === "serious")).toEqual([]);
 });

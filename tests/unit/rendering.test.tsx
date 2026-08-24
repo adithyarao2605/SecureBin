@@ -159,6 +159,7 @@ describe("Safe Markdown & Code Rendering (Day 3)", () => {
     it("offers a Download button that saves a blob under the mapped extension", () => {
       const createObjectURL = vi.fn(() => "blob:mock-url");
       const revokeObjectURL = vi.fn();
+      const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
       Object.defineProperty(URL, "createObjectURL", { value: createObjectURL, configurable: true });
       Object.defineProperty(URL, "revokeObjectURL", { value: revokeObjectURL, configurable: true });
 
@@ -168,6 +169,7 @@ describe("Safe Markdown & Code Rendering (Day 3)", () => {
 
       expect(createObjectURL).toHaveBeenCalledOnce();
       expect(downloadButton).toBeInTheDocument();
+      click.mockRestore();
     });
   });
 });

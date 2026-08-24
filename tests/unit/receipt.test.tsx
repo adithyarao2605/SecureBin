@@ -76,7 +76,7 @@ describe("Privacy receipt", () => {
     expect(
       screen.getByText("Enabled — revealed recipients can post encrypted replies")
     ).toBeInTheDocument();
-    expect(screen.getByText("300s from the first opening")).toBeInTheDocument();
+    expect(screen.getByText("5 minutes from the first opening")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Download receipt \(\.txt\)/iu })
     ).toBeInTheDocument();

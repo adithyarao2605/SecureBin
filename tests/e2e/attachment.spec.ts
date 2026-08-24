@@ -20,11 +20,9 @@ test("creates a share with an encrypted attachment and reveals both", async ({ p
       capturedBodies.push(request.postData() ?? "");
     }
   });
-  page.on("requestfailed", (request) => {
-    console.log(`[diag] FAILED ${request.method()} ${request.url()} :: ${request.failure()?.errorText}`);
-  });
-  page.on("console", (message) => {
-    if (message.type() === "error") console.log(`[diag] console.error: ${message.text().slice(0, 300)}`);
+  page.on("requestfailed", () => {
+    // Keep diagnostics capability- and URL-free; the assertion below reports
+    // the user-visible failure without copying request details into CI logs.
   });
 
   await page.goto("/new");

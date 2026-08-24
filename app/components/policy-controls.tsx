@@ -1,9 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import type {
   ExpiryPreset,
   PolicyDraft,
   RevealPreset,
   RevealWindowPreset,
 } from "../../lib/shares/policy-ui";
+import { formatExpiryLabel, formatRevealLimitLabel, resolveRevealWindowSeconds } from "../../lib/shares/policy-ui";
 
 export interface PolicyControlsProps {
   readonly draft: PolicyDraft;
@@ -12,6 +16,7 @@ export interface PolicyControlsProps {
 }
 
 export function PolicyControls({ draft, onChange, disabled = false }: PolicyControlsProps) {
+  const [releaseWindowInfoOpen, setReleaseWindowInfoOpen] = useState(false);
   // Preset wins when set; otherwise infer from maxReveals, falling through to
   // "custom" for a non-preset count so the custom input reflects its value.
   const currentRevealPreset: RevealPreset =
@@ -30,6 +35,18 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
 
   return (
     <div className="policy-controls-container">
+      <div className="policy-summary" aria-label="Active access policy">
+        <p className="policy-summary-eyebrow">Access policy</p>
+        <dl className="policy-summary-grid">
+          <div><dt>Available</dt><dd>{draft.availability === "now" ? "Immediately" : "Scheduled"}</dd></div>
+          <div><dt>Expires</dt><dd>{formatExpiryLabel(draft.expiryPreset, draft.customExpiryValue, draft.customExpiryUnit)}</dd></div>
+          <div><dt>Releases</dt><dd>{formatRevealLimitLabel(draft.maxReveals)}</dd></div>
+          <div><dt>Reveal window</dt><dd>{(() => { const seconds = resolveRevealWindowSeconds(draft.revealWindowPreset ?? "none", draft.customRevealWindowSeconds); return seconds === null ? "None" : seconds === "invalid" ? "Custom" : `${seconds}s`; })()}</dd></div>
+        </dl>
+      </div>
+      <details className="policy-advanced">
+        <summary>Customize policy</summary>
+        <div className="policy-advanced-body">
       {/* Availability Fieldset */}
       <fieldset className="policy-fieldset">
         <legend className="policy-legend">When can this share be opened?</legend>
@@ -176,7 +193,7 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
                 })
               }
             />
-            <span>Once — burn after opening</span>
+            <span>One-time reveal</span>
           </label>
           <label className="policy-radio-label">
             <input
@@ -301,9 +318,28 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
       <fieldset className="policy-fieldset">
         <legend className="policy-legend">When should further releases close?</legend>
         <div className="policy-input-group">
-          <label htmlFor="reveal-window-preset" className="policy-input-label">
-            Release window after the first opening
-          </label>
+          <div className="policy-label-with-info">
+            <label htmlFor="reveal-window-preset" className="policy-input-label">
+              Release window after the first opening
+            </label>
+            <button
+              type="button"
+              className="policy-info-button"
+              aria-label="About release windows"
+              aria-expanded={releaseWindowInfoOpen}
+              aria-controls="release-window-explanation"
+              onClick={() => setReleaseWindowInfoOpen((open) => !open)}
+            >
+              <span aria-hidden="true">i</span>
+            </button>
+          </div>
+          {releaseWindowInfoOpen && (
+            <p id="release-window-explanation" className="policy-info-panel">
+              The window starts with the first server-authorized ciphertext release. When it closes,
+              new releases become unavailable and this browser hides its open copy. SecureBin cannot
+              erase copies a recipient already saved.
+            </p>
+          )}
           <select
             id="reveal-window-preset"
             className="policy-select"
@@ -351,12 +387,9 @@ export function PolicyControls({ draft, onChange, disabled = false }: PolicyCont
             </div>
           )}
         </div>
-        <p className="policy-hint">
-          The window starts at the first opening. After it closes, new ciphertext releases stop.
-          Copies a recipient already saved cannot be erased.
-        </p>
       </fieldset>
+        </div>
+      </details>
     </div>
   );
 }
-

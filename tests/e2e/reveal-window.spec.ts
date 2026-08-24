@@ -22,6 +22,7 @@ test("closes further releases after the chosen window elapses", async ({ page })
 
   await page.goto("/new");
   await page.getByLabel("Note content").fill(NOTE);
+  await page.getByText("Customize policy", { exact: true }).click();
   await page
     .getByRole("group", { name: "How many times can the ciphertext be released?" })
     .getByText("3 reveals")
@@ -37,8 +38,9 @@ test("closes further releases after the chosen window elapses", async ({ page })
   await page.goto(shareHref);
   await revealFully(page);
   await expect(page.getByText(NOTE)).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText(/The sender set a release window/iu)).toBeVisible();
-  await expect(page.getByText(/Copies already saved cannot be erased\./iu)).toBeVisible();
+  await expect(page.getByText(/Release window ·/u)).toBeVisible();
+  await expect(page.getByText(/Closes at/iu)).toBeVisible();
+  await expect(page.getByText(/cannot erase copies\s+a recipient has already saved/iu)).toBeVisible();
 
   // A second tab inside the window still releases.
   const earlyPage = await page.context().newPage();
@@ -49,16 +51,10 @@ test("closes further releases after the chosen window elapses", async ({ page })
 
   // After the window closes, a fresh recipient is uniformly unavailable.
   await page.waitForTimeout(10_500);
+  await expect(page.getByText(NOTE)).not.toBeVisible();
+  await expect(page.getByText(/This release window closed/iu)).toBeVisible();
   const latePage = await page.context().newPage();
   await latePage.goto(shareHref);
-  const lateReveal = latePage.getByRole("button", { name: "Reveal" });
-  await expect(lateReveal).toBeVisible({ timeout: 20_000 });
-  await lateReveal.click();
-  // The confirm step may appear before the server classifies the share.
-  const lateConfirm = latePage.getByRole("button", { name: "Yes, reveal now" });
-  if (await lateConfirm.isVisible().catch(() => false)) {
-    await lateConfirm.click();
-  }
   await expect(
     latePage.getByText("This share is no longer available. Ask the sender for a new link.")
   ).toBeVisible({ timeout: 20_000 });

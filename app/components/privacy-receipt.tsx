@@ -38,6 +38,13 @@ function maskLabel(mask: string): string {
   }
 }
 
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds} seconds`;
+  if (seconds % 3600 === 0) return `${seconds / 3600} hour${seconds === 3600 ? "" : "s"}`;
+  if (seconds % 60 === 0) return `${seconds / 60} minute${seconds === 60 ? "" : "s"}`;
+  return `${seconds} seconds`;
+}
+
 /**
  * Privacy Receipt (T1 transparency requirement): what the browser protected,
  * the technical details, and an honest list of what infrastructure can still
@@ -83,7 +90,7 @@ export function PrivacyReceipt({ data }: { data: PrivacyReceiptData }) {
           <dd>
             {data.revealWindowSeconds == null
               ? "None — releases stop at expiry or revocation"
-              : `${data.revealWindowSeconds}s from the first opening`}
+              : `${formatDuration(data.revealWindowSeconds)} from the first opening`}
           </dd>
           <dt>Revocation</dt>
           <dd>You can revoke access from this device at any time</dd>
@@ -97,6 +104,9 @@ export function PrivacyReceipt({ data }: { data: PrivacyReceiptData }) {
           onClick={() => downloadReceipt(data)}
         >
           Download receipt (.txt)
+        </button>
+        <button type="button" className="action-button tertiary-button receipt-print" onClick={() => window.print()}>
+          Print receipt
         </button>
       </div>
     </details>
@@ -117,7 +127,7 @@ function downloadReceipt(data: PrivacyReceiptData): void {
     `Availability: ${data.availableAt ?? "Immediately"}`,
     `Expires: ${data.expiresAt ?? "Never"}`,
     `Reveals: ${data.maxReveals === null ? "Unlimited" : `Up to ${data.maxReveals}`}`,
-    `Release window: ${data.revealWindowSeconds == null ? "None" : `${data.revealWindowSeconds}s from first opening`}`,
+    `Release window: ${data.revealWindowSeconds == null ? "None" : `${formatDuration(data.revealWindowSeconds)} from first opening`}`,
     "Revocation: available on this device at any time",
     `Ciphertext fingerprint: ${data.fingerprint.slice(0, 16)}…`,
     "Infrastructure may still observe ciphertext sizes, timestamps, request timing, and access patterns.",

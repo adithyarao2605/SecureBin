@@ -21,16 +21,23 @@ export function PrivacyVeil({ children }: { children: ReactNode }) {
       if (event.key === "Escape") hide();
     };
     const onBlur = () => hide();
+    const onVisibility = () => { if (document.visibilityState !== "visible") hide(); };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [hide]);
 
   function toggle() {
-    setVeiled((current) => !current);
+    setVeiled((current) => {
+      const next = !current;
+      if (!next) requestAnimationFrame(() => toggleRef.current?.focus());
+      return next;
+    });
   }
 
   return (
