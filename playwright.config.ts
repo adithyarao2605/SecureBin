@@ -12,7 +12,6 @@ export default defineConfig({
   reporter: process.env.CI ? "dot" : "list",
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100",
-    launchOptions: chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : undefined,
     trace: "retain-on-failure"
   },
   webServer: {
@@ -21,5 +20,7 @@ export default defineConfig({
     url: "http://127.0.0.1:3100",
     timeout: 120_000
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }]
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"], launchOptions: chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : undefined } }
+  ]
 });

@@ -50,7 +50,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.115.0
       - name: Activate the package manager declared by package.json
         shell: bash
         run: |
@@ -64,13 +64,19 @@ jobs:
         run: |
           supabase start
           supabase status -o env | grep '^SERVICE_ROLE_KEY=' | tr -d '"' | sed 's/^/SUPABASE_/' >> "$GITHUB_ENV"
+      - name: Replay every migration from a clean database
+        run: pnpm supabase:reset
       - name: Run Supabase pgTAP database tests
         run: pnpm supabase:test
       - name: Run validation gate
         run: pnpm validate
+      - name: Scan source and tests for secret-bearing diagnostics
+        run: pnpm audit:source
+      - name: Audit production dependencies
+        run: pnpm audit:prod
       - name: Run integration tests
         run: pnpm test:integration
-      - name: Install the pinned browser runtime
+      - name: Install the pinned browser runtimes
         run: pnpm exec playwright install --with-deps chromium
       - name: Run end-to-end tests
         run: pnpm test:e2e
@@ -87,4 +93,3 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
-

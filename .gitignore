@@ -24,6 +24,7 @@ test-results/
 .supabase/
 supabase/.temp/
 supabase/.branches/
+.securebin-local/
 
 # Secrets and machine-local configuration. Keep the names, never values.
 .env

@@ -79,6 +79,17 @@ def main() -> int:
     if main_audit_trail not in workflow_text:
         fail("CI must preserve completed main-branch runs while cancelling superseded PR runs")
 
+    if "version: 2.115.0" not in workflow_text or "version: latest" in workflow_text:
+        fail("CI must pin the Supabase CLI to the repository version")
+    for command in ("pnpm audit:prod", "pnpm audit:source", "playwright install --with-deps chromium"):
+        if command not in workflow_text:
+            fail(f"CI must run {command}")
+
+    package_text = (ROOT / "package.json").read_text(encoding="utf-8")
+    for script in ("audit:prod", "audit:source"):
+        if f'"{script}"' not in package_text:
+            fail(f"package.json is missing {script} script")
+
     print("OK: reproducibility and documentation contract is valid")
     return 0
 
