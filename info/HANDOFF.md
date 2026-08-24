@@ -2,6 +2,25 @@
 
 Updated: 2026-08-24 (Asia/Kolkata) — **post–Day 6 handoff**
 
+## Pre-freeze audit addendum
+
+- Three read-only subagent audits covered Day 6/docs completeness,
+  backend/security/database behavior, and frontend/accessibility quality.
+- The consolidated remediation order is now recorded in
+  `docs/before-day-7.md`. Day 6 is implemented in broad shape but its exit gate
+  is not considered green until that plan and the separately planned UI
+  overhaul are complete.
+- Audit-time validation on `dev@719af57`: `pnpm validate` passed (170 unit
+  tests across 27 files plus build), 16 integration tests passed, 145 pgTAP
+  tests passed, 17 development E2E passed, 17 production-build E2E passed,
+  7 accessibility tests passed, and reproducibility verification passed.
+  These suites need the new regression cases listed in the remediation plan.
+- Highest-priority findings: retry leases currently precede revoke/expiry
+  checks; unlock-only creates are rejected; attachment cleanup candidates are
+  dropped; closed-window status remains active; immutable idempotency checks
+  are incomplete; and an E2E diagnostic logs raw discussion capabilities.
+- Existing user work in `app/page.tsx` remains unmodified and uncommitted.
+
 ## Read this first
 
 - Active roadmap: **`info/plan_v3.md`**. Status: **Phases A–F complete**
