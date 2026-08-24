@@ -36,9 +36,9 @@ Updated: 2026-08-24 (Asia/Kolkata)
 - `9b4104d` — `feat(ui): unify quiet-proof experience`
 - `9895544` — `ci: harden reproducible release gates`
 
-Documentation synchronization and the authorized historical message cleanup
-follow these implementation commits. Remote push and CI state must be recorded
-after they are verified.
+Documentation synchronization follows these implementation commits. Historical
+commit messages remain unchanged; no history rewrite was performed. Remote push
+and CI state must be recorded after they are verified.
 
 The results include the pre-freeze regression additions. The local release
 gate is closed green; hosted evidence remains owner-operated.

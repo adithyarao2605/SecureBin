@@ -25,9 +25,10 @@ clearly marked as future work.
 Days 1 through 6 implementation work is on `dev`. The pre-freeze lifecycle,
 recovery, parcel, composer, accessibility, self-host, and quiet-proof UI work
 is implemented; 191 unit tests, 16 integration tests, 155 pgTAP assertions
-after clean reset/replay, reproducibility, dependency, and source/log audits
-pass. Final browser/Axe/visual and hosted evidence remains to be recorded in
-[`before-day-7.md`](before-day-7.md). Day 7/release-freeze work has not begun.
+after clean reset/replay, 19 development and 19 production-build Playwright
+tests, 7 Axe checks, nine reviewed screenshots, reproducibility, dependency,
+and source/log audits pass. Hosted migration, promotion, cleanup, and smoke
+evidence remains owner-operated. Release-freeze work has not begun.
 
 The production incident is closed.
 
