@@ -43,14 +43,14 @@ export function AttachmentZone({
         Attach file (max 10 MB)
       </label>
       <p className="file-drop-hint">Drag files here or use the button below</p>
-      {files.length === 0 && (
+      {files.length < 5 && (
         <button
           type="button"
           className="action-button secondary-button attach-file-btn"
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
         >
-          Attach files (max 10 MB each, up to 5)
+          {files.length === 0 ? "Attach files (max 10 MB each, up to 5)" : "+ Add another file"}
         </button>
       )}
       {files.map((file, index) => (

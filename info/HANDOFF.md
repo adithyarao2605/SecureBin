@@ -2,6 +2,13 @@
 
 Updated: 2026-08-24 (Asia/Kolkata)
 
+## UI Harmonization Update
+
+- Reverted `app/styles/landing.css` to restore the original, preferred landing page design language.
+- Harmonized `/new` workspace and its subviews (`base.css`, `composer.css`, `history.css`, `receipt-actions.css`, `viewer.css`) to match the landing page's floating pill navigation header, pill action buttons, monospace uppercase metadata badges, and refined surface card styling.
+- Terminated running background dev server (`pnpm dev`).
+- Local validation suite: `pnpm validate` (191 unit tests, TypeScript typecheck, ESLint, source audit, and Next.js production build) all passed with zero errors.
+
 ## Pre-freeze remediation update
 
 - Delegated Luna audits covered backend lifecycle/upload recovery, UI/accessibility, CI, documentation, and the final diff. `backend_remaining_build`, `history_composer_build`, and `viewer_parcel_build` completed bounded implementation slices; the read-only backend, UI, browser-failure, documentation, and `final_diff_review` audits supplied and verified the remaining review list. The final review found no security or retained-requirement regression.

@@ -14,7 +14,7 @@
   --line: color-mix(in srgb, var(--ink) 18%, transparent);
   --muted-ink: color-mix(in srgb, var(--ink) 64%, transparent);
   --surface-bg: #ffffff;
-  --surface-subtle: #f6faff;
+  --surface-subtle: #f8f6f1;
   --focus-ring: #2f7071;
 
   --font-display: "Bricolage Grotesque", ui-rounded, "Arial Rounded MT Bold", sans-serif;
