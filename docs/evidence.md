@@ -2,20 +2,26 @@
 
 This file consolidates reproducible evidence. It records observations, not a substitute for rerunning the gates at the release commit.
 
-## Last full local baseline
+## Pre-freeze verification snapshot
 
-Recorded 2026-08-24 on `dev`:
+Recorded 2026-08-24 on `dev` after the forward migration and remediation work:
 
 | Gate | Result |
 | --- | ---: |
-| Unit | 170 tests / 27 files |
-| Integration | 16 tests |
-| PostgreSQL pgTAP | 145 tests / 9 files |
-| Playwright E2E | 17 development + 17 production-build |
-| Axe | 7 tests |
+| Unit / validate | 191 tests; lint, typecheck, build pass |
+| Integration | 16 tests pass |
+| PostgreSQL pgTAP | 155 assertions after clean reset/replay |
+| Dependency audit | pass |
+| Source/log audit | pass |
 | Reproducibility | pass |
+| Development Playwright | 19 Chromium tests pass |
+| Production-build Playwright | 19 Chromium tests pass |
+| Axe | 7 checks pass; zero serious or critical findings |
+| Visual review | 9 route/state screenshots reviewed at desktop, 320 px, and 390 px in light/dark and reduced-motion states |
 
-The audit subsequently identified missing regression paths. A green baseline does not make Day 6 complete; run every case in [`before-day-7.md`](before-day-7.md) before freezing.
+The complete local pre-freeze gate is green. Remote migration, production
+promotion, and hosted cleanup verification remain owner-operated. Release-freeze
+work has not begun.
 
 ## Concurrency evidence
 
@@ -28,7 +34,9 @@ pnpm test:integration
 pnpm supabase:test
 ```
 
-Pre-freeze evidence must add same-token retry after revocation, expiry, and window closure; closed-window status parity; unlock-only shares; full create idempotency mismatches; and partial attachment cleanup/recovery.
+The new pre-freeze regression suite covers same-token retry after revocation,
+expiry, and window closure; closed-window status parity; unlock-only shares;
+full create idempotency mismatches; and partial attachment cleanup/recovery.
 
 ## Performance baseline
 

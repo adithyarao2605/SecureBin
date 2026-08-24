@@ -1,5 +1,18 @@
 You are performing a COMPLETE UI/UX redesign and visual-system unification of the existing SecureBin web application.
 
+Implementation status (2026-08-24, `dev`): the quiet-proof shell, light-first
+Linen palette, shared brand treatment, evidence rail/mobile status strip,
+proofline, route/state surfaces, Markdown/code authoring, parcel utility,
+viewer, receipt, keyboard behavior, and failure/empty/loading states are
+implemented in the current application. The Chromium desktop/mobile,
+keyboard, reduced-motion, Axe, and nine-screenshot visual review is green.
+Owner-hosted verification remains an operational action. This document
+describes completed pre-freeze UI work; release-freeze work has not begun.
+The public landing route now closely matches the supplied Stitch technical
+split screenshot, including its rounded header shell, two-column hero/editor,
+proof chips, capability grid, self-host panel, density, and footer. Its copy,
+commands, links, colors, and behavior remain SecureBin's verified contracts.
+
 I am providing a ZIP exported from Google Stitch.
 
 Treat the Stitch ZIP as the PRIMARY VISUAL / DESIGN REFERENCE for:
@@ -2252,4 +2265,3 @@ Existing application:
 existing SecureBin colors + significantly improved design discipline, hierarchy, consistency, responsiveness, and UX.
 
 Do not declare the redesign complete until the entire product has been reviewed route-by-route and state-by-state.
-![alt text](image.png)

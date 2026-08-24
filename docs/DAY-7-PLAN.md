@@ -49,7 +49,7 @@ parser validation. Findings fixed or explicitly accepted in HANDOFF.
 
 ## 5. Browser/mobile/accessibility/performance
 
-Chromium full flow; Firefox smoke; WebKit if practical. Mobile 320/390px on
+Chromium full flow; WebKit if practical. Mobile 320/390px on
 View Share, Markdown, code, attachments, discussions, receipt, reveal window —
 no horizontal overflow. Keyboard-only create/reveal; visible focus; labels;
 error association; confirm dialogs announce and move focus; Axe critical = 0

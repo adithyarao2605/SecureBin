@@ -2,37 +2,53 @@
 
 Updated: 2026-08-24 (Asia/Kolkata)
 
+## Pre-freeze remediation update
+
+- Delegated Luna audits covered backend lifecycle/upload recovery, UI/accessibility, CI, documentation, and the final diff. `backend_remaining_build`, `history_composer_build`, and `viewer_parcel_build` completed bounded implementation slices; the read-only backend, UI, browser-failure, documentation, and `final_diff_review` audits supplied and verified the remaining review list. The final review found no security or retained-requirement regression.
+- Added forward migration `20260901000000_pre_freeze_lifecycle_uploads.sql` for lifecycle parity, idempotency, unlock-only creation, and upload recovery.
+- Rebuilt the public landing route and header against the supplied Stitch technical-split screenshot while retaining truthful SecureBin copy, verified local commands, real routes, bundled assets, responsive behavior, and WCAG AA contrast.
+- Local verification: clean migration reset/replay passed; pgTAP passed (155 assertions); integration passed (16 tests); `pnpm validate` passed (191 unit tests plus lint, typecheck, and production build); development and production-build Playwright passed (19 each); Axe passed (7 checks, zero serious/critical findings); nine desktop/mobile/light/dark/reduced-motion screenshots were reviewed; reproducibility, dependency, and source/log audits passed.
+- Remaining owner work: apply the remote migration, promote the reviewed commit, and verify the hosted cleanup schedule and production smoke path.
+
 ## Current state
 
 - Branch: `dev`. `main` was not inspected for this audit.
-- Days 1–5 are implemented. Day 6 surfaces are present, but the exit gate is not green.
-- Required work is consolidated in `docs/before-day-7.md`; the release freeze remains blocked.
+- Pre-freeze implementation and its complete local gate are green on `dev`; hosted owner evidence remains open.
+- Required work is consolidated in `docs/before-day-7.md`; Day 7/release-freeze work has not begun.
 - The user's existing uncommitted `app/page.tsx` change was preserved.
-- Local documentation commit `e075ff0` added the pre-freeze plan. It is not claimed as pushed; verify `git status`, `git log`, and `git rev-parse origin/dev` before handoff.
+- Do not claim a hosted deployment until the owner verifies the remote migration, production promotion, cleanup schedule, and smoke path.
 
-## Last validation baseline
+## Current core validation
 
-- `pnpm validate`: pass — 170 unit tests / 27 files plus build.
+- `pnpm validate`: pass — 191 unit tests plus lint, typecheck, and production build.
 - `pnpm test:integration`: 16 pass.
-- `pnpm supabase:test`: 145 pgTAP pass / 9 files.
-- `pnpm test:e2e`: 17 pass.
-- `pnpm test:e2e:prod`: 17 pass.
-- `pnpm test:a11y`: 7 pass.
+- `pnpm supabase:reset` followed by `pnpm supabase:test`: 155 pgTAP assertions pass.
+- `pnpm audit:prod` and `pnpm audit:source`: pass.
+- `pnpm test:e2e`: 19 pass (Chromium).
+- `pnpm test:e2e:prod`: 19 pass (Chromium production build).
+- `pnpm test:a11y`: 7 pass; zero serious or critical Axe findings.
+- Visual review: 9 screenshots pass across major routes/states, 320/390 px mobile, light/dark, and reduced motion.
 - `.venv/bin/python scripts/verify-reproducibility.py`: pass.
 
-These results predate the required regression additions and do not make Day 6 complete.
+## Latest implementation commits
 
-## Audit findings that block freeze
+- `e4f7fa0` — `fix(security): close lifecycle gaps`
+- `9b4104d` — `feat(ui): unify quiet-proof experience`
+- `9895544` — `ci: harden reproducible release gates`
 
-- Retry leases precede revocation/expiry checks; closed windows are absent from status parity.
-- Unlock-only create fails; create idempotency comparisons are incomplete.
-- Attachment cleanup candidates are dropped and lost Storage PUT responses are not recovery-safe.
-- Parcel schema/bounds are insufficiently strict and evidence is incomplete.
-- An E2E diagnostic logs discussion capabilities/request bodies.
-- Release-window countdown/automatic hide is incomplete.
-- Composer modes are visually identical; detector is unwired; language expansion and accessible picker are pending.
-- Keyboard tabs, destructive-action confirmations, clipboard failures, receipt print, mobile evidence rail, and serious Axe handling need work.
-- Self-host scripts can retain unsafe environment state, use development mode, and stop arbitrary port owners.
+Documentation synchronization and the authorized historical message cleanup
+follow these implementation commits. Remote push and CI state must be recorded
+after they are verified.
+
+The results include the pre-freeze regression additions. The local release
+gate is closed green; hosted evidence remains owner-operated.
+
+## Resolved pre-freeze audit findings
+
+- Forward lifecycle/upload migration and regression coverage now enforce retry leases, closed-window parity, unlock-only creation, complete idempotency, attachment cleanup retry, and lost-response upload recovery.
+- Envelope v2/HKDF labels, factor-mask/file/content vectors, canonical unlock format, strict discussion/parcel validation, and language IDs are frozen in code and tests.
+- Release-window countdown/hide cleanup, parcel restore, Markdown/code modes, searchable picker, keyboard tabs, confirmations/fallbacks, receipt print, evidence rail, and isolated production-shaped self-host scripts are implemented.
+- Discussion diagnostics and proxy trust are redacted/configured; source and dependency audits pass.
 
 See `docs/before-day-7.md` for exact fixes and regression requirements.
 
@@ -62,5 +78,5 @@ The supplied Stitch export was reviewed read-only. `docs/UI-REDESIGN.md` is now 
 - Defer Secure Drop, recipient acknowledgment, and ciphertext-size padding.
 - Keep envelope v2 and deployed v2 HKDF labels during remediation.
 - Keep current 27-character/124-random-bit unlock format and correct documentation/tests.
-- Preserve language IDs `0–8`; append new IDs only with vectors and cached-client incompatibility documented.
+- Preserve language IDs `0–8`; append IDs `9–20` only with vectors and cached-client incompatibility documented.
 - Commit subjects are Conventional Commits without day numbers.

@@ -1,6 +1,6 @@
 # SecureBin active roadmap
 
-Status: **Days 1–5 implemented; Day 6 surfaces present but remediation and UI gates open; release freeze blocked.**
+Status: **Pre-freeze implementation and local evidence complete on `dev`; owner-hosted actions pending; release freeze not started.**
 
 This is the single active roadmap. Historical plans remain in Git history and are summarized in `docs/archive/history.md`. Security/protocol contracts live in `docs/architecture.md`; experience requirements live in `docs/SPEC.md`; current operational state lives in `info/HANDOFF.md`.
 
@@ -11,7 +11,11 @@ This is the single active roadmap. Historical plans remain in Git history and ar
 - Password and two-channel factors, QR/native sharing, receipts, custom reveal counts, Never expiry, Markdown/code modes, multi-file ZIP, encrypted discussions with edit/delete, and batch status.
 - Public `/` and sharing app `/new`; release-window, privacy-veil, portable-parcel, local-manager, and self-host surfaces exist on `dev`.
 
-Passing legacy gates do not prove the latest surfaces complete. The 2026-08-24 audit found security and product regressions.
+The pre-freeze gate passes locally: 191 unit tests, 16 integration tests,
+155 pgTAP assertions after clean reset/replay, 19 development and 19
+production-build Playwright tests, 7 Axe checks, nine reviewed screenshots,
+production build, reproducibility, dependency, and source/log audits. Remote
+migration, production promotion, and hosted cleanup verification remain owner-operated.
 
 ## Required before the release freeze
 
@@ -24,11 +28,12 @@ Execute [`../docs/before-day-7.md`](../docs/before-day-7.md) in this order:
 5. Complete the full light-first quiet-proof UI overhaul in [`../docs/UI-REDESIGN.md`](../docs/UI-REDESIGN.md): one primary surface, narrow evidence rail, compact mobile status strip, restrained proofline, honest copy, keyboard/mobile/contrast/reduced-motion coverage.
 6. Rerun every local gate and record exact evidence.
 
-No release-freeze work begins until these items are green.
+No release-freeze work has begun; it begins only after the final evidence items
+are green.
 
 ## Release freeze
 
-Follow [`../docs/DAY-7-PLAN.md`](../docs/DAY-7-PLAN.md): no features; fresh-clone reproduction; full test matrix; security and secret/log audit; Chromium/Firefox/mobile/keyboard/Axe checks; production-shaped performance; repository cleanup; judge demo rehearsal; owner migration/deployment evidence; rubric mapping; early submission buffer.
+Follow [`../docs/DAY-7-PLAN.md`](../docs/DAY-7-PLAN.md): no features; fresh-clone reproduction; full test matrix; security and secret/log audit; Chromium/mobile/keyboard/Axe checks; production-shaped performance; repository cleanup; judge demo rehearsal; owner migration/deployment evidence; rubric mapping; early submission buffer.
 
 ## Deferred by decision
 

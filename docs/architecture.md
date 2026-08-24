@@ -7,7 +7,13 @@ This document is the technical source of truth for the judged SecureBin release.
 
 ### Current implementation status
 
-Days 1–5 are implemented. Day 6 surfaces exist on `dev`, but the pre-freeze audit found lifecycle, cleanup, recovery, parcel-validation, accessibility, and evidence gaps. The authoritative open gate is [`before-day-7.md`](before-day-7.md); the UI overhaul is part of that gate. The last baseline passed 170 unit, 16 integration, 145 pgTAP, 17 development E2E, 17 production-build E2E, and 7 Axe tests, but those suites do not yet cover every audited regression.
+Days 1–6 implementation work is on `dev`. Lifecycle, cleanup, recovery,
+parcel-validation, accessibility, and quiet-proof UI remediation is implemented
+and covered by 191 unit tests, 16 integration tests, 155 pgTAP assertions after
+clean reset/replay, 19 development and 19 production-build Playwright tests,
+7 Axe checks, nine reviewed screenshots, reproducibility, dependency, and
+source/log audits. Hosted migration and cleanup verification remains owner-operated;
+release-freeze work has not begun.
 
 Development happens on the `dev` branch (Vercel preview); `main` is production.
 
@@ -95,7 +101,7 @@ The service-role credential is imported only from server-only modules. Browser c
 - `publicId`: 16 random bytes encoded as unpadded base64url, generated before encryption.
 - `linkSecret`: 32 random bytes encoded in the URL fragment.
 - `passwordKey`: optional 32-byte PBKDF2-HMAC-SHA-256 output.
-- `unlockSecret`: optional 16-byte random value encoded with Crockford Base32 plus a check symbol.
+- `unlockSecret`: optional 124-bit random value encoded as exactly 27 characters with the canonical base-28 alphabet and check symbol defined below.
 - `passwordSalt`: optional 16-byte random PBKDF2 salt.
 - `hkdfSalt`: 16-byte random HKDF salt shared by the content and file envelopes.
 - `factorMask`: `link`, `link+password`, `link+unlock`, or `link+password+unlock`.
@@ -108,13 +114,13 @@ Password input is encoded as UTF-8 without Unicode normalization, limited to 1,0
 2. Build the HKDF input keying material by concatenation in factor-mask order: `linkSecret` (32 bytes) ‖ `passwordKey` (32 bytes, only when the mask includes password) ‖ `unlockBytes` (16 bytes, only when the mask includes unlock). The raw password and the printable unlock code are never used as HKDF input directly.
 3. Derive independent 32-byte AES keys from that IKM with HKDF-SHA-256 and `hkdfSalt`, using labels per envelope version:
    - v1: `securebin/v1/{factorMask}/content` and `/file`
-   - v2: `securebin/v2/link/content` and `securebin/v2/link/file`. Optional factor material remains in the IKM and the factor mask remains authenticated in AAD; deployed labels do not vary by mask.
+   - v2: `securebin/v2/link/content` and `securebin/v2/link/file` for every factor mask. Optional factor material remains in the IKM and the factor mask remains authenticated in AAD; deployed labels never vary by mask.
    - Discussions (v2 only): `securebin/v2/{factorMask}/discussion`, derived from the raw 32-byte discussion capability instead of the share IKM, with the comment thread's own random HKDF salt.
 4. Future object types receive new labels; a label is never repurposed.
 
 ### Unlock code format
 
-Two-channel unlock codes carry 124 random bits as 26 canonical base-28 body characters plus one checksum character — 27 characters total. Codes are normalized to uppercase before validation; non-canonical body digits or a wrong checksum are rejected before network access. Only the decoded 16 bytes enter key derivation.
+Two-channel unlock codes carry 124 random bits as 26 canonical base-28 body characters plus one checksum character — exactly 27 uppercase characters total. Separators, whitespace, lowercase, ambiguous aliases, non-canonical body digits, and wrong checksums are rejected before network access. Only the decoded 16 bytes enter key derivation.
 
 ### Envelope
 
@@ -140,7 +146,7 @@ The `kdfParameters` AAD slot is the validated compact JSON string for the suppor
 
 ### Day 3 protocol v2 decision
 
-Version 1 content remains the shipped legacy whole-note plaintext format; a v1 file envelope is invalid. Version 2 content and file envelopes retain the same exact field names and AES-GCM/AAD construction but use `securebin/v2/{factorMask}/content` and `/file` HKDF labels.
+Version 1 content remains the shipped legacy whole-note plaintext format; a v1 file envelope is invalid. Version 2 content and file envelopes retain the same exact field names and AES-GCM/AAD construction and use the fixed deployed `securebin/v2/link/content` and `securebin/v2/link/file` HKDF labels for all factor masks.
 
 #### Content Envelope v2 Framing (Magic `SBCT`)
 
@@ -189,7 +195,7 @@ A new forward migration replaces SQL validation and size constraints atomically 
 
 - Viewer: `/s/{publicId}#{base64url(linkSecret)}`.
 - The fragment remains in the address so refresh and copy-link behavior remain reliable. An explicit “hide key from address” action may remove it after warning that refresh will then require the original link.
-- Two-channel unlock codes use the Crockford format specified under "Unlock code format" above.
+- Two-channel unlock codes use the canonical 27-character base-28 format specified under "Unlock code format" above.
 - The deletion capability is 32 random bytes. Its SHA-256 digest is sent at creation; the raw capability is shown once and supplied only for deletion.
 
 ## 6. Data Model
@@ -387,7 +393,7 @@ The public API deliberately collapses expired, exhausted, revoked, and missing r
 
 - Render plain text with text nodes, never `innerHTML`.
 - Parse Markdown with an established library, sanitize with an allowlist, strip remote images, and add `rel="noopener noreferrer"` to links.
-- Syntax highlighting currently uses browser-only `lowlight@3.3.0` with language IDs `0–8`. A detector helper exists but is not wired into the composer; overlay highlighting, conservative detection, and append-only IDs `9–20` are pre-freeze work. Its HAST is rebuilt as React from only text/root and `span` nodes with allowlisted `hljs-*` classes; any other node/property falls back to plaintext.
+- Syntax highlighting uses browser-only `lowlight@3.3.0` with language IDs `0–20`; IDs `9–20` are append-only and older clients reject unknown IDs. Conservative, debounced Code-mode detection and the accessible overlay editor are implemented. Its HAST is rebuilt as React from only text/root and `span` nodes with allowlisted `hljs-*` classes; any other node/property falls back to plaintext.
 - Server-only `@supabase/supabase-js@2.50.0` implements signed private Storage operations so credential/header details are not reimplemented. It is instantiated only in server modules with session persistence and refresh disabled; the dependency is advisory-checked before installation.
 - Preview only raster image formats decoded through Blob URLs and plain text rendered as text. Never inline SVG, HTML, or active documents.
 - Revoke Blob URLs when views unmount, before replacing an existing URL, and immediately after a download click completes.
@@ -437,4 +443,4 @@ Reveal limits cannot prevent a recipient from copying already released ciphertex
 | Compromised application/browser/device | CSP, no remote assets on secret routes, reviewed Web Crypto boundary | Runtime compromise can capture plaintext and keys. |
 | Logs and diagnostics | Redacted structured logging and no-store responses | Provider network metadata remains visible. |
 
-The lifecycle and sequence sections above replace the former standalone diagram, threat-model, and policy-state documents. Intended release-window semantics are contractual: revocation and expiry override retry leases immediately; the same authorized token may retry across reveal exhaustion or window closure only during its five-minute lease. Current `dev` code must be brought back to this contract by the pre-freeze remediation migration and regression tests.
+The lifecycle and sequence sections above replace the former standalone diagram, threat-model, and policy-state documents. Release-window semantics are contractual: revocation and expiry override retry leases immediately; the same authorized token may retry across reveal exhaustion or window closure only during its five-minute lease. The forward pre-freeze migration and regression suite enforce this contract on `dev`.

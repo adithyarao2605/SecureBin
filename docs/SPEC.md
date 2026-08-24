@@ -22,7 +22,12 @@ clearly marked as future work.
 
 ## Progress snapshot
 
-Days 1 through 5 are implemented. Day 6 surfaces exist on `dev`, but audited lifecycle, recovery, validation, accessibility, and evidence gaps keep its exit gate open. The last baseline passed 170 unit, 16 integration, 145 pgTAP, 17 development E2E, 17 production-build E2E, and 7 Axe tests; missing regression cases are listed in [`before-day-7.md`](before-day-7.md). The code-language detector helper is not yet wired, and the agreed Markdown/code composer improvements remain pre-freeze work.
+Days 1 through 6 implementation work is on `dev`. The pre-freeze lifecycle,
+recovery, parcel, composer, accessibility, self-host, and quiet-proof UI work
+is implemented; 191 unit tests, 16 integration tests, 155 pgTAP assertions
+after clean reset/replay, reproducibility, dependency, and source/log audits
+pass. Final browser/Axe/visual and hosted evidence remains to be recorded in
+[`before-day-7.md`](before-day-7.md). Day 7/release-freeze work has not begun.
 
 The production incident is closed.
 

@@ -6,9 +6,9 @@ It modernises the problem behind CloneFest 2.0's PrivateBin challenge without co
 
 ## Release status
 
-Days 1–5 are implemented. The Day 6 surfaces—release windows, privacy veil, portable `.securebin` parcels, local share management, expanded receipts, and self-host tooling—are present on `dev`, but the audit found lifecycle, compatibility, recovery, accessibility, and evidence gaps. Day 6 is **not yet a green release gate**. Complete [`docs/before-day-7.md`](docs/before-day-7.md) and the quiet-proof UI overhaul before starting the release freeze.
+The complete pre-freeze implementation is present on `dev`, including lifecycle parity, strict parcels, upload recovery, cleanup retry, release-window veil behavior, local history, receipts, isolated self-host tooling, and the quiet-proof redesign. The local gate is green: 191 unit tests, 16 integration tests, 155 pgTAP assertions after a clean reset/replay, 19 development Playwright tests, 19 production-build Playwright tests, 7 Axe checks, nine reviewed route/state screenshots, reproducibility, dependency, and source/log audits all pass.
 
-The last full local baseline passed 170 unit, 16 integration, 145 pgTAP, 17 development E2E, 17 production-build E2E, and 7 Axe tests. Those tests do not cover every audited regression; the pre-freeze plan names the missing cases. Production promotion and verification of the newest migrations remain owner-operated. Development is on `dev`; `main` is not the current audit target.
+Production promotion, the newest remote database migration, and hosted cleanup verification remain owner-operated. Release-freeze work has not started.
 
 ## Why the design matters
 
@@ -18,7 +18,7 @@ The last full local baseline passed 170 unit, 16 integration, 145 pgTAP, 17 deve
 - Decrypted Markdown and attachments cross explicit safe-render boundaries.
 - The product states its limits: a compromised browser can capture plaintext, recipients can save copies, and infrastructure can observe traffic metadata.
 
-The UI contract is light-first **quiet proof**: Linen, Ink, Mineral, Copper, and Mist; one primary surface plus a narrow evidence rail; a compact mobile status strip; and one restrained browser → sealed parcel → recipient proofline. It avoids cyberpunk decoration and never presents a visual as cryptographic evidence. See [`docs/SPEC.md`](docs/SPEC.md).
+The UI contract is light-first **quiet proof**: Linen, Ink, Mineral, Copper, and Mist; a Stitch-matched compact technical landing shell with an OLED dark counterpart; one primary application surface plus a narrow evidence rail; a compact mobile status strip; and one restrained browser → sealed parcel → recipient proofline. It avoids cyberpunk decoration and never presents a visual as cryptographic evidence. See [`docs/SPEC.md`](docs/SPEC.md).
 
 ## Documentation
 

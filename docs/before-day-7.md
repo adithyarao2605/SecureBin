@@ -1,17 +1,20 @@
 # Before Day 7: pre-freeze remediation plan
 
-Status: **required before the Day 7 release freeze**. This plan applies to
+Status: **complete locally; owner-operated hosted evidence remains**. This plan applies to
 `dev`; production promotion remains owner-operated. Preserve unrelated user
 changes, especially the existing edit to `app/page.tsx`.
 
 ## Outcome
 
-Days 1–5 are implemented. The Day 6 surfaces exist and the current automated
-gates pass, but the 2026-08-24 audit found lifecycle, cleanup, compatibility,
-evidence, and UI defects that prevent calling the Day 6 exit gate green.
+Days 1–6 implementation work is on `dev`. Lifecycle, cleanup, compatibility,
+upload recovery, parcel, self-host, composer, accessibility, and quiet-proof UI
+remediation is implemented and covered by the complete local gate. Chromium
+development and production Playwright, mobile, keyboard, reduced-motion,
+screenshot, and Axe evidence is recorded. Only the remote migration,
+production promotion, and hosted cleanup verification remain owner-operated.
 
-Complete every required section below, then complete the separately planned
-UI overhaul. Only after both gates are green may Day 7 begin. Optional roadmap
+The implementation and UI gates are green locally. Release-freeze work may
+begin only as a separate owner-authorized phase. Optional roadmap
 items remain deferred: Secure Drop, recipient acknowledgment, ciphertext-size
 padding, accounts/rooms, and the other explicit `info/plan_v3.md` non-goals.
 
@@ -183,6 +186,13 @@ Extend upload-reservation responses to:
   implementation receive their own plan.
 
 ## 6. Exit gate
+
+Implementation status on `dev` (2026-08-24): clean reset and forward replay,
+155 pgTAP assertions, 16 integration tests, 191 unit tests, production build,
+reproducibility, dependency audit, and source/log audit pass. The browser
+matrix, production-build browser run, final Axe review, screenshot review, and
+owner-hosted migration/deployment checks are intentionally still marked open
+until their exact outputs are recorded. This is not a release-freeze start.
 
 1. Clean local Supabase reset and forward-migration replay.
 2. pgTAP, integration, crypto vectors, lint, typecheck, unit tests, and build.
