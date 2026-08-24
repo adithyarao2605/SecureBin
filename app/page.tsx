@@ -73,7 +73,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="landing-footer"><div><strong>SecureBin</strong><span>© 2026 SecureBin. Zero-knowledge by design.</span></div><nav aria-label="Footer navigation"><a href="#features">Features</a><Link href="/new#how-it-works">Docs</Link><a href="#self-hosting">Self-Hosting</a><a href="https://github.com/adithyarao2605/SecureBin" rel="noreferrer">GitHub</a><a href="mailto:hello@securebin.dev">Contact</a></nav></footer>
+      <footer className="landing-footer"><div><strong>SecureBin</strong><span>Zero-knowledge by design.</span></div><nav aria-label="Footer navigation"><a href="#features">Features</a><Link href="/new#how-it-works">Docs</Link><a href="#self-hosting">Self-Hosting</a><a href="https://github.com/adithyarao2605/SecureBin" rel="noreferrer">GitHub</a></nav></footer>
     </div>
   );
 }
