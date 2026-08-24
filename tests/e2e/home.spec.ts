@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("the composer explains the browser-side trust boundary and defaults to light theme", async ({ page }) => {
+test("the composer explains the browser-side trust boundary and defaults to dark theme", async ({ page }) => {
   await page.goto("/new");
 
   await expect(page.getByRole("heading", { name: "Create a private share" })).toBeVisible();
@@ -9,9 +9,8 @@ test("the composer explains the browser-side trust boundary and defaults to ligh
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Create share" })).toBeEnabled();
 
-  // The quiet-proof experience is light-first.
   const rootClass = await page.locator("html").getAttribute("class");
-  expect(rootClass).toContain("light");
+  expect(rootClass).toContain("dark");
 });
 
 test("the user can toggle between dark and light theme", async ({ page }) => {
@@ -20,14 +19,14 @@ test("the user can toggle between dark and light theme", async ({ page }) => {
   const toggleBtn = page.getByRole("button", { name: /switch to light theme|switch to dark theme/i });
   await expect(toggleBtn).toBeVisible();
 
-  // Click to switch to dark theme.
-  await toggleBtn.click();
-  await expect(page.locator("html")).toHaveClass(/dark/);
-
-  // Click to switch back to light theme.
+  // Click to switch to light theme.
   await toggleBtn.click();
   await expect(page.locator("html")).toHaveClass(/light/);
-  await expect(page.locator("html")).not.toHaveClass(/dark/);
+
+  // Click to switch back to dark theme.
+  await toggleBtn.click();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expect(page.locator("html")).not.toHaveClass(/light/);
 });
 
 test("the user can navigate between application tabs", async ({ page }) => {

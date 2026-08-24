@@ -7,15 +7,6 @@ async function capture(page: import("@playwright/test").Page, testInfo: import("
 test("major public and application views retain the quiet-proof visual contract", async ({ page }, testInfo) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Share sensitive information/u })).toBeVisible();
-  const lightTokens = await page.evaluate(() => {
-    const style = getComputedStyle(document.documentElement);
-    return [style.getPropertyValue("--linen").trim(), style.getPropertyValue("--ink").trim(), style.getPropertyValue("--mineral").trim()];
-  });
-  expect(lightTokens).toEqual(["#f4f0e8", "#17242d", "#2f7071"]);
-  await capture(page, testInfo, "landing-light-desktop");
-
-  await page.getByRole("button", { name: "Switch to dark theme" }).click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   const darkTokens = await page.evaluate(() => {
     const style = getComputedStyle(document.documentElement);
     return [style.getPropertyValue("--linen").trim(), style.getPropertyValue("--ink").trim(), style.getPropertyValue("--mineral").trim()];
@@ -24,6 +15,15 @@ test("major public and application views retain the quiet-proof visual contract"
   await capture(page, testInfo, "landing-dark-desktop");
 
   await page.getByRole("button", { name: "Switch to light theme" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  const lightTokens = await page.evaluate(() => {
+    const style = getComputedStyle(document.documentElement);
+    return [style.getPropertyValue("--linen").trim(), style.getPropertyValue("--ink").trim(), style.getPropertyValue("--mineral").trim()];
+  });
+  expect(lightTokens).toEqual(["#f4f0e8", "#17242d", "#2f7071"]);
+  await capture(page, testInfo, "landing-light-desktop");
+
+  await page.getByRole("button", { name: "Switch to dark theme" }).click();
   await page.goto("/new");
   await expect(page.getByRole("heading", { name: "Create a private share" })).toBeVisible();
   await capture(page, testInfo, "new-create-desktop");

@@ -18,10 +18,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const nonce = headersList.get("x-nonce") ?? undefined;
   // Pre-hydration theme script (nonce'd, CSP-safe): applies the stored theme
   // before first paint so there is no wrong-theme flash on any route.
-  const themeScript = `try{var t=localStorage.getItem("securebin-theme");if(t==="light"||t==="dark"){document.documentElement.className=t;document.documentElement.dataset.theme=t;}}catch(e){}`;
+  const themeScript = `try{var t=localStorage.getItem("securebin-theme");if(t==="light"||t==="dark"){document.documentElement.className=t;document.documentElement.dataset.theme=t;}else{document.documentElement.className="dark";document.documentElement.dataset.theme="dark";}}catch(e){}`;
 
   return (
-    <html lang="en" className="light" data-theme="light" suppressHydrationWarning>
+    <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
       <head>
         <script nonce={nonce} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
