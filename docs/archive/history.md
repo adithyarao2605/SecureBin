@@ -1,12 +1,8 @@
-# Delivery history
+# Delivery History & Completed Capabilities
 
-This is the compact historical record for completed delivery work. Full superseded plans, standalone contracts, and evidence snapshots are retained under [`legacy/`](legacy/); they are historical records, not active contracts, and their original relative links may describe the former layout.
+All implemented features, protocols, and test evidence are consolidated in the top-level **[`history.md`](../../history.md)**.
 
-- Foundation: reproducible tooling, browser cryptography, strict envelopes, uniform recipient failures, CI, and deployment scaffolding.
-- Lifecycle: atomic reveal authorization, expiry/revocation, retry leases, upload reservations, cleanup, observability, and local share history.
-- Content and files: SBCT framing, plain/Markdown/code render boundaries, encrypted private attachments, previews, and download.
-- Protection and UX: password and two-channel factors, QR/native share, Privacy Receipt, failure states, keyboard/mobile/a11y coverage.
-- Extended sharing: custom reveal counts, Never expiry, Markdown authoring, multiple files, ZIP download, encrypted discussions, comment edit/delete, and batch manager status.
-- Day 6 surfaces: release window, privacy veil, portable parcel, self-host scripts, local manager, and expanded privacy UX were implemented on `dev`. The 2026-08-24 audit found gaps; [`../before-day-7.md`](../before-day-7.md) is the authoritative completion gate.
-
-The 2026-08-21 create failure and its resolved investigation order remain in [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md).
+- **Cryptography & Security:** Zero-knowledge Web Crypto, AES-256-GCM, HKDF key derivation, PBKDF2 password hashing, 27-character base-28 second-channel unlock codes, SBPX parcel v1 container, and sanitized render boundaries.
+- **Backend & Database:** Atomic PostgreSQL RPCs (`create_share`, `reveal_share`, `revoke_share`), 5-minute retry leases, multi-file attachments (slots 0–4), encrypted threaded discussions, and calibrated rate limiting.
+- **UI & Experience:** Unified quiet-proof design system, default OLED dark theme with light theme toggle, plain/markdown/code editors, scheduled start, custom/never expiry, release-window countdown with privacy veil auto-hide, Privacy Receipt, and Share History Desk.
+- **Production Incident Record:** The resolved 2026-08-21 create failure investigation is recorded in [`PRODUCTION-INCIDENT.md`](PRODUCTION-INCIDENT.md).

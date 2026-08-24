@@ -18,20 +18,20 @@ Production promotion, the newest remote database migration, and hosted cleanup v
 - Decrypted Markdown and attachments cross explicit safe-render boundaries.
 - The product states its limits: a compromised browser can capture plaintext, recipients can save copies, and infrastructure can observe traffic metadata.
 
-The UI contract is light-first **quiet proof**: Linen, Ink, Mineral, Copper, and Mist; a Stitch-matched compact technical landing shell with an OLED dark counterpart; one primary application surface plus a narrow evidence rail; a compact mobile status strip; and one restrained browser → sealed parcel → recipient proofline. It avoids cyberpunk decoration and never presents a visual as cryptographic evidence. See [`docs/SPEC.md`](docs/SPEC.md).
+The UI contract is **quiet proof** with default dark mode: Linen, Ink, Mineral, Copper, and Mist; a Stitch-matched compact technical landing shell with high-contrast light and dark themes; one primary application surface plus a narrow evidence rail; a compact mobile status strip; and one restrained browser → sealed parcel → recipient proofline. It avoids cyberpunk decoration and never presents a visual as cryptographic evidence. See [`docs/SPEC.md`](docs/SPEC.md).
 
 ## Documentation
 
+- [`history.md`](history.md) — consolidated record of all implemented features, cryptographic protocols, database functions, and testing evidence.
+- [`bugs.md`](bugs.md) — active tracker for known visual, interaction, and editor issues.
+- [`LAST_DAY.md`](LAST_DAY.md) — Day 7 release freeze plan, fresh-clone verification, and demo script.
 - [`docs/architecture.md`](docs/architecture.md) — protocol, trust model, lifecycle state, schemas, APIs, diagrams, and residual risks.
 - [`docs/SPEC.md`](docs/SPEC.md) — standing product and experience contract.
 - [`docs/deployment.md`](docs/deployment.md) — fresh clone, local/self-hosted, preview, production, and owner handoff.
 - [`docs/evidence.md`](docs/evidence.md) — reproducible test, concurrency, performance, and demo evidence.
-- [`docs/before-day-7.md`](docs/before-day-7.md) — required remediation and UI gate.
-- [`docs/UI-REDESIGN.md`](docs/UI-REDESIGN.md) — implementation-ready visual-system and route/state redesign contract.
-- [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) — final release-freeze checklist.
 - [`info/plan_v3.md`](info/plan_v3.md) — active roadmap and scope decisions.
 - [`info/HANDOFF.md`](info/HANDOFF.md) — branch, validation, owner actions, and recent work.
-- [`docs/archive/history.md`](docs/archive/history.md) and [`docs/archive/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md) — delivery history and the resolved production incident.
+- [`docs/archive/PRODUCTION-INCIDENT.md`](docs/archive/PRODUCTION-INCIDENT.md) — resolved production incident investigation.
 
 `info/plan.md`, `info/Challenge_1.md`, `info/clonefest.md`, and `info/PrivateBin/` are read-only references, not implementation contracts.
 
