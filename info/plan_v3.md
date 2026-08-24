@@ -21,7 +21,7 @@ Execute [`../docs/before-day-7.md`](../docs/before-day-7.md) in this order:
 2. Freeze deployed cryptographic labels/unlock format and add strict vectors and parcel validation.
 3. Complete release-window hide behavior, parcel evidence, upload recovery, safe self-hosting, and cleanup scheduling.
 4. Fix Markdown/code composer distinction, detection/language expansion, tabs, feedback, destructive actions, receipts, and accessibility gates.
-5. Complete the full light-first quiet-proof UI overhaul: one primary surface, narrow evidence rail, compact mobile status strip, restrained proofline, honest copy, keyboard/mobile/contrast/reduced-motion coverage.
+5. Complete the full light-first quiet-proof UI overhaul in [`../docs/UI-REDESIGN.md`](../docs/UI-REDESIGN.md): one primary surface, narrow evidence rail, compact mobile status strip, restrained proofline, honest copy, keyboard/mobile/contrast/reduced-motion coverage.
 6. Rerun every local gate and record exact evidence.
 
 No release-freeze work begins until these items are green.

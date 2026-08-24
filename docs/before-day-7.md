@@ -175,7 +175,7 @@ Extend upload-reservation responses to:
   download/print, self-hosting, unlock-only shares, cleanup, and failures.
 - Record delegated audits and final validation in `info/HANDOFF.md`. Never
   modify `info/plan.md`.
-- Complete a separately designed **full UI overhaul before Day 7**. It must
+- Complete the **full UI overhaul in [`UI-REDESIGN.md`](UI-REDESIGN.md) before Day 7**. It must
   follow the light-first quiet-proof contract: one primary surface plus a
   narrow evidence rail, compact mobile status strip, restrained proofline,
   honest copy, responsive keyboard use, and no regression to security or

@@ -27,6 +27,7 @@ The UI contract is light-first **quiet proof**: Linen, Ink, Mineral, Copper, and
 - [`docs/deployment.md`](docs/deployment.md) — fresh clone, local/self-hosted, preview, production, and owner handoff.
 - [`docs/evidence.md`](docs/evidence.md) — reproducible test, concurrency, performance, and demo evidence.
 - [`docs/before-day-7.md`](docs/before-day-7.md) — required remediation and UI gate.
+- [`docs/UI-REDESIGN.md`](docs/UI-REDESIGN.md) — implementation-ready visual-system and route/state redesign contract.
 - [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) — final release-freeze checklist.
 - [`info/plan_v3.md`](info/plan_v3.md) — active roadmap and scope decisions.
 - [`info/HANDOFF.md`](info/HANDOFF.md) — branch, validation, owner actions, and recent work.

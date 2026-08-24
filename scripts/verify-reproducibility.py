@@ -24,6 +24,7 @@ REQUIRED_FILES = (
     ".github/dependabot.yml",
     "docs/SPEC.md",
     "docs/before-day-7.md",
+    "docs/UI-REDESIGN.md",
     "docs/DAY-7-PLAN.md",
     "docs/evidence.md",
     "docs/archive/history.md",

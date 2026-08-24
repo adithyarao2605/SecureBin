@@ -45,7 +45,9 @@ Three delegated read-only audits mapped references, checked code/document contra
 - merged validation, concurrency, performance, and demo material into `docs/evidence.md`;
 - summarized historical day plans in `docs/archive/history.md` while retaining the production incident;
 - retained the separately requested pre-freeze checklist and final freeze plan;
-- removed the superseded plan v2 and standalone Day 6 plan; Git history preserves them.
+- removed the superseded plan v2 and standalone Day 6 plan from the active set; exact snapshots remain under `docs/archive/legacy/`.
+
+The supplied Stitch export was reviewed read-only. `docs/UI-REDESIGN.md` is now the implementation contract for the UI gate: it preserves the current route topology and application palette, makes light-first quiet proof the default, keeps OLED treatment to the landing's dark counterpart, and excludes fictional API/Docker content, activity receipts/acknowledgment, named policy presets, unsupported discussion formatting, and nonexistent product routes.
 
 ## Owner actions
 
