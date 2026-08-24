@@ -1,3 +1,9 @@
+import {
+  MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES,
+  MAX_DISCUSSION_NICKNAME_CIPHERTEXT_BYTES,
+  validateDiscussionEnvelope,
+} from "../crypto/discussion";
+
 /**
  * Server-facing share contracts.
  *
@@ -327,6 +333,9 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
   ) {
     return null;
   }
+  if (value.discussionCapabilityHash !== undefined && value.discussionCapabilityHash !== null && !isDigest(value.discussionCapabilityHash)) {
+    return null;
+  }
 
   return {
     publicId: value.publicId,
@@ -339,9 +348,9 @@ export function parseCreateShareInput(value: unknown, nowMillis: number = Date.n
     unlockRequired: value.unlockRequired,
     idempotencyKeyHash: value.idempotencyKeyHash,
     discussionCapabilityHash:
-      typeof value.discussionCapabilityHash === "string" && isDigest(value.discussionCapabilityHash)
-        ? value.discussionCapabilityHash
-        : null,
+      value.discussionCapabilityHash === undefined || value.discussionCapabilityHash === null
+        ? null
+        : value.discussionCapabilityHash,
     revealWindowSeconds:
       value.revealWindowSeconds === undefined || value.revealWindowSeconds === null
         ? null
@@ -387,6 +396,14 @@ export function parseAddCommentInput(value: unknown): AddCommentInput | null {
     !isRecord(value.bodyEnvelope)
   ) return null;
   if (value.nicknameEnvelope !== undefined && value.nicknameEnvelope !== null && !isRecord(value.nicknameEnvelope)) return null;
+  try {
+    validateDiscussionEnvelope(value.bodyEnvelope, MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES);
+    if (value.nicknameEnvelope !== undefined && value.nicknameEnvelope !== null) {
+      validateDiscussionEnvelope(value.nicknameEnvelope, MAX_DISCUSSION_NICKNAME_CIPHERTEXT_BYTES);
+    }
+  } catch {
+    return null;
+  }
   if (value.parentCommentId !== undefined && value.parentCommentId !== null && typeof value.parentCommentId !== "string") return null;
   return value as unknown as AddCommentInput;
 }
@@ -399,6 +416,11 @@ export function parseEditCommentInput(value: unknown): EditCommentInput | null {
     !isDigest(value.editToken) ||
     !isRecord(value.bodyEnvelope)
   ) return null;
+  try {
+    validateDiscussionEnvelope(value.bodyEnvelope, MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES);
+  } catch {
+    return null;
+  }
   return value as unknown as EditCommentInput;
 }
 

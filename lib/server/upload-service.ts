@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { UploadReservationInput } from "@/lib/shares/contracts";
 import { parseIsoUtc } from "@/lib/shares/contracts";
 import { createRpcClient, type RpcClient, RpcRequestError } from "./supabase-rpc";
@@ -14,8 +15,8 @@ export class UploadServiceError extends Error {
 }
 
 export interface UploadReservationResult {
-  readonly uploadUrl: string;
-  readonly token?: string;
+  readonly uploadUrl: string | null;
+  readonly alreadyUploaded: boolean;
   readonly expiresAt: string;
 }
 
@@ -45,6 +46,7 @@ export function createUploadService(
     async createReservation(input) {
       let objectPath: string;
       let expiresAt: string;
+      let alreadyUploaded = false;
 
       try {
         const value = await rpc.call("create_upload_reservation", {
@@ -55,10 +57,16 @@ export function createUploadService(
           p_attachment_slot: input.attachmentSlot,
         });
         const row = firstRow(value);
-        if (!row || typeof row.object_path !== "string" || !row.expires_at) {
+        if (
+          !row ||
+          typeof row.object_path !== "string" ||
+          !row.expires_at ||
+          typeof row.already_uploaded !== "boolean"
+        ) {
           throw new UploadServiceError("dependency");
         }
         objectPath = row.object_path;
+        alreadyUploaded = row.already_uploaded;
         const parsedExpiry = parseIsoUtc(row.expires_at);
         if (!parsedExpiry) throw new UploadServiceError("dependency");
         expiresAt = parsedExpiry;
@@ -78,13 +86,13 @@ export function createUploadService(
         throw new UploadServiceError("dependency");
       }
 
+      if (alreadyUploaded) {
+        return { uploadUrl: null, alreadyUploaded: true, expiresAt };
+      }
+
       try {
         const signed = await storage.createSignedUpload(objectPath);
-        return {
-          uploadUrl: signed.url,
-          token: signed.token,
-          expiresAt,
-        };
+        return { uploadUrl: signed.url, alreadyUploaded: false, expiresAt };
       } catch {
         throw new UploadServiceError("dependency");
       }

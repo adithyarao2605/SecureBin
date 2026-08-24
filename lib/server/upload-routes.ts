@@ -1,5 +1,5 @@
 import { errorResponse, jsonResponse, readJsonBody } from "./http";
-import { readServerConfig } from "./config";
+import { readServerConfig, type ProxyTrust } from "./config";
 import { networkDiscriminator } from "./hashing";
 import { parseUploadReservationInput } from "@/lib/shares/contracts";
 import { createUploadService, UploadServiceError, type UploadService } from "./upload-service";
@@ -12,6 +12,7 @@ export interface UploadRouteDependencies {
   readonly uploadService: UploadService;
   readonly shareService: ShareService;
   readonly rateLimitHmacKey: string;
+  readonly proxyTrust?: ProxyTrust;
 }
 
 export function defaultUploadRouteDependencies(): UploadRouteDependencies {
@@ -20,6 +21,7 @@ export function defaultUploadRouteDependencies(): UploadRouteDependencies {
     uploadService: createUploadService(),
     shareService: createShareService(),
     rateLimitHmacKey: config.rateLimitHmacKey,
+    proxyTrust: config.proxyTrust,
   };
 }
 
@@ -29,7 +31,7 @@ export function createPostUploadHandler(
   return async (request) => {
     let allowed: boolean;
     try {
-      const discriminator = networkDiscriminator(request, dependencies.rateLimitHmacKey);
+      const discriminator = networkDiscriminator(request, dependencies.rateLimitHmacKey, dependencies.proxyTrust);
       allowed = await dependencies.shareService.consumeRateLimit(discriminator, "upload", 30);
     } catch {
       return errorResponse("server_error", 503);
@@ -52,7 +54,7 @@ export function createPostUploadHandler(
       const result = await dependencies.uploadService.createReservation(input);
       return jsonResponse({
         uploadUrl: result.uploadUrl,
-        token: result.token,
+        alreadyUploaded: result.alreadyUploaded,
         expiresAt: result.expiresAt,
       }, 201);
     } catch (error) {

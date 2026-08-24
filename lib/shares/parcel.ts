@@ -1,5 +1,5 @@
 import { utf8Decode, utf8Encode } from "../crypto/encoding";
-import { validateContentEnvelope, validateFileEnvelope } from "../crypto/envelope";
+import { validateContentEnvelope, validateFileEnvelope, validatePublicId } from "../crypto/envelope";
 import { MAX_FILE_CIPHERTEXT_SIZE } from "../crypto/file";
 
 /**
@@ -15,7 +15,7 @@ import { MAX_FILE_CIPHERTEXT_SIZE } from "../crypto/file";
 export const PARCEL_MAGIC = new Uint8Array([0x53, 0x42, 0x50, 0x58]); // "SBPX"
 export const PARCEL_VERSION = 0x01;
 
-const MAX_PARCEL_BYTES = 64 * 1024 * 1024; // 10 MiB plaintext cap × 5 + envelopes
+export const MAX_PARCEL_BYTES = 64 * 1024 * 1024; // 10 MiB plaintext cap × 5 + envelopes
 const MAX_POLICY_JSON_BYTES = 4 * 1024;
 // A maximal content envelope (512 KiB ciphertext base64url + metadata) is
 // ~700 KB; allow headroom so every share the composer can seal also imports.
@@ -28,6 +28,7 @@ export interface ParcelAttachment {
 }
 
 export interface Parcel {
+  readonly version: typeof PARCEL_VERSION;
   readonly policy: {
     /** Public-ID context required as the envelopes' AES-GCM additional data.
      *  Not a capability: without the link secret it opens nothing. */
@@ -60,6 +61,39 @@ interface ParcelInput {
   }>;
 }
 
+function validTimestamp(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(value) && Number.isFinite(Date.parse(value));
+}
+
+function validatePolicy(value: unknown): asserts value is Parcel["policy"] {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) throw new ParcelError("Parcel metadata is invalid.");
+  const record = value as Record<string, unknown>;
+  const keys = Object.keys(record).sort();
+  if (keys.join(",") !== "availableAt,createdAt,expiresAt,maxReveals,publicId,revealWindowSeconds") throw new ParcelError("Parcel metadata is invalid.");
+  try { validatePublicId(record.publicId as string); } catch { throw new ParcelError("Parcel metadata is invalid."); }
+  for (const key of ["availableAt", "expiresAt", "createdAt"]) {
+    const item = record[key];
+    if (item !== null && !validTimestamp(item)) throw new ParcelError("Parcel metadata is invalid.");
+  }
+  if (record.maxReveals !== null && (typeof record.maxReveals !== "number" || !Number.isInteger(record.maxReveals) || record.maxReveals < 1 || record.maxReveals > 100)) throw new ParcelError("Parcel metadata is invalid.");
+  if (record.revealWindowSeconds !== null && (typeof record.revealWindowSeconds !== "number" || !Number.isInteger(record.revealWindowSeconds) || record.revealWindowSeconds < 10 || record.revealWindowSeconds > 86_400)) throw new ParcelError("Parcel metadata is invalid.");
+  if (record.availableAt !== null && record.expiresAt !== null && Date.parse(record.availableAt as string) >= Date.parse(record.expiresAt as string)) throw new ParcelError("Parcel metadata is invalid.");
+}
+
+function validateFactorConsistency(
+  contentEnvelope: ReturnType<typeof validateContentEnvelope>,
+  attachments: ReadonlyArray<{ envelope: ReturnType<typeof validateFileEnvelope> }>
+): void {
+  for (const attachment of attachments) {
+    if (attachment.envelope.factorMask !== contentEnvelope.factorMask) {
+      throw new ParcelError("Parcel encrypted objects use different factor policies.");
+    }
+    if (attachment.envelope.passwordSalt !== contentEnvelope.passwordSalt) {
+      throw new ParcelError("Parcel encrypted objects use different password salts.");
+    }
+  }
+}
+
 function writeU32(target: Uint8Array, offset: number, value: number): number {
   new DataView(target.buffer, target.byteOffset, target.byteLength).setUint32(offset, value, false);
   return offset + 4;
@@ -78,23 +112,35 @@ function lengthPrefixed(bytes: Uint8Array): Uint8Array[] {
 
 /** Encode a parcel from validated share material. Throws ParcelError on overflow. */
 export function encodeParcel(input: ParcelInput): Uint8Array {
-  if (!/^[A-Za-z0-9_-]{22}$/.test(input.publicId)) throw new ParcelError("Invalid public id.");
-  const policyBytes = utf8Encode(JSON.stringify({ ...input.policy, publicId: input.publicId }));
+  try { validatePublicId(input.publicId); } catch { throw new ParcelError("Invalid public id."); }
+  const policy = { ...input.policy, publicId: input.publicId };
+  validatePolicy(policy);
+  const policyBytes = utf8Encode(JSON.stringify(policy));
   if (policyBytes.length > MAX_POLICY_JSON_BYTES) throw new ParcelError("Parcel policy metadata too large.");
 
-  const contentEnvelope = validateContentEnvelope(input.contentEnvelope) as unknown as Record<string, unknown>;
+  const contentEnvelope = validateContentEnvelope(input.contentEnvelope);
   const contentEnvelopeBytes = utf8Encode(JSON.stringify(contentEnvelope));
 
+  if (input.attachments.length > 5) throw new ParcelError("Too many attachments.");
+  const slots = new Set<number>();
   const attachments = input.attachments.map((attachment, index) => {
-    const envelope = validateFileEnvelope(attachment.envelope) as unknown as Record<string, unknown>;
+    const envelope = validateFileEnvelope(attachment.envelope);
     if (!Number.isInteger(attachment.slot) || attachment.slot < 0 || attachment.slot > 4) {
       throw new ParcelError("Attachment slot out of range.");
     }
-    if (attachment.ciphertext.length === 0 || attachment.ciphertext.length > MAX_FILE_CIPHERTEXT_SIZE) {
+    if (slots.has(attachment.slot)) throw new ParcelError("Duplicate attachment slot.");
+    slots.add(attachment.slot);
+    if (attachment.ciphertext.length < 16 || attachment.ciphertext.length > MAX_FILE_CIPHERTEXT_SIZE) {
       throw new ParcelError(`Attachment ${index} ciphertext size out of bounds.`);
     }
-    return { slot: attachment.slot, envelopeBytes: utf8Encode(JSON.stringify(envelope)), ciphertext: attachment.ciphertext };
+    return {
+      slot: attachment.slot,
+      envelope,
+      envelopeBytes: utf8Encode(JSON.stringify(envelope)),
+      ciphertext: attachment.ciphertext,
+    };
   });
+  validateFactorConsistency(contentEnvelope, attachments);
 
   const chunks: Uint8Array[] = [];
   chunks.push(PARCEL_MAGIC);
@@ -160,21 +206,7 @@ export function decodeParcel(bytes: Uint8Array): Parcel {
     if (policyLength > MAX_POLICY_JSON_BYTES || cursor + policyLength > bytes.length) throw new ParcelError();
     const policy = JSON.parse(utf8Decode(bytes.subarray(cursor, cursor + policyLength))) as Parcel["policy"];
     cursor += policyLength;
-    if (
-      !policy ||
-      typeof policy !== "object" ||
-      !(
-        typeof policy.publicId === "string" &&
-        /^[A-Za-z0-9_-]{22}$/.test(policy.publicId) &&
-        (policy.availableAt === null || typeof policy.availableAt === "string") &&
-        (policy.expiresAt === null || typeof policy.expiresAt === "string") &&
-        (policy.maxReveals === null || typeof policy.maxReveals === "number") &&
-        (policy.revealWindowSeconds === null || typeof policy.revealWindowSeconds === "number") &&
-        (policy.createdAt === null || typeof policy.createdAt === "string")
-      )
-    ) {
-      throw new ParcelError("Parcel metadata is invalid.");
-    }
+    validatePolicy(policy);
 
     const envelopeLength = readU32(view, cursor);
     cursor += 4;
@@ -199,15 +231,18 @@ export function decodeParcel(bytes: Uint8Array): Parcel {
       cursor += attachmentEnvelopeLength;
       const ciphertextLength = readU32(view, cursor);
       cursor += 4;
-      if (ciphertextLength === 0 || ciphertextLength > bytes.length - cursor) throw new ParcelError();
+      if (ciphertextLength < 16 || ciphertextLength > MAX_FILE_CIPHERTEXT_SIZE || ciphertextLength > bytes.length - cursor) throw new ParcelError();
       const ciphertext = bytes.slice(cursor, cursor + ciphertextLength);
       cursor += ciphertextLength;
       attachments.push({ slot, envelope, ciphertext });
     }
 
+    if (new Set(attachments.map((attachment) => attachment.slot)).size !== attachments.length) throw new ParcelError();
+    validateFactorConsistency(contentEnvelope, attachments);
+
     if (cursor !== bytes.length) throw new ParcelError();
 
-    return { policy, contentEnvelope, attachments };
+    return { version: PARCEL_VERSION, policy, contentEnvelope, attachments };
   } catch (error) {
     if (error instanceof ParcelError) throw error;
     throw new ParcelError();

@@ -9,7 +9,6 @@ import {
 } from "./encoding";
 import {
   canonicalAad,
-  CONTENT_HKDF_LABEL_V1,
   CONTENT_HKDF_LABEL_V2,
   MAX_CONTENT_BYTES,
   newContentEnvelope,
@@ -52,8 +51,12 @@ async function deriveContentKey(
   version: 1 | 2,
   options?: { mask?: FactorMask; ikmOverride?: Uint8Array }
 ): Promise<CryptoKey> {
-  const mask: FactorMask = options?.mask ?? "link";
-  const label = `securebin/v${version}/${mask}/content`;
+  // v2 object labels are deployed protocol constants.  Optional factors are
+  // already domain-separated in the IKM and authenticated by AAD; they must
+  // not change the v2 HKDF info string.
+  const label = version === 2
+    ? CONTENT_HKDF_LABEL_V2
+    : `securebin/v1/${options?.mask ?? "link"}/content`;
   const rawIkm = options?.ikmOverride
     ? bytesToArrayBuffer(options.ikmOverride)
     : bytesToArrayBuffer(validateLinkSecret(linkSecret));

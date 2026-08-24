@@ -240,7 +240,7 @@ export function validateFileEnvelope(value: unknown, requireCiphertext = false):
     ) {
       throw new EnvelopeValidationError("Invalid file envelope PBKDF2 block.");
     }
-    decodeBytes(value.passwordSalt, "password salt");
+    requireBytes(value.passwordSalt, PASSWORD_SALT_BYTES, "password salt");
   } else {
     if (Object.keys(value.kdfParameters).length !== 0 || value.passwordSalt !== null) {
       throw new EnvelopeValidationError("Invalid file envelope factor metadata.");
@@ -333,8 +333,14 @@ function kdfFields(options?: EnvelopeKdfOptions): {
   const factorMask: EnvelopeFactorMask = options?.factorMask ?? CONTENT_FACTOR_MASK;
   const hasPassword = factorMask.includes("password");
   const rawSalt = options?.passwordSalt ?? null;
-  const passwordSalt =
-    hasPassword && rawSalt ? (typeof rawSalt === "string" ? rawSalt : bytesToBase64Url(rawSalt)) : null;
+  let passwordSalt: string | null = null;
+  if (hasPassword && rawSalt) {
+    const salt = typeof rawSalt === "string" ? requireBytes(rawSalt, PASSWORD_SALT_BYTES, "password salt") : rawSalt;
+    if (salt.length !== PASSWORD_SALT_BYTES) {
+      throw new EnvelopeValidationError("Invalid password salt length.");
+    }
+    passwordSalt = bytesToBase64Url(salt);
+  }
   return {
     factorMask,
     passwordSalt,

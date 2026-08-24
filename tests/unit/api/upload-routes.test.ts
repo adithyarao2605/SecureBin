@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createPostUploadHandler,
@@ -27,7 +27,7 @@ function validUploadPayload(overrides: Record<string, unknown> = {}) {
     idempotencyKeyHash: digest,
     fileEnvelope: validFileEnvelope,
     expectedCiphertextSize: 1024,
-        attachmentSlot: 0,
+    attachmentSlot: 0,
     ...overrides,
   };
 }
@@ -40,20 +40,20 @@ function uploadDependencies(
     rateLimitHmacKey: "test-hmac-key",
     shareService: {
       consumeRateLimit: vi.fn(async () => rateLimitAllowed),
-       createShare: vi.fn(),
-       getStatus: vi.fn(),
-       getStatusBatch: vi.fn(),
-       reveal: vi.fn(),
-       addComment: vi.fn(),
-       editComment: vi.fn(),
-       deleteComment: vi.fn(),
-       listComments: vi.fn(),
+      createShare: vi.fn(),
+      getStatus: vi.fn(),
+      getStatusBatch: vi.fn(),
+      reveal: vi.fn(),
+      addComment: vi.fn(),
+      editComment: vi.fn(),
+      deleteComment: vi.fn(),
+      listComments: vi.fn(),
       revoke: vi.fn(),
     },
     uploadService: {
       createReservation: vi.fn(async () => ({
         uploadUrl: "http://localhost:54321/storage/v1/object/upload/sign/securebin-files/objects/test.bin?token=abc",
-        token: "abc",
+        alreadyUploaded: false,
         expiresAt: "2099-01-01T00:15:00.000Z",
       })),
       ...serviceOverrides,
@@ -70,7 +70,7 @@ describe("upload route contracts and parsing", () => {
       idempotencyKeyHash: digest,
       fileEnvelope: validFileEnvelope,
       expectedCiphertextSize: 1024,
-        attachmentSlot: 0,
+      attachmentSlot: 0,
     });
   });
 
@@ -99,6 +99,14 @@ describe("upload route contracts and parsing", () => {
 });
 
 describe("POST /api/uploads handler", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("returns 201 with signed upload URL on valid request", async () => {
     const deps = uploadDependencies();
     const handler = createPostUploadHandler(deps);
@@ -111,7 +119,28 @@ describe("POST /api/uploads handler", () => {
     const json = await response.json();
     expect(json).toMatchObject({
       uploadUrl: expect.stringContaining("securebin-files"),
-      token: "abc",
+      alreadyUploaded: false,
+      expiresAt: "2099-01-01T00:15:00.000Z",
+    });
+  });
+
+  it("returns a null upload URL when the reservation already has the exact object", async () => {
+    const deps = uploadDependencies({
+      createReservation: vi.fn(async () => ({
+        uploadUrl: null,
+        alreadyUploaded: true,
+        expiresAt: "2099-01-01T00:15:00.000Z",
+      })),
+    });
+    const response = await createPostUploadHandler(deps)(new Request("http://localhost/api/uploads", {
+      method: "POST",
+      body: JSON.stringify(validUploadPayload()),
+    }));
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toEqual({
+      uploadUrl: null,
+      alreadyUploaded: true,
       expiresAt: "2099-01-01T00:15:00.000Z",
     });
   });

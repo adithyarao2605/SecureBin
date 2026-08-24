@@ -1,4 +1,4 @@
-import { base64UrlToBytes, bytesToArrayBuffer, randomBytes, utf8Decode } from "./encoding";
+import { base64UrlToBytes, bytesToArrayBuffer, bytesToBase64Url, randomBytes, utf8Decode } from "./encoding";
 import type { FactorMask } from "./factors";
 
 /**
@@ -11,6 +11,18 @@ import type { FactorMask } from "./factors";
  */
 
 export const DISCUSSION_HKDF_LABEL_SUFFIX = "/discussion";
+export const MAX_DISCUSSION_BODY_PLAINTEXT_BYTES = 4_096;
+export const MAX_DISCUSSION_NICKNAME_PLAINTEXT_BYTES = 1_024;
+export const MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES = MAX_DISCUSSION_BODY_PLAINTEXT_BYTES + 16;
+export const MAX_DISCUSSION_NICKNAME_CIPHERTEXT_BYTES = MAX_DISCUSSION_NICKNAME_PLAINTEXT_BYTES + 16;
+
+export interface DiscussionEnvelope {
+  readonly version: 1;
+  readonly objectType: "discussion";
+  readonly algorithm: "AES-256-GCM";
+  readonly nonce: string;
+  readonly ciphertext: string;
+}
 
 const ENCODER = new TextEncoder();
 
@@ -38,7 +50,7 @@ export async function deriveDiscussionKey(options: {
   );
 }
 
-function envelopeShape(nonceB64: string, ctB64: string): Record<string, unknown> {
+function envelopeShape(nonceB64: string, ctB64: string): DiscussionEnvelope {
   return {
     version: 1,
     objectType: "discussion",
@@ -48,10 +60,32 @@ function envelopeShape(nonceB64: string, ctB64: string): Record<string, unknown>
   };
 }
 
+export function validateDiscussionEnvelope(
+  value: unknown,
+  maxCiphertextBytes = MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES
+): DiscussionEnvelope {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error("invalid discussion envelope");
+  const record = value as Record<string, unknown>;
+  const keys = Object.keys(record).sort();
+  if (keys.join(",") !== "algorithm,ciphertext,nonce,objectType,version") throw new Error("invalid discussion envelope");
+  if (record.version !== 1 || record.objectType !== "discussion" || record.algorithm !== "AES-256-GCM") throw new Error("invalid discussion envelope");
+  if (typeof record.nonce !== "string" || typeof record.ciphertext !== "string") throw new Error("invalid discussion envelope");
+  let nonce: Uint8Array;
+  let ciphertext: Uint8Array;
+  try {
+    nonce = base64UrlToBytes(record.nonce);
+    ciphertext = base64UrlToBytes(record.ciphertext);
+  } catch {
+    throw new Error("invalid discussion envelope");
+  }
+  if (nonce.length !== 12 || ciphertext.length < 16 || ciphertext.length > maxCiphertextBytes) throw new Error("invalid discussion envelope");
+  return { version: 1, objectType: "discussion", algorithm: "AES-256-GCM", nonce: bytesToBase64Url(nonce), ciphertext: bytesToBase64Url(ciphertext) };
+}
+
 export async function sealDiscussionText(
   key: CryptoKey,
   plaintext: string
-): Promise<Record<string, unknown>> {
+): Promise<DiscussionEnvelope> {
   const nonce = randomBytes(12);
   const ct = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv: bytesToArrayBuffer(nonce) },
@@ -68,12 +102,9 @@ export async function sealDiscussionText(
 }
 
 export async function openDiscussionText(key: CryptoKey, envelope: unknown): Promise<string> {
-  if (typeof envelope !== "object" || envelope === null) {
-    throw new Error("invalid discussion envelope");
-  }
-  const record = envelope as Record<string, unknown>;
-  const nonce = base64UrlToBytes(record.nonce as string);
-  const ciphertext = base64UrlToBytes(record.ciphertext as string);
+  const record = validateDiscussionEnvelope(envelope);
+  const nonce = base64UrlToBytes(record.nonce);
+  const ciphertext = base64UrlToBytes(record.ciphertext);
   const plain = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: bytesToArrayBuffer(nonce) },
     key,

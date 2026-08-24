@@ -6,6 +6,13 @@ import { ShareServiceError, type ShareService } from "@/lib/server/share-service
 const publicId = "AQEBAQEBAQEBAQEBAQEBAQ";
 const commentId = "11111111-1111-4111-8111-111111111111";
 const digest = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE";
+const discussionEnvelope = {
+  version: 1,
+  objectType: "discussion",
+  algorithm: "AES-256-GCM",
+  nonce: "AAAAAAAAAAAAAAAA",
+  ciphertext: "AAAAAAAAAAAAAAAAAAAAAA",
+};
 
 function dependencies(overrides: Partial<ShareService> = {}): CommentRouteDependencies {
   return {
@@ -52,7 +59,7 @@ describe("discussion comment mutation routes", () => {
     const response = await handlers.patch(
       new Request("http://localhost/comments", {
         method: "PATCH",
-        body: JSON.stringify({ capability: digest, editToken: digest, bodyEnvelope: { v: 1 } }),
+        body: JSON.stringify({ capability: digest, editToken: digest, bodyEnvelope: discussionEnvelope }),
       }),
       context()
     );
@@ -61,7 +68,7 @@ describe("discussion comment mutation routes", () => {
     expect(deps.service.editComment).toHaveBeenCalledWith(publicId, commentId, {
       capability: digest,
       editToken: digest,
-      bodyEnvelope: { v: 1 },
+      bodyEnvelope: discussionEnvelope,
     });
   });
 
@@ -78,5 +85,30 @@ describe("discussion comment mutation routes", () => {
 
     expect(response.status).toBe(429);
     await expect(response.json()).resolves.toEqual({ error: "rate_limited" });
+  });
+
+  it.each([
+    ["GET", "get"],
+    ["POST", "post"],
+    ["PATCH", "patch"],
+    ["DELETE", "delete"],
+  ] as const)("maps a closed discussion %s to the uniform unavailable response", async (method, handlerName) => {
+    const unavailable = vi.fn(async () => { throw new ShareServiceError("unavailable"); });
+    const deps = dependencies({
+      listComments: unavailable,
+      addComment: unavailable,
+      editComment: unavailable,
+      deleteComment: unavailable,
+    });
+    const handlers = createCommentHandlers(deps);
+    const init: RequestInit = { method, headers: { "x-discussion-capability": digest } };
+    if (method === "POST") init.body = JSON.stringify({ capability: digest, editToken: digest, bodyEnvelope: discussionEnvelope });
+    if (method === "PATCH") init.body = JSON.stringify({ capability: digest, editToken: digest, bodyEnvelope: discussionEnvelope });
+    if (method === "DELETE") init.body = JSON.stringify({ capability: digest, editToken: digest });
+
+    const response = await handlers[handlerName](new Request("http://localhost/comments", init), context());
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({ error: "unavailable" });
   });
 });

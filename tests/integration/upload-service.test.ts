@@ -69,6 +69,7 @@ describe("upload service integration", () => {
     });
 
     expect(res1.uploadUrl).toBeDefined();
+    expect(res1.alreadyUploaded).toBe(false);
     expect(res1.expiresAt).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$/);
 
     // Identical retry returns valid signed upload operation
@@ -80,7 +81,10 @@ describe("upload service integration", () => {
       attachmentSlot: 0,
     });
 
+    // The first reservation is not backed by a Storage object in this test,
+    // so an identical retry still mints a fresh signed upload operation.
     expect(res2.uploadUrl).toBeDefined();
+    expect(res2.alreadyUploaded).toBe(false);
     expect(res2.expiresAt).toBe(res1.expiresAt);
   });
 

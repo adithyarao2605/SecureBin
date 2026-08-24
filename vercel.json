@@ -2,5 +2,11 @@
   "framework": "nextjs",
   "buildCommand": "pnpm build",
   "installCommand": "corepack pnpm install --frozen-lockfile",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/internal/cleanup",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

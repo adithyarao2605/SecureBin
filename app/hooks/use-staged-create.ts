@@ -253,27 +253,31 @@ export function useStagedCreate() {
       });
 
       if (!uploadRes.ok) {
-        const errText = await uploadRes.text().catch(() => "");
-        console.error("[SecureBin] Upload reservation failed:", uploadRes.status);
         throw new Error("upload_reservation_failed");
       }
 
-      const uploadData = (await uploadRes.json()) as { uploadUrl?: string };
-      if (!uploadData.uploadUrl) {
-        console.error("[SecureBin] Missing uploadUrl in reservation response");
-        throw new Error("missing_upload_url");
-      }
+      const uploadData = (await uploadRes.json()) as {
+        uploadUrl?: unknown;
+        alreadyUploaded?: unknown;
+      };
+      if (uploadData.alreadyUploaded === true) {
+        // The PUT may have succeeded while its response was lost. The
+        // reservation RPC verified the exact object size, so the browser can
+        // safely recover without issuing a second PUT.
+      } else {
+        if (typeof uploadData.uploadUrl !== "string" || uploadData.uploadUrl.length === 0) {
+          throw new Error("missing_upload_url");
+        }
 
-      const putRes = await fetch(uploadData.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "application/octet-stream" },
-        body: new Blob([bytesToArrayBuffer(entry.sealed.ciphertext)], { type: "application/octet-stream" }),
-      });
+        const putRes = await fetch(uploadData.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "application/octet-stream" },
+          body: new Blob([bytesToArrayBuffer(entry.sealed.ciphertext)], { type: "application/octet-stream" }),
+        });
 
-      if (!putRes.ok) {
-        const putErr = await putRes.text().catch(() => "");
-        console.error("[SecureBin] Storage upload failed:", putRes.status);
-        throw new Error("storage_upload_failed");
+        if (!putRes.ok) {
+          throw new Error("storage_upload_failed");
+        }
       }
 
       prepared.files[index] = { sealed: entry.sealed, uploaded: true };
@@ -288,7 +292,6 @@ export function useStagedCreate() {
     });
 
     if (!response.ok) {
-      console.error("[SecureBin] Create share RPC failed:", response.status);
       throw new Error("create_failed");
     }
 

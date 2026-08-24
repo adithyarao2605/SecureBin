@@ -67,12 +67,11 @@ export function validatePassword(password: string): Uint8Array {
  * encoding exactly 128 bits. Ambiguous glyphs (I L O U) never appear.
  */
 export const UNLOCK_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+/** The body is base-28; the complete 32-symbol alphabet remains available for the checksum. */
+export const UNLOCK_BODY_ALPHABET = UNLOCK_ALPHABET.slice(0, 28);
 const DECODE_MAP: Record<string, number> = (() => {
   const map: Record<string, number> = {};
   for (let i = 0; i < UNLOCK_ALPHABET.length; i += 1) map[UNLOCK_ALPHABET[i]] = i;
-  map.O = 0;
-  map.I = 1;
-  map.L = 1;
   return map;
 })();
 
@@ -91,20 +90,25 @@ export function generateUnlockCode(): { code: string; bytes: Uint8Array } {
   const checkSum = digits.reduce((sum, d) => sum + d, 0) % UNLOCK_ALPHABET.length;
   const body = digits.reverse().map((d) => UNLOCK_ALPHABET[d]).join("");
   const check = UNLOCK_ALPHABET[checkSum];
-  const grouped = body.match(/.{1,5}/g)?.join("-") ?? body;
-  return { code: `${grouped}${check}`, bytes };
+  // Canonical wire/display form is exactly 27 characters: 26 body symbols
+  // followed by one checksum. Separators and ambiguous aliases are not part
+  // of the protocol and are rejected by the parser.
+  return { code: `${body}${check}`, bytes };
 }
 
 export function unlockCodeToBytes(code: string): Uint8Array {
-  const cleaned = code.toUpperCase().replace(/[-\s]/g, "");
-  if (cleaned.length !== 27) throw new FactorError("invalid_unlock_code", "Unlock codes are 27 characters.");
-  const body = cleaned.slice(0, 26);
-  const check = cleaned[26];
+  if (typeof code !== "string" || code.length !== 27 || code !== code.toUpperCase()) {
+    throw new FactorError("invalid_unlock_code", "Unlock codes are 27 canonical characters.");
+  }
+  const body = code.slice(0, 26);
+  const check = code[26];
   let value = 0n;
   let checkSum = 0;
   for (const symbol of body) {
     const digit = DECODE_MAP[symbol];
-    if (digit === undefined) throw new FactorError("invalid_unlock_code", "The unlock code contains an invalid character.");
+    if (digit === undefined || digit >= UNLOCK_BODY_ALPHABET.length) {
+      throw new FactorError("invalid_unlock_code", "The unlock code contains an invalid body character.");
+    }
     value = value * 28n + BigInt(digit);
     checkSum += digit;
   }

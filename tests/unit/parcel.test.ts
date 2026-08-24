@@ -42,7 +42,7 @@ const policy = {
 };
 
 describe("securebin parcel codec", () => {
-  const bytes = new Uint8Array([1, 2, 3, 4, 5]);
+  const bytes = new Uint8Array(16).map((_, index) => index + 1);
 
   it("round-trips policy, content envelope, and attachments", () => {
     const encoded = encodeParcel({
@@ -53,6 +53,7 @@ describe("securebin parcel codec", () => {
     });
     const decoded = decodeParcel(encoded);
 
+    expect(decoded.version).toBe(1);
     expect(decoded.policy).toEqual({ ...policy, publicId: PUBLIC_ID });
     expect(decoded.contentEnvelope.ciphertext).toBe(contentEnvelope.ciphertext);
     expect(decoded.attachments.length).toBe(1);
@@ -89,6 +90,21 @@ describe("securebin parcel codec", () => {
     expect(() => decodeParcel(foreign)).toThrow(ParcelError);
 
     expect(() => decodeParcel(new Uint8Array(12))).toThrow(ParcelError);
+  });
+
+  it("rejects attachments sealed with a different factor policy", () => {
+    expect(() =>
+      encodeParcel({
+        publicId: PUBLIC_ID,
+        policy,
+        contentEnvelope,
+        attachments: [{
+          slot: 0,
+          envelope: { ...fileEnvelope, factorMask: "link+unlock" },
+          ciphertext: bytes,
+        }],
+      })
+    ).toThrow(/different factor policies/u);
   });
 
   it("round-trips a password-protected share through parcel export and offline import", async () => {

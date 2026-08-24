@@ -53,6 +53,7 @@ describe("composer staged creation flow", () => {
             "a".repeat(48) +
             ".bin?token=x",
           token: "t",
+          alreadyUploaded: false,
           expiresAt: new Date(Date.now() + 900_000).toISOString(),
         }));
       }

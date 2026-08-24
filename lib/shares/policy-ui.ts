@@ -172,7 +172,7 @@ export function formatRevealLimitLabel(maxReveals: MaxReveals): string {
     return "Unlimited";
   }
   if (maxReveals === 1) {
-    return "Once — burn after opening";
+    return "One-time reveal";
   }
   return `${maxReveals} reveals`;
 }

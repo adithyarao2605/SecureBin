@@ -1,13 +1,14 @@
 import { isPublicId, parseCreateShareInput, parseDeleteInput, parseRevealInput, parseStatusBatchInput, type ShareStatus } from "../shares/contracts";
 import { networkDiscriminator } from "./hashing";
 import { errorResponse, jsonResponse, readJsonBody } from "./http";
-import { readServerConfig } from "./config";
+import { readServerConfig, type ProxyTrust } from "./config";
 import { createShareService, ShareServiceError, type ShareService } from "./share-service";
 import { RpcRequestError } from "./supabase-rpc";
 
 export interface ShareRouteDependencies {
   readonly service: ShareService;
   readonly rateLimitHmacKey: string;
+  readonly proxyTrust?: ProxyTrust;
 }
 
 const MAX_CREATE_BODY_BYTES = 1_100_000;
@@ -15,7 +16,7 @@ const MAX_SMALL_BODY_BYTES = 4_096;
 
 function defaultDependencies(): ShareRouteDependencies {
   const config = readServerConfig();
-  return { service: createShareService(), rateLimitHmacKey: config.rateLimitHmacKey };
+  return { service: createShareService(), rateLimitHmacKey: config.rateLimitHmacKey, proxyTrust: config.proxyTrust };
 }
 
 function isDependencyFailure(error: unknown): boolean {
@@ -24,7 +25,7 @@ function isDependencyFailure(error: unknown): boolean {
 
 async function allowed(request: Request, dependencies: ShareRouteDependencies, action: "create" | "status" | "reveal" | "delete", limit: number): Promise<true | Response> {
     try {
-      const discriminator = networkDiscriminator(request, dependencies.rateLimitHmacKey);
+      const discriminator = networkDiscriminator(request, dependencies.rateLimitHmacKey, dependencies.proxyTrust);
       const accepted = await dependencies.service.consumeRateLimit(discriminator, action, limit);
     if (!accepted) return errorResponse("rate_limited", 429);
     return true;

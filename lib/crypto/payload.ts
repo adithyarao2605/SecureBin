@@ -26,6 +26,18 @@ export const CODE_LANGUAGES = [
   "sql",
   "css",
   "html",
+  "java",
+  "c",
+  "cpp",
+  "csharp",
+  "go",
+  "rust",
+  "ruby",
+  "php",
+  "kotlin",
+  "yaml",
+  "xml",
+  "ini",
 ] as const;
 
 export type CodeLanguage = (typeof CODE_LANGUAGES)[number];
@@ -40,6 +52,18 @@ export const LANGUAGE_TO_ID: Record<CodeLanguage, number> = {
   sql: 6,
   css: 7,
   html: 8,
+  java: 9,
+  c: 10,
+  cpp: 11,
+  csharp: 12,
+  go: 13,
+  rust: 14,
+  ruby: 15,
+  php: 16,
+  kotlin: 17,
+  yaml: 18,
+  xml: 19,
+  ini: 20,
 };
 
 export const ID_TO_LANGUAGE: Record<number, CodeLanguage> = {
@@ -52,6 +76,18 @@ export const ID_TO_LANGUAGE: Record<number, CodeLanguage> = {
   6: "sql",
   7: "css",
   8: "html",
+  9: "java",
+  10: "c",
+  11: "cpp",
+  12: "csharp",
+  13: "go",
+  14: "rust",
+  15: "ruby",
+  16: "php",
+  17: "kotlin",
+  18: "yaml",
+  19: "xml",
+  20: "ini",
 };
 
 export type ContentPayload =

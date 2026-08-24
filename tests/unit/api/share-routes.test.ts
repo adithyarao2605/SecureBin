@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createDeleteShareHandler,
@@ -30,6 +30,14 @@ const envelope = {
   factorMask: "link" as const,
   ciphertext: "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
 } as const;
+
+beforeEach(() => {
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function dependencies(service: Partial<ShareService> = {}): ShareRouteDependencies {
   return {

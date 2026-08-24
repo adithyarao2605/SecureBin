@@ -17,6 +17,11 @@ import {
   type ShareStatusBatchItem,
   type ShareStatus,
 } from "../shares/contracts";
+import {
+  MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES,
+  MAX_DISCUSSION_NICKNAME_CIPHERTEXT_BYTES,
+  validateDiscussionEnvelope,
+} from "../crypto/discussion";
 import { sha256Base64Url } from "./hashing";
 import { createRpcClient, RpcRequestError, type RpcClient } from "./supabase-rpc";
 import { createSecureStorage, type SecureStorage } from "./storage";
@@ -49,9 +54,9 @@ export interface ShareService {
 export type RateLimitAction = "upload" | "create" | "status" | "reveal" | "delete" | "discussion";
 
 export class ShareServiceError extends Error {
-  readonly kind: "dependency" | "invalid" | "conflict" | "rate_limited";
+  readonly kind: "dependency" | "invalid" | "conflict" | "rate_limited" | "unavailable";
 
-  constructor(kind: "dependency" | "invalid" | "conflict" | "rate_limited") {
+  constructor(kind: "dependency" | "invalid" | "conflict" | "rate_limited" | "unavailable") {
     super("SecureBin share operation failed");
     this.name = "ShareServiceError";
     this.kind = kind;
@@ -114,6 +119,12 @@ function parseBatchStatusRows(value: unknown, publicIds: readonly string[]): Sha
 
 function dependencyError(): ShareServiceError {
   return new ShareServiceError("dependency");
+}
+
+function discussionRpcError(error: RpcRequestError): ShareServiceError {
+  if (error.errorDetails?.includes("rate_limited")) return new ShareServiceError("rate_limited");
+  if (error.errorDetails?.includes("discussion unavailable")) return new ShareServiceError("unavailable");
+  return new ShareServiceError("invalid");
 }
 
 export function createShareService(
@@ -286,6 +297,12 @@ export function createShareService(
         throw new ShareServiceError("invalid");
       }
       try {
+        validateDiscussionEnvelope(payload.bodyEnvelope, MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES);
+        if (payload.nicknameEnvelope !== undefined && payload.nicknameEnvelope !== null) validateDiscussionEnvelope(payload.nicknameEnvelope, MAX_DISCUSSION_NICKNAME_CIPHERTEXT_BYTES);
+      } catch {
+        throw new ShareServiceError("invalid");
+      }
+      try {
         const value = await rpc.call("add_share_comment", {
           p_public_id: publicId,
           p_discussion_capability: bytesHex(capability),
@@ -303,7 +320,7 @@ export function createShareService(
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
         if (error instanceof RpcRequestError && (error.code === "22023" || error.code === "P0001")) {
-          throw new ShareServiceError(error.errorDetails?.includes("rate_limited") ? "rate_limited" : "invalid");
+          throw discussionRpcError(error);
         }
         throw dependencyError();
       }
@@ -313,6 +330,11 @@ export function createShareService(
       const capability = typeof payload.capability === "string" ? payload.capability : "";
       const editToken = typeof payload.editToken === "string" ? payload.editToken : "";
       if (!UUID_PATTERN.test(commentId) || !isDigest(capability) || !isDigest(editToken) || typeof payload.bodyEnvelope !== "object" || payload.bodyEnvelope === null) {
+        throw new ShareServiceError("invalid");
+      }
+      try {
+        validateDiscussionEnvelope(payload.bodyEnvelope, MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES);
+      } catch {
         throw new ShareServiceError("invalid");
       }
       try {
@@ -329,7 +351,7 @@ export function createShareService(
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
         if (error instanceof RpcRequestError && (error.code === "22023" || error.code === "P0001")) {
-          throw new ShareServiceError(error.errorDetails?.includes("rate_limited") ? "rate_limited" : "invalid");
+          throw discussionRpcError(error);
         }
         throw dependencyError();
       }
@@ -354,7 +376,7 @@ export function createShareService(
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
         if (error instanceof RpcRequestError && (error.code === "22023" || error.code === "P0001")) {
-          throw new ShareServiceError(error.errorDetails?.includes("rate_limited") ? "rate_limited" : "invalid");
+          throw discussionRpcError(error);
         }
         throw dependencyError();
       }
@@ -372,7 +394,7 @@ export function createShareService(
           : [];
       } catch (error) {
         if (error instanceof RpcRequestError && error.code === "22023") {
-          throw new ShareServiceError("invalid");
+          throw discussionRpcError(error);
         }
         throw dependencyError();
       }

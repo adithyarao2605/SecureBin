@@ -18,6 +18,13 @@ const fakeStorage: SecureStorage = {
 
 const publicId = "abcdefghijklmnopqrstug";
 const digest = "a".repeat(43);
+const discussionEnvelope = {
+  version: 1,
+  objectType: "discussion",
+  algorithm: "AES-256-GCM",
+  nonce: "AAAAAAAAAAAAAAAA",
+  ciphertext: "AAAAAAAAAAAAAAAAAAAAAA",
+};
 const contentEnvelope: CreateShareInput["contentEnvelope"] = {
   version: 1,
   objectType: "content",
@@ -191,12 +198,12 @@ describe("share service RPC mapping", () => {
     await expect(service.addComment(publicId, {
       capability: "A".repeat(43),
       editToken: rawToken,
-      bodyEnvelope: { v: 1 },
+      bodyEnvelope: discussionEnvelope,
     })).resolves.toMatchObject({ commentId: "11111111-1111-4111-8111-111111111111" });
     await expect(service.editComment(publicId, "11111111-1111-4111-8111-111111111111", {
       capability: "A".repeat(43),
       editToken: rawToken,
-      bodyEnvelope: { v: 2 },
+      bodyEnvelope: discussionEnvelope,
     })).resolves.toEqual({ commentId: "11111111-1111-4111-8111-111111111111", editedAt: "2099-01-01T00:00:00.000Z" });
     await expect(service.deleteComment(publicId, "11111111-1111-4111-8111-111111111111", {
       capability: "A".repeat(43),

@@ -45,7 +45,7 @@ describe("policy-ui helper functions", () => {
     expect(formatExpiryLabel("30d")).toBe("30 days");
     expect(formatExpiryLabel("custom", 5, "days")).toBe("5 days");
 
-    expect(formatRevealLimitLabel(1)).toBe("Once — burn after opening");
+    expect(formatRevealLimitLabel(1)).toBe("One-time reveal");
     expect(formatRevealLimitLabel(3)).toBe("3 reveals");
     expect(formatRevealLimitLabel(5)).toBe("5 reveals");
     expect(formatRevealLimitLabel(10)).toBe("10 reveals");
@@ -208,4 +208,3 @@ describe("policy-ui helper functions", () => {
     if (tooLarge.valid) throw new Error("expected >24h window to be rejected");
   });
 });
-

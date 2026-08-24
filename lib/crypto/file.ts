@@ -144,8 +144,9 @@ async function deriveFileKey(
   hkdfSalt: Uint8Array,
   options?: { mask?: FactorMask; ikmOverride?: Uint8Array }
 ): Promise<CryptoKey> {
-  const mask: FactorMask = options?.mask ?? "link";
-  const label = mask === "link" ? FILE_HKDF_LABEL_V2 : `securebin/v2/${mask}/file`;
+  // The v2 file label is fixed after deployment. Factor material is carried
+  // in the IKM and the mask is authenticated in AAD.
+  const label = FILE_HKDF_LABEL_V2;
   const rawIkm = options?.ikmOverride
     ? bytesToArrayBuffer(options.ikmOverride)
     : bytesToArrayBuffer(validateLinkSecret(linkSecret));

@@ -24,7 +24,7 @@ function cleanupDependencies(
   };
 }
 
-describe("POST /api/internal/cleanup route handler", () => {
+describe("GET|POST /api/internal/cleanup route handler", () => {
   it("rejects unauthenticated requests with uniform 404 unavailable", async () => {
     const deps = cleanupDependencies();
     const handler = createPostCleanupHandler(deps);
@@ -70,6 +70,18 @@ describe("POST /api/internal/cleanup route handler", () => {
       deletedLeases: 4,
       deletedBuckets: 3,
     });
+    expect(deps.cleanupService.runCleanup).toHaveBeenCalledOnce();
+  });
+
+  it("accepts the authenticated GET shape used by Vercel Cron", async () => {
+    const deps = cleanupDependencies();
+    const handler = createPostCleanupHandler(deps);
+    const response = await handler(new Request("http://localhost/api/internal/cleanup", {
+      method: "GET",
+      headers: { authorization: "Bearer super-secret-cron-token" },
+    }));
+
+    expect(response.status).toBe(200);
     expect(deps.cleanupService.runCleanup).toHaveBeenCalledOnce();
   });
 

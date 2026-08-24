@@ -1,7 +1,7 @@
 -- Day 5: encrypted discussion tests.
 begin;
 
-select plan(24);
+select plan(25);
 
 -- Primary share S1 with discussion capability cap1 = 0x77 * 32.
 insert into public.shares (
@@ -318,6 +318,18 @@ select throws_ok(
   '22023',
   'discussion unavailable',
   'expired share rejects list_share_comments'
+);
+
+select throws_ok(
+  $$
+    select * from public.list_share_comments(
+      'DSEBAQEBAQEBAQEBAQEBAQ',
+      decode(repeat('00', 32), 'hex')
+    );
+  $$,
+  '22023',
+  'discussion unavailable',
+  'closed discussion does not reveal whether a capability matches'
 );
 
 select throws_ok(

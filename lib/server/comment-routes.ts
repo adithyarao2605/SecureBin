@@ -4,7 +4,7 @@ import {
   parseEditCommentInput,
 } from "../shares/contracts";
 import { errorResponse, jsonResponse, readJsonBody } from "./http";
-import { readServerConfig } from "./config";
+import { readServerConfig, type ProxyTrust } from "./config";
 import { networkDiscriminator } from "./hashing";
 import { createShareService, ShareServiceError, type ShareService } from "./share-service";
 import { RpcRequestError } from "./supabase-rpc";
@@ -14,11 +14,12 @@ const MAX_COMMENT_BODY_BYTES = 4_096;
 export interface CommentRouteDependencies {
   readonly service: ShareService;
   readonly rateLimitHmacKey: string;
+  readonly proxyTrust?: ProxyTrust;
 }
 
 export function defaultCommentRouteDependencies(): CommentRouteDependencies {
   const config = readServerConfig();
-  return { service: createShareService(), rateLimitHmacKey: config.rateLimitHmacKey };
+  return { service: createShareService(), rateLimitHmacKey: config.rateLimitHmacKey, proxyTrust: config.proxyTrust };
 }
 
 export function createCommentHandlers(dependencies: CommentRouteDependencies): {
@@ -33,7 +34,7 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
     limit: number
   ): Promise<true | Response> {
     try {
-      const discriminator = networkDiscriminator(request, dependencies.rateLimitHmacKey);
+      const discriminator = networkDiscriminator(request, dependencies.rateLimitHmacKey, dependencies.proxyTrust);
       const accepted = await dependencies.service.consumeRateLimit(discriminator, action, limit);
       return accepted ? true : errorResponse("rate_limited", 429);
     } catch {
@@ -42,6 +43,9 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
   }
 
   function mapError(error: unknown): Response {
+    if (error instanceof ShareServiceError && error.kind === "unavailable") {
+      return errorResponse("unavailable", 404);
+    }
     if (error instanceof ShareServiceError && error.kind === "invalid") {
       return errorResponse("invalid_request", 400);
     }

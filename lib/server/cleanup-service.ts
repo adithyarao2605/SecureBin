@@ -69,16 +69,41 @@ export function createCleanupService(
         ? rawCandidates.map(parseCandidate).filter((candidate): candidate is CleanupCandidate => candidate !== null)
         : [];
 
+      // A share may have several attachment candidates. Finalize it only
+      // after every path in its group was deleted (or already missing), so a
+      // transient failure leaves the whole share retryable on the next run.
+      const shareGroups = new Map<string, CleanupCandidate[]>();
+      const nonShareCandidates: CleanupCandidate[] = [];
+      for (const candidate of candidates) {
+        if (candidate.candidate_type === "share" && candidate.share_id) {
+          const group = shareGroups.get(candidate.share_id) ?? [];
+          group.push(candidate);
+          shareGroups.set(candidate.share_id, group);
+        } else {
+          nonShareCandidates.push(candidate);
+        }
+      }
+
       const successfulShareIds: string[] = [];
       const successfulReservationIds: string[] = [];
       const successfulRotationIds: string[] = [];
 
-      for (const candidate of candidates) {
+      for (const [shareId, group] of shareGroups) {
+        let complete = true;
+        for (const candidate of group) {
+          try {
+            await storage.remove(candidate.object_path);
+          } catch {
+            complete = false;
+          }
+        }
+        if (complete) successfulShareIds.push(shareId);
+      }
+
+      for (const candidate of nonShareCandidates) {
         try {
           await storage.remove(candidate.object_path);
-          if (candidate.candidate_type === "share" && candidate.share_id) {
-            successfulShareIds.push(candidate.share_id);
-          } else if (candidate.candidate_type === "upload" && candidate.reservation_id) {
+          if (candidate.candidate_type === "upload" && candidate.reservation_id) {
             successfulReservationIds.push(candidate.reservation_id);
           } else if (candidate.candidate_type === "upload_rotation" && candidate.reservation_id) {
             successfulRotationIds.push(candidate.reservation_id);
