@@ -36,7 +36,7 @@ async function allowed(request: Request, dependencies: ShareRouteDependencies, a
 
 export function createPostShareHandler(dependencies: ShareRouteDependencies): (request: Request) => Promise<Response> {
   return async (request) => {
-    const rateLimit = await allowed(request, dependencies, "create", 20);
+    const rateLimit = await allowed(request, dependencies, "create", 120);
     if (rateLimit !== true) return rateLimit;
     const body = await readJsonBody(request, MAX_CREATE_BODY_BYTES);
     const input = parseCreateShareInput(body);
@@ -71,7 +71,7 @@ export function createPostShareHandler(dependencies: ShareRouteDependencies): (r
 
 export function createGetStatusHandler(dependencies: ShareRouteDependencies): (request: Request, context: { params: Promise<{ publicId: string }> }) => Promise<Response> {
   return async (request, context) => {
-    const rateLimit = await allowed(request, dependencies, "status", 60);
+    const rateLimit = await allowed(request, dependencies, "status", 240);
     if (rateLimit !== true) return rateLimit;
     let publicId: string;
     try {
@@ -91,7 +91,7 @@ export function createGetStatusHandler(dependencies: ShareRouteDependencies): (r
 
 export function createPostStatusBatchHandler(dependencies: ShareRouteDependencies): (request: Request) => Promise<Response> {
   return async (request) => {
-    const rateLimit = await allowed(request, dependencies, "status", 60);
+    const rateLimit = await allowed(request, dependencies, "status", 240);
     if (rateLimit !== true) return rateLimit;
     const input = parseStatusBatchInput(await readJsonBody(request, MAX_SMALL_BODY_BYTES));
     if (!input) return errorResponse("invalid_request", 400);
@@ -109,7 +109,7 @@ export function createPostStatusBatchHandler(dependencies: ShareRouteDependencie
 
 export function createPostRevealHandler(dependencies: ShareRouteDependencies): (request: Request, context: { params: Promise<{ publicId: string }> }) => Promise<Response> {
   return async (request, context) => {
-    const rateLimit = await allowed(request, dependencies, "reveal", 20);
+    const rateLimit = await allowed(request, dependencies, "reveal", 120);
     if (rateLimit !== true) return rateLimit;
     let publicId: string;
     try {
@@ -140,7 +140,7 @@ export function createPostRevealHandler(dependencies: ShareRouteDependencies): (
 
 export function createDeleteShareHandler(dependencies: ShareRouteDependencies): (request: Request, context: { params: Promise<{ publicId: string }> }) => Promise<Response> {
   return async (request, context) => {
-    const rateLimit = await allowed(request, dependencies, "delete", 20);
+    const rateLimit = await allowed(request, dependencies, "delete", 120);
     if (rateLimit !== true) return rateLimit;
     let publicId: string;
     try {

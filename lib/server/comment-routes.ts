@@ -64,7 +64,7 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
 
   return {
     async get(request, context) {
-      const limitCheck = await allowed(request, "discussion", 120);
+      const limitCheck = await allowed(request, "discussion", 240);
       if (limitCheck !== true) return limitCheck;
       let publicId: string;
       try {
@@ -85,7 +85,7 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
     },
 
     async post(request, context) {
-      const limit = await allowed(request, "discussion", 30);
+      const limit = await allowed(request, "discussion", 120);
       if (limit !== true) return limit;
       let publicId: string;
       try {
@@ -104,7 +104,7 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
     },
 
     async patch(request, context) {
-      const limitCheck = await allowed(request, "discussion", 30);
+      const limitCheck = await allowed(request, "discussion", 120);
       if (limitCheck !== true) return limitCheck;
       let publicId: string;
       let commentId: string;
@@ -123,7 +123,7 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
     },
 
     async delete(request, context) {
-      const limitCheck = await allowed(request, "discussion", 30);
+      const limitCheck = await allowed(request, "discussion", 120);
       if (limitCheck !== true) return limitCheck;
       let publicId: string;
       let commentId: string;

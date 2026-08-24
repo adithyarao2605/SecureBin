@@ -32,7 +32,7 @@ export function createPostUploadHandler(
     let allowed: boolean;
     try {
       const discriminator = networkDiscriminator(request, dependencies.rateLimitHmacKey, dependencies.proxyTrust);
-      allowed = await dependencies.shareService.consumeRateLimit(discriminator, "upload", 30);
+      allowed = await dependencies.shareService.consumeRateLimit(discriminator, "upload", 120);
     } catch {
       return errorResponse("server_error", 503);
     }
