@@ -14,14 +14,17 @@ visual identity.
 
 > Create share. Reveal once. Keep the key where it belongs: in the browser.
 
+### Landing Page
 <p align="center">
   <img src="docs/assets/landing-hero.png" alt="SecureBin Landing Page" width="100%" />
 </p>
 
+### Share Composer Workspace
 <p align="center">
   <img src="docs/assets/composer-workspace.png" alt="SecureBin Share Composer Workspace" width="100%" />
 </p>
 
+### Sealed Share Delivery & Evidence
 <p align="center">
   <img src="docs/assets/share-ready.png" alt="SecureBin Share Delivery and Evidence" width="100%" />
 </p>
