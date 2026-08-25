@@ -17,10 +17,21 @@ import { loadShareHistory } from "../../lib/shares/share-history";
 
 type AppTab = "create" | "history" | "how-it-works" | "parcel";
 const PRIMARY_TABS = ["create", "history", "how-it-works"] as const;
+const DOCUMENTATION_SECTION_HASHES = [
+  "#guide-quickstart",
+  "#guide-factors",
+  "#guide-policies",
+  "#guide-attachments",
+  "#guide-parcels",
+  "#guide-self-hosting",
+  "#guide-security",
+] as const;
 
 function tabFromHash(hash: string): AppTab {
   if (hash === "#history") return "history";
-  if (hash === "#how-it-works") return "how-it-works";
+  if (hash === "#how-it-works" || (DOCUMENTATION_SECTION_HASHES as readonly string[]).includes(hash)) {
+    return "how-it-works";
+  }
   return "create";
 }
 

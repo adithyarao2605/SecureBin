@@ -52,6 +52,26 @@ test("the user can navigate between application tabs", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Create a private share" })).toBeVisible();
 });
 
+test("documentation guide links stay in the documentation panel", async ({ page }) => {
+  await page.goto("/new#how-it-works");
+  const guideLinks = [
+    { name: /Quickstart/u, id: "guide-quickstart" },
+    { name: /Multi-Factor/u, id: "guide-factors" },
+    { name: /Policies & Expiry/u, id: "guide-policies" },
+    { name: /Files & Replies/u, id: "guide-attachments" },
+    { name: /Offline Parcels/u, id: "guide-parcels" },
+    { name: /Self-Hosting/u, id: "guide-self-hosting" },
+    { name: /Security Model/u, id: "guide-security" },
+  ] as const;
+
+  for (const guide of guideLinks) {
+    await page.getByRole("link", { name: guide.name }).click();
+    await expect(page).toHaveURL(new RegExp(`/new#${guide.id}$`, "u"));
+    await expect(page.getByRole("tab", { name: "How it works" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.locator(`#${guide.id}`)).toBeVisible();
+  }
+});
+
 test("the user can select custom expiration duration", async ({ page }) => {
   await page.goto("/new");
 

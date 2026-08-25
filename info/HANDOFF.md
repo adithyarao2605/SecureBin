@@ -2,6 +2,16 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Documentation guide navigation
+
+- Fixed the documentation guide pills (`Quickstart`, `Multi-Factor`, policies,
+  files, parcels, self-hosting, and security) so their section hashes keep the
+  documentation tab active instead of falling back to the create-share tab.
+- Added an E2E regression covering all seven guide links and their targets.
+- Lint, typecheck, and Playwright test discovery pass; the development suite
+  now lists 20 tests. Chromium execution remains CI-only in this workspace.
+- No push was performed.
+
 ## CI accessibility contrast hardening
 
 - Fixed the dark landing preview link and primary action so their foreground
