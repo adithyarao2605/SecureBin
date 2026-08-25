@@ -14,9 +14,17 @@ visual identity.
 
 > Create share. Reveal once. Keep the key where it belongs: in the browser.
 
-| **Landing Page** | **Share Composer** | **Delivery & Evidence** |
-| :---: | :---: | :---: |
-| [![Landing Page](docs/assets/landing-hero.png)](docs/assets/landing-hero.png) | [![Share Composer](docs/assets/composer-workspace.png)](docs/assets/composer-workspace.png) | [![Delivery & Evidence](docs/assets/share-ready.png)](docs/assets/share-ready.png) |
+<p align="center">
+  <img src="docs/assets/landing-hero.png" alt="SecureBin Landing Page" width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/assets/composer-workspace.png" alt="SecureBin Share Composer Workspace" width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/assets/share-ready.png" alt="SecureBin Share Delivery and Evidence" width="100%" />
+</p>
 
 ## At a glance
 
