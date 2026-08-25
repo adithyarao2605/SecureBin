@@ -19,7 +19,7 @@ Updated: 2026-08-25 (UTC)
   command ran the six share-service tests but the three Supabase-backed suites
   require credentials that are not present in this workspace.
 - No production migration or deployment was performed. The owner still needs
-  to push this commit and verify the hosted migration and cleanup schedule.
+  to push commit `9ba6b4f` and verify the hosted migration and cleanup schedule.
 
 ## Code authoring polish update
 
@@ -87,9 +87,9 @@ Updated: 2026-08-25 (UTC)
 
 ## Current state
 
-- Branch: `main`, aligned with `origin/main` before this polish batch.
+- Branch: `main`, three commits ahead of `origin/main`; no push was performed.
 - Pre-freeze implementation and its complete local gate remain green; the
-  latest local Code-mode polish is committed as `51f65eb` and awaits the
+  latest security/lifecycle batch is committed as `9ba6b4f` and awaits the
   owner's push/hosted verification.
 - Required work is consolidated in `docs/before-day-7.md`; Day 7/release-freeze work has not begun.
 - The user's existing uncommitted `app/page.tsx` change was preserved.
@@ -97,8 +97,9 @@ Updated: 2026-08-25 (UTC)
 
 ## Current core validation
 
-- `pnpm validate`: pass — 193 unit tests plus lint, typecheck, and production build.
-- `pnpm test:integration`: 16 pass.
+- `pnpm validate`: pass — 212 unit tests plus lint, source audit, typecheck, and production build.
+- `pnpm test:integration`: 6 share-service tests pass; cleanup, reveal-concurrency,
+  and upload-service suites require Supabase credentials not present locally.
 - `pnpm supabase:reset` followed by `pnpm supabase:test`: 155 pgTAP assertions pass.
 - `pnpm audit:prod` and `pnpm audit:source`: pass.
 - `pnpm test:e2e`: 19 pass (Chromium).
@@ -109,6 +110,7 @@ Updated: 2026-08-25 (UTC)
 
 ## Latest implementation commits
 
+- `9ba6b4f` — `fix(security): harden response and cleanup contracts`
 - `51f65eb` — `feat(ui): add live code authoring preview`
 - `4258a92` — `feat(ui): polish viewer discussion and history states`
 - `e4f7fa0` — `fix(security): close lifecycle gaps`
