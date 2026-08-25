@@ -89,7 +89,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
           <article className="docs-glance-card">
             <span className="docs-glance-index">03 / EVIDENCE</span>
             <h4>Receipts explain the protection</h4>
-            <p>The Privacy Receipt identifies the algorithm, factors, policy, encrypted objects, and visible infrastructure metadata.</p>
+            <p>The Privacy Receipt identifies the algorithm, factors, policy, encrypted objects, and what infrastructure can still observe.</p>
           </article>
           <article className="docs-glance-card docs-glance-card-boundary">
             <span className="docs-glance-index">04 / LIMITS</span>
@@ -99,7 +99,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
         </div>
         <div className="docs-validation-strip" aria-label="Recorded CI validation baseline">
           <span className="docs-validation-label">Recorded CI baseline</span>
-          <span><strong>214</strong> unit</span>
+          <span><strong>217</strong> unit</span>
           <span><strong>16</strong> integration</span>
           <span><strong>155</strong> pgTAP</span>
           <span><strong>20 + 20</strong> browser</span>
@@ -152,7 +152,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
           <ul className="threat-section" style={{ margin: 0, paddingLeft: "1.2rem" }}>
             <li><strong>Link Key:</strong> 256-bit key in the URL fragment. The server never receives the fragment.</li>
             <li><strong>Password:</strong> Derived using PBKDF2 (600,000 iterations). Recipient must enter the exact password.</li>
-            <li><strong>Second-Channel Unlock:</strong> 27-character base-28 code with checksum (124 bits entropy). Transmitted over SMS/Signal separately so link interception alone fails.</li>
+            <li><strong>Second-Channel Unlock:</strong> 27-character base-28 code with checksum (124 bits entropy). Send it separately through a channel you trust so link interception alone is insufficient.</li>
           </ul>
         </article>
       </div>
@@ -165,7 +165,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
             <li><strong>One-Time Release:</strong> The share becomes permanently unavailable after 1 authorized ciphertext release.</li>
             <li><strong>Reveal Limits:</strong> The safe default is one release; set exact bounds (3, 5, 10, custom, or unlimited) when needed. Every limit is enforced atomically at database level.</li>
             <li><strong>Expiry Durations:</strong> Automatically expires after 24h, 7 days, 30 days, custom duration, or Never (indefinite until manual revocation).</li>
-            <li><strong>Release Window & Privacy Veil:</strong> An active countdown (10s–5m) begins when recipient reveals. When it hits zero, decrypted text is scrubbed from browser memory and replaced with a privacy veil.</li>
+            <li><strong>Release Window & Privacy Veil:</strong> A countdown begins at the first authorized ciphertext release. Presets range from 10 seconds to 5 minutes, with custom windows up to 24 hours. When it closes, SecureBin drops its application-held decrypted references and replaces the content with a privacy veil; JavaScript cannot guarantee physical memory erasure.</li>
           </ul>
         </article>
 
@@ -183,7 +183,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
       <section className="docs-card" id="guide-parcels">
         <div className="principle-card-top"><span className="principle-number">05</span><span className="principle-tag">Offline Capability</span></div>
         <h3>📦 Offline Encrypted Parcels (.securebin)</h3>
-        <p>Export any share as an offline <code>.securebin</code> parcel (SBPX v1). Carry your ciphertext on an air-gapped USB or local drive, and restore it inside this browser with zero network requests.</p>
+        <p>Export a newly created share as an encrypted <code>.securebin</code> parcel (SBPX v1). Once the SecureBin parcel utility is loaded, restore the ciphertext from an air-gapped USB or local drive without API or Storage requests.</p>
         <div style={{ marginTop: "0.5rem" }}><button type="button" className="action-button secondary-button" onClick={onOpenParcel}>Open Parcel Utility</button></div>
       </section>
 
@@ -198,7 +198,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
       <section className="protocol-section" id="guide-security" aria-labelledby="protocol-heading">
         <p className="eyebrow">Cryptographic Protocol</p>
         <h3 id="protocol-heading">Sender browser → sealed parcel → recipient browser</h3>
-        <div className="protocol-grid"><div><strong>Sender browser</strong><span>Plaintext → factor derivation (HKDF-SHA-256) → AES-256-GCM → ciphertext</span></div><div><strong>SecureBin Server</strong><span>Sealed ciphertext, bounded policy timestamps, and atomic release counters</span></div><div><strong>Recipient browser</strong><span>Ciphertext + fragment key + optional user factors → local decryption</span></div></div>
+        <div className="protocol-grid"><div><strong>Sender browser</strong><span>Plaintext → optional PBKDF2 password processing → HKDF-SHA-256 object-key derivation → AES-256-GCM → ciphertext</span></div><div><strong>SecureBin Server</strong><span>Sealed ciphertext, bounded policy timestamps, and atomic release counters</span></div><div><strong>Recipient browser</strong><span>Ciphertext + fragment key + optional user factors → local decryption</span></div></div>
       </section>
 
       <section className="boundary-comparison" aria-labelledby="observe-heading">
@@ -209,13 +209,13 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
       <section className="protocol-section">
         <p className="eyebrow">Atomic Database Enforcement</p>
         <h3>Row-locked concurrency prevents limit overruns</h3>
-        <div className="atomic-example"><span>100 simultaneous requests</span><strong>PostgreSQL FOR UPDATE Lock</strong><span>3 authorized · 97 uniform unavailable</span></div>
+        <div className="atomic-example"><span>20 concurrent test requests</span><strong>PostgreSQL FOR UPDATE lock</strong><span>3 authorized · 17 uniform unavailable</span></div>
         <p style={{ marginTop: "0.75rem" }}>A lost-response retry that reuses its request token recovers the existing 5-minute authorization lease without consuming an extra release count.</p>
       </section>
 
       <section className="threat-section">
         <p className="eyebrow">Honest Security Boundaries</p>
-        <ul><li>Cannot protect against compromised browser extensions or malware on the recipient device.</li><li>Cannot prevent a recipient from taking physical screenshots or copying decrypted text.</li><li>Cannot erase copies of files that a recipient has already downloaded locally.</li><li>Ciphertext size, access patterns, and network traffic timing remain observable by ISPs.</li></ul>
+        <ul><li>Cannot protect against compromised browser extensions or malware on the recipient device.</li><li>Cannot prevent a recipient from taking physical screenshots or copying decrypted text.</li><li>Cannot erase copies of files that a recipient has already downloaded locally.</li><li>The service can observe application ciphertext sizes and access events; network providers can observe TLS traffic sizes, endpoints, and timing.</li></ul>
       </section>
 
       <section className="how-final">
