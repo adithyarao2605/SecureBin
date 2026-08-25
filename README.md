@@ -14,14 +14,37 @@ visual identity.
 
 > Create share. Reveal once. Keep the key where it belongs: in the browser.
 
+## At a glance
+
+| Resource | Entry point |
+| --- | --- |
+| Live application | [secure-bin.vercel.app](https://secure-bin.vercel.app/) |
+| In-product technical guide | [`/new#how-it-works`](https://secure-bin.vercel.app/new#how-it-works) |
+| Local production-shaped runtime | `pnpm local:setup && pnpm local` |
+| Fast local validation | `pnpm validate` |
+| Security reporting | [`SECURITY.md`](SECURITY.md) |
+
+## Evaluation at a glance
+
+| Area | Review-ready evidence |
+| --- | --- |
+| Problem and core flow | Browser-side encryption, fragment-keyed sharing, explicit expiry/revocation/reveal policies, and a real recipient viewer. |
+| Security model | AES-256-GCM, PBKDF2/HKDF factors, strict envelope validation, private Storage, atomic lifecycle RPCs, and uniform unavailable states. |
+| Product depth | Notes, Markdown, code IDE, encrypted attachments, discussions, Privacy Receipt, local Share History, QR sharing, and offline parcels. |
+| Reliability and accessibility | Idempotent creation/upload/reveal flows, cleanup retries, rate limits, keyboard support, responsive states, source audit, unit tests, and CI browser/Axe gates. |
+| Review path | This README for orientation, the in-app guide for behavior, and [`docs/architecture.md`](docs/architecture.md) plus [`docs/evidence.md`](docs/evidence.md) for implementation proof. |
+
 ## Contents
 
+- [At a glance](#at-a-glance)
+- [Evaluation at a glance](#evaluation-at-a-glance)
 - [Live product and current focus](#live-product-and-current-focus)
 - [Explore the product](#explore-the-product)
 - [What SecureBin supports](#what-securebin-supports)
 - [How the security model works](#how-the-security-model-works)
 - [Offline `.securebin` parcels](#offline-securebin-parcels)
 - [Encrypted discussions](#encrypted-discussions)
+- [Architecture at a glance](#architecture-at-a-glance)
 - [Run locally](#run-locally)
 - [Run the validation suite](#run-the-validation-suite)
 - [Self-host](#self-host)
@@ -155,6 +178,16 @@ Discussion behavior:
 This is an encrypted threaded discussion feature, not a realtime encrypted
 room. Realtime rooms and collaborative editing remain outside the current
 release scope.
+
+## Architecture at a glance
+
+| Layer | Responsibility |
+| --- | --- |
+| Browser | Generates factors and keys; encrypts/decrypts content and files; renders decrypted material; creates QR codes and receipts. |
+| Next.js API | Validates strict payloads, applies rate limits, coordinates lifecycle RPCs, and issues short-lived Storage operations. |
+| Supabase PostgreSQL | Stores ciphertext envelopes and bounded metadata; enforces idempotency, reveal leases, expiry, revocation, RLS, and cleanup state transitions. |
+| Private Storage | Holds encrypted attachment bytes under random paths; anonymous table and object access is disabled. |
+| CI and scripts | Replays migrations, runs unit/integration/browser/accessibility checks, audits source diagnostics, and validates reproducibility. |
 
 ## Run locally
 

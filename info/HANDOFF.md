@@ -13,6 +13,9 @@ Updated: 2026-08-25 (UTC)
 - Added repository metadata for GitHub, the live application, and issue
   reporting. No product behavior, cryptography, database function, or feature
   scope was changed.
+- Refined the README with compact reviewer entry points, an evaluation-at-a-
+  glance table, an architecture summary, and a documentation index inspired by
+  the repository's strongest review flow.
 - `pnpm lint`, `pnpm typecheck`, `pnpm test` (217 tests), and `pnpm build`
   pass. `new_plan_final.md` remains intentionally untracked and untouched.
 - Supabase replay, environment-backed integration tests, and browser/Axe
