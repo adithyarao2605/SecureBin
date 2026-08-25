@@ -318,7 +318,7 @@
   gap: 0.75rem;
 }
 
-.landing-capability-list span {
+.landing-capability-list > span {
   display: flex;
   align-items: center;
   gap: 0.5rem;

@@ -2,6 +2,14 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Landing capability tile polish
+
+- Scoped the Technical Capabilities tile styling to direct child items so the
+  nested checkmark glyph no longer receives its own border and rounded box.
+  The outer capability tiles remain unchanged.
+- `pnpm validate` passes with 214 unit tests, lint, typecheck, source audit,
+  and production build. No push was performed.
+
 ## README focus update
 
 - Removed the release checklist, deferred-scope inventory, and contribution
