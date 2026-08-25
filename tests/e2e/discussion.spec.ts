@@ -19,6 +19,11 @@ test("revealed recipients hold an encrypted discussion", async ({ page }) => {
 
   await page.goto("/new");
   await page.getByLabel("Note content").fill(NOTE);
+  await page.getByText("Customize policy", { exact: true }).click();
+  await page
+    .getByRole("group", { name: "How many times can the ciphertext be released?" })
+    .getByText("3 reveals")
+    .click();
   await page.getByRole("checkbox", { name: /Enable encrypted discussion/i }).check();
   await page.getByRole("button", { name: "Create share" }).click();
   const shareLinkInput = page.getByRole("textbox", { name: "Share link" });
@@ -30,10 +35,11 @@ test("revealed recipients hold an encrypted discussion", async ({ page }) => {
   const revealButton = page.getByRole("button", { name: "Reveal" });
   await expect(revealButton).toBeVisible({ timeout: 20_000 });
   await revealButton.click();
+  await page.getByRole("button", { name: "Yes, reveal now" }).click();
 
   const thread = page.getByLabel("Encrypted discussion");
   await expect(thread).toBeVisible({ timeout: 20_000 });
-  await expect(thread.getByText("No comments yet.")).toBeVisible();
+  await expect(thread.getByText("No comments yet.")).toBeVisible({ timeout: 30_000 });
 
   // Post a top-level comment with a nickname.
   const form = thread.locator("form").last();

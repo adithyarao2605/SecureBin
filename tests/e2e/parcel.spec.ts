@@ -16,6 +16,7 @@ test("exports a parcel at creation and restores it offline", async ({ page }) =>
   await expect(shareLinkInput).toBeVisible({ timeout: 30_000 });
 
   // Export the parcel offered on the result card.
+  await page.getByText("Carry the ciphertext locally", { exact: true }).click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download .securebin parcel" }).click();
   const download = await downloadPromise;

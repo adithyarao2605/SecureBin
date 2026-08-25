@@ -16,8 +16,13 @@ test("creates a password + unlock protected share and reveals with both factors"
   });
 
   await page.goto("/new");
-  await page.getByLabel("Note content").fill(NOTE);
   await page.getByRole("button", { name: /Add password or second channel/u }).click();
+  await page.getByLabel("Note content").fill(NOTE);
+  await page.getByText("Customize policy", { exact: true }).click();
+  await page
+    .getByRole("group", { name: "How many times can the ciphertext be released?" })
+    .getByText("3 reveals")
+    .click();
 
   await page.getByLabel("Password (optional)").fill(PASSWORD);
   await page.getByLabel("Confirm password").fill(PASSWORD);
@@ -49,6 +54,7 @@ test("creates a password + unlock protected share and reveals with both factors"
   await page.getByLabel(/Unlock code/iu).fill(code);
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Reveal" }).click();
+  await page.getByRole("button", { name: "Yes, reveal now" }).click();
   await expect(page.getByText(/Could not decrypt with the supplied local factors/iu).first()).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
 
@@ -56,5 +62,6 @@ test("creates a password + unlock protected share and reveals with both factors"
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Reveal" }).click();
+  await page.getByRole("button", { name: "Yes, reveal now" }).click();
   await expect(page.getByText(NOTE)).toBeVisible({ timeout: 30_000 });
 });

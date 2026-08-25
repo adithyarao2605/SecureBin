@@ -33,6 +33,7 @@ test("the fully opened share has no serious or critical accessibility violations
     buffer: Buffer.from(PNG_BASE64, "base64"),
   });
   await expect(page.getByText("probe.png")).toBeVisible();
+  await page.getByLabel("Note content").fill("A11y opened-view probe note.");
   await page.getByRole("button", { name: "Create share" }).click();
   const shareLinkInput = page.getByRole("textbox", { name: "Share link" });
   await expect(shareLinkInput).toBeVisible({ timeout: 30_000 });
@@ -41,6 +42,7 @@ test("the fully opened share has no serious or critical accessibility violations
   const revealButton = page.getByRole("button", { name: "Reveal" });
   await expect(revealButton).toBeVisible({ timeout: 20_000 });
   await revealButton.click();
+  await page.getByRole("button", { name: "Yes, reveal now" }).click();
 
   await expect(page.getByText("A11y opened-view probe note.")).toBeVisible({ timeout: 20_000 });
   const results = await new AxeBuilder({ page }).analyze();
@@ -52,6 +54,11 @@ test("the discussion thread has no serious or critical accessibility violations"
 
   await page.goto("/new");
   await page.getByLabel("Note content").fill("A11y discussion probe note.");
+  await page.getByText("Customize policy", { exact: true }).click();
+  await page
+    .getByRole("group", { name: "How many times can the ciphertext be released?" })
+    .getByText("3 reveals")
+    .click();
   await page.getByRole("checkbox", { name: /Enable encrypted discussion/i }).check();
   await page.getByRole("button", { name: "Create share" }).click();
   const shareLinkInput = page.getByRole("textbox", { name: "Share link" });
@@ -61,12 +68,14 @@ test("the discussion thread has no serious or critical accessibility violations"
   const revealButton = page.getByRole("button", { name: "Reveal" });
   await expect(revealButton).toBeVisible({ timeout: 20_000 });
   await revealButton.click();
+  await page.getByRole("button", { name: "Yes, reveal now" }).click();
 
   const thread = page.getByLabel("Encrypted discussion");
   await expect(thread).toBeVisible({ timeout: 20_000 });
   await thread.getByPlaceholder("Write a reply…").fill("A11y probe reply");
   await thread.getByRole("button", { name: "Post" }).click();
   await expect(thread.getByText("A11y probe reply")).toBeVisible({ timeout: 15_000 });
+  await expect(thread.getByText("Loading encrypted replies…")).toBeHidden({ timeout: 15_000 });
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((violation) => violation.impact === "critical" || violation.impact === "serious")).toEqual([]);

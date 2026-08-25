@@ -54,6 +54,7 @@ test("the user can navigate between application tabs", async ({ page }) => {
 
 test("documentation guide links stay in the documentation panel", async ({ page }) => {
   await page.goto("/new#how-it-works");
+  const guideNavigation = page.getByRole("navigation", { name: "Documentation sections" });
   const guideLinks = [
     { name: /Quickstart/u, id: "guide-quickstart" },
     { name: /Multi-Factor/u, id: "guide-factors" },
@@ -65,7 +66,7 @@ test("documentation guide links stay in the documentation panel", async ({ page 
   ] as const;
 
   for (const guide of guideLinks) {
-    await page.getByRole("link", { name: guide.name }).click();
+    await guideNavigation.getByRole("link", { name: guide.name }).click();
     await expect(page).toHaveURL(new RegExp(`/new#${guide.id}$`, "u"));
     await expect(page.getByRole("tab", { name: "How it works" })).toHaveAttribute("aria-selected", "true");
     await expect(page.locator(`#${guide.id}`)).toBeVisible();
@@ -88,7 +89,7 @@ test("the user can select custom expiration duration", async ({ page }) => {
   await unitSelect.selectOption("hours");
 
   // Evidence rail updates with custom expiry
-  await expect(page.getByLabel("Evidence rail")).toBeVisible();
+  await expect(page.getByLabel("Evidence rail", { exact: true })).toBeVisible();
 });
 
 test("the user can select a supported reveal limit", async ({ page }) => {
@@ -100,10 +101,12 @@ test("the user can select a supported reveal limit", async ({ page }) => {
   await expect(tenReveals).toBeChecked();
 
   // Evidence rail updates
-  await expect(page.getByLabel("Evidence rail")).toBeVisible();
+  await expect(page.getByLabel("Evidence rail", { exact: true })).toBeVisible();
 });
 
 test("created share appears in the local history desk with live actions", async ({ page }) => {
+  const publicId = "AAAAAAAAAAAAAAAAAAAAAA";
+  const expiresAt = new Date(Date.now() + 86400000).toISOString();
   await page.route(/\/api\/shares(?:\/|$)/u, async (route) => {
     const request = route.request();
     const pathname = new URL(request.url()).pathname;
@@ -113,15 +116,34 @@ test("created share appears in the local history desk with live actions", async 
         status: 201,
         contentType: "application/json",
         body: JSON.stringify({
-          publicId: "hist-sample-public-id-123",
+          publicId,
           created: true,
           policy: {
             availableAt: null,
-            expiresAt: new Date(Date.now() + 86400000).toISOString(),
+            expiresAt,
             maxReveals: 5,
             passwordRequired: false,
             unlockRequired: false,
           },
+        }),
+      });
+      return;
+    }
+    if (pathname === "/api/shares/status-batch" && request.method() === "POST") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          statuses: [{
+            publicId,
+            status: "active",
+            availableAt: null,
+            expiresAt,
+            passwordRequired: false,
+            unlockRequired: false,
+            maxReveals: 5,
+            remainingReveals: 5,
+          }],
         }),
       });
       return;

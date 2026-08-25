@@ -34,6 +34,7 @@ test("creates a share with an encrypted attachment and reveals both", async ({ p
     buffer: Buffer.from(PNG_BASE64, "base64"),
   });
   await expect(page.getByText("probe.png")).toBeVisible();
+  await page.getByLabel("Note content").fill(NOTE);
 
   await page.getByRole("button", { name: "Create share" }).click();
   const shareLinkInput = page.getByRole("textbox", { name: "Share link" });
@@ -63,6 +64,7 @@ test("creates a share with an encrypted attachment and reveals both", async ({ p
   const revealButton = page.getByRole("button", { name: "Reveal" });
   await expect(revealButton).toBeVisible({ timeout: 20_000 });
   await revealButton.click();
+  await page.getByRole("button", { name: "Yes, reveal now" }).click();
 
   await expect(page.getByText(NOTE)).toBeVisible({ timeout: 30_000 });
   const attachmentCard = page.getByLabel("Decrypted file attachment");
@@ -114,6 +116,7 @@ test("accepts drag-dropped multi-file uploads and downloads them as one ZIP", as
   for (const file of files) {
     await expect(page.getByText(file.name)).toBeVisible();
   }
+  await page.getByLabel("Note content").fill("Multi-file round trip through drag and drop.");
 
   await page.getByRole("button", { name: "Create share" }).click();
   const shareLinkInput = page.getByRole("textbox", { name: "Share link" });
@@ -128,6 +131,7 @@ test("accepts drag-dropped multi-file uploads and downloads them as one ZIP", as
   const revealButton = page.getByRole("button", { name: "Reveal" });
   await expect(revealButton).toBeVisible({ timeout: 20_000 });
   await revealButton.click();
+  await page.getByRole("button", { name: "Yes, reveal now" }).click();
 
   for (const file of files) {
     await expect(page.getByLabel("Decrypted file attachment").getByRole("heading", { name: new RegExp(file.name, "u") })).toBeVisible();

@@ -25,6 +25,7 @@ test("veils decrypted content locally and never calls the server to re-show", as
   const revealButton = page.getByRole("button", { name: "Reveal" });
   await expect(revealButton).toBeVisible({ timeout: 20_000 });
   await revealButton.click();
+  await page.getByRole("button", { name: "Yes, reveal now" }).click();
 
   const veilRegion = page.locator(".privacy-veil");
   await expect(veilRegion).toBeVisible({ timeout: 20_000 });
