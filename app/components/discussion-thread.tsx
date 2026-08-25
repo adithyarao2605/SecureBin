@@ -93,6 +93,7 @@ export function DiscussionThread({
     return promise;
   }, [capability, hkdfSalt, mask]);
   const [comments, setComments] = useState<DecryptedComment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [replyText, setReplyText] = useState("");
   const [nickname, setNickname] = useState("");
@@ -110,6 +111,7 @@ export function DiscussionThread({
 
   const loadComments = useCallback(async () => {
     const seq = ++loadSeq.current;
+    setIsLoading(true);
     try {
       const key = await keyPromise;
       const response = await fetch(
@@ -151,6 +153,8 @@ export function DiscussionThread({
       setLoadError("");
     } catch {
       if (seq === loadSeq.current) setLoadError("Comments could not be loaded right now.");
+    } finally {
+      if (seq === loadSeq.current) setIsLoading(false);
     }
   }, [keyPromise, publicId, capability]);
 
@@ -380,25 +384,48 @@ export function DiscussionThread({
   }
 
   return (
-    <section className="discussion-thread" aria-label="Encrypted discussion">
-      <h3 className="surface-heading">Encrypted discussion</h3>
+    <section className="discussion-thread" aria-label="Encrypted discussion" aria-busy={posting || mutating || isLoading}>
+      <div className="discussion-heading-row">
+        <div>
+          <h3 className="surface-heading">Encrypted discussion</h3>
+          <p className="discussion-intro">Replies are sealed in your browser and available only while this share remains available.</p>
+        </div>
+        <span className="discussion-proof-badge">Client encrypted</span>
+      </div>
 
-      {(loadError || postStatus) && (
-        <p className="viewer-status-text" role="status">
-          {loadError || postStatus}
+      {loadError && (
+        <div className="discussion-error" role="alert" aria-live="polite">
+          <p className="viewer-status-text">{loadError}</p>
+          <button type="button" className="action-button secondary-button" onClick={() => void loadComments()}>
+            Retry discussion
+          </button>
+        </div>
+      )}
+
+      {postStatus && !loadError && (
+        <p className="viewer-status-text" role="alert" aria-live="polite">
+          {postStatus}
         </p>
       )}
 
       <ul className="discussion-list">
         {topLevel.map(renderComment)}
-        {topLevel.length === 0 && !loadError && (
+        {isLoading && comments.length === 0 && !loadError && (
+          <li className="discussion-empty" role="status">Loading encrypted replies…</li>
+        )}
+        {!isLoading && topLevel.length === 0 && !loadError && (
           <li className="discussion-empty">No comments yet.</li>
         )}
       </ul>
 
       <form className="discussion-form" onSubmit={(e) => void handlePost(e)}>
         {parentId && (
-          <p className="policy-hint">Replying to an earlier comment.</p>
+          <div className="discussion-reply-context">
+            <p className="policy-hint">Replying to an earlier comment.</p>
+            <button type="button" className="discussion-reply-button action-button tertiary-button" onClick={() => setParentId(null)}>
+              Cancel reply
+            </button>
+          </div>
         )}
         <label htmlFor="discussion-reply-text" className="sr-only">
           Reply

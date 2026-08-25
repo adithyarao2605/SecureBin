@@ -214,15 +214,21 @@
   border: 1px solid var(--line);
 }
 
-.history-status-badge.active {
+.history-status-badge.badge-active {
   color: var(--mineral);
   border-color: var(--mineral);
   background: color-mix(in srgb, var(--mineral) 10%, transparent);
 }
 
-.history-status-badge.revoked,
-.history-status-badge.exhausted,
-.history-status-badge.expired {
+.history-status-badge.badge-scheduled {
+  color: var(--copper);
+  border-color: var(--copper);
+  background: color-mix(in srgb, var(--copper) 10%, transparent);
+}
+
+.history-status-badge.badge-revoked,
+.history-status-badge.badge-unavailable,
+.history-status-badge.badge-checking {
   color: var(--copper);
   border-color: var(--copper);
   background: color-mix(in srgb, var(--copper) 10%, transparent);
@@ -238,6 +244,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
   color: var(--muted-ink);
   font-size: 0.8rem;
 }

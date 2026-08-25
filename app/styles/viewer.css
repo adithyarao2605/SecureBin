@@ -389,6 +389,46 @@
   border-top: 1px solid var(--line);
 }
 
+.discussion-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.discussion-intro {
+  max-width: 52ch;
+  margin: 0.35rem 0 0;
+  color: var(--muted-ink);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.discussion-proof-badge {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--mineral);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.discussion-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.discussion-error .viewer-status-text {
+  flex: 1 1 16rem;
+}
+
 .discussion-list {
   list-style: none;
   margin: 0.75rem 0;
@@ -454,6 +494,17 @@
   gap: 0.35rem;
 }
 
+.discussion-reply-context {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+
+.discussion-reply-context .policy-hint {
+  margin: 0;
+}
+
 .discussion-form {
   display: flex;
   flex-direction: column;
@@ -471,6 +522,21 @@
 .discussion-nickname-input {
   max-width: 16rem;
   border-radius: .35rem;
+}
+
+@media (max-width: 480px) {
+  .discussion-heading-row {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .discussion-proof-badge {
+    align-self: flex-start;
+  }
+
+  .discussion-replies {
+    padding-left: 0.65rem;
+  }
 }
 
 /* Viewer alignment polish (ported from friend's UI commit) */

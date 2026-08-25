@@ -73,6 +73,15 @@ export function ViewerView({
    releaseWindowRemainingMs,
 }: ViewerViewProps) {
   const activeStatus = shareStatus?.status === "active" ? shareStatus : null;
+  const isDecrypted = state === "opened" && content !== null;
+  const viewerHeading = isDecrypted
+    ? "Decrypted share"
+    : state === "unavailable"
+      ? "Share unavailable"
+      : "Protected share";
+  const viewerTrustLine = isDecrypted
+    ? "Decrypted in your browser using the link fragment."
+    : "The link fragment stays in this browser until you choose to reveal the share.";
 
   return (
     <main className="viewer-shell" role="main">
@@ -85,10 +94,10 @@ export function ViewerView({
         <Proofline phase={prooflinePhase} />
       </section>
 
-      <div className="surface-card viewer-card">
+      <section className="surface-card viewer-card" aria-labelledby="viewer-heading">
         <div className="viewer-header">
-          <h2 className="surface-heading">Decrypted share</h2>
-          <p className="trust-line">Decrypted in your browser using the link fragment.</p>
+          <h2 className="surface-heading" id="viewer-heading">{viewerHeading}</h2>
+          <p className="trust-line">{viewerTrustLine}</p>
         </div>
 
         {notice && state !== "opened" && (
@@ -255,7 +264,7 @@ export function ViewerView({
             Public ID: <code>{publicId}</code>
           </p>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

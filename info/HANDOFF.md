@@ -1,6 +1,21 @@
 # SecureBin handoff
 
-Updated: 2026-08-24 (Asia/Kolkata)
+Updated: 2026-08-25 (UTC)
+
+## UI polish update
+
+- Repaired local-history status badge styling so active, scheduled, checking,
+  revoked, and unavailable states receive the intended quiet-proof treatment.
+- Improved narrow-screen history metadata wrapping and added a visible retry
+  action when an encrypted discussion cannot load.
+- Clarified the viewer heading boundary: unopened shares are labelled
+  `Protected share`, while `Decrypted share` appears only after local
+  decryption. Discussion threads now expose their client-encrypted boundary,
+  loading state, and a clear cancel-reply path.
+- This pass stayed in UI components and styles; friend-owned lifecycle,
+  attachment, API, migration, and cryptographic files were not changed.
+- Validation: `pnpm lint`, `pnpm typecheck`, `pnpm test` (191 tests),
+  `pnpm build`, and `git diff --check` all pass.
 
 ## UI Harmonization Update
 
@@ -19,8 +34,9 @@ Updated: 2026-08-24 (Asia/Kolkata)
 
 ## Current state
 
-- Branch: `dev`. `main` was not inspected for this audit.
-- Pre-freeze implementation and its complete local gate are green on `dev`; hosted owner evidence remains open.
+- Branch: `main`, aligned with `origin/main` before this polish batch.
+- Pre-freeze implementation and its complete local gate remain green; this
+  polish batch is ready for the next commit and hosted verification.
 - Required work is consolidated in `docs/before-day-7.md`; Day 7/release-freeze work has not begun.
 - The user's existing uncommitted `app/page.tsx` change was preserved.
 - Do not claim a hosted deployment until the owner verifies the remote migration, production promotion, cleanup schedule, and smoke path.

@@ -227,6 +227,7 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
                   <span className={`history-status-badge badge-${displayStatus}`}>
                     {displayStatus === "active" && "● Active"}
                     {displayStatus === "scheduled" && "⏱ Scheduled"}
+                    {displayStatus === "checking" && "↻ Checking"}
                     {displayStatus === "unavailable" && "✕ Unavailable / Expired"}
                     {displayStatus === "revoked" && "⊘ Revoked"}
                   </span>
