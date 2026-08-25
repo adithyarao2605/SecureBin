@@ -53,6 +53,13 @@ export interface StagedCreateRequest {
     readonly revealWindowSeconds?: number | null;
   };
   readonly mask: string;
+  readonly onProgress?: (progress: StagedCreateProgress) => void;
+}
+
+export interface StagedCreateProgress {
+  readonly phase: "sealing" | "uploading" | "finalizing";
+  readonly current: number;
+  readonly total: number;
 }
 
 export interface StagedCreateOutcome {
@@ -191,6 +198,11 @@ export function useStagedCreate() {
 
       const stagedFiles: PreparedAttemptFile[] = [];
       for (const file of request.files) {
+        request.onProgress?.({
+          phase: "sealing",
+          current: stagedFiles.length + 1,
+          total: request.files.length,
+        });
         const buffer = await file.arrayBuffer();
         const sealed = await sealFile(
           {
@@ -240,6 +252,12 @@ export function useStagedCreate() {
       const entry = prepared.files[index];
       if (entry.uploaded) continue;
 
+      request.onProgress?.({
+        phase: "uploading",
+        current: index + 1,
+        total: prepared.files.length,
+      });
+
       const uploadRes = await fetch("/api/uploads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -285,6 +303,7 @@ export function useStagedCreate() {
     }
 
     // Create the share
+    request.onProgress?.({ phase: "finalizing", current: 1, total: 1 });
     const response = await fetch("/api/shares", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

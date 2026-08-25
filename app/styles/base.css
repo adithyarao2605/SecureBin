@@ -531,6 +531,34 @@ button {
   .docs-glance-grid { grid-template-columns: 1fr; }
   .docs-glance-card { min-height: auto; }
   .docs-validation-strip { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
+  .docs-card,
+  .boundary-comparison > div,
+  .how-final > div {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .site-header {
+    width: calc(100% - 1rem);
+    padding-inline: 0.5rem;
+  }
+
+  .header-actions {
+    gap: 0.35rem;
+  }
+
+  .parcel-utility-button {
+    max-width: 7rem;
+    overflow: hidden;
+    padding-inline: 0.55rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tab-pill-btn {
+    padding-inline: 0.5rem;
+  }
 }
 
 .how-header-block {
@@ -799,16 +827,45 @@ button {
   transition: all 150ms ease;
 }
 
-.docs-nav-pill:hover {
+.docs-nav-pill:hover,
+.docs-nav-pill.active {
   background: var(--surface-bg);
   border-color: var(--mineral);
   color: var(--ink);
 }
 
+.docs-nav-pill.active {
+  box-shadow: inset 0 -2px 0 var(--mineral);
+}
+
 .docs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 1.5rem;
+}
+
+#guide-quickstart,
+#guide-factors,
+#guide-policies,
+#guide-attachments,
+#guide-parcels,
+#guide-self-hosting,
+#guide-security {
+  scroll-margin-top: 1rem;
+}
+
+@media (max-width: 480px) {
+  .docs-nav-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.75rem;
+    scrollbar-width: thin;
+  }
+
+  .docs-nav-pill {
+    flex: 0 0 auto;
+  }
+
 }
 
 .docs-card {

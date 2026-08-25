@@ -22,6 +22,7 @@ import {
   revokeShare,
   useStagedCreate,
   type CreateAttempt,
+  type StagedCreateProgress,
 } from "../hooks/use-staged-create";
 import { ModeTabs, type ComposerMode } from "./composer/mode-tabs";
 import { EditorPane, type MarkdownViewMode } from "./composer/editor-pane";
@@ -36,6 +37,8 @@ export interface ComposerProps {
   readonly onPolicyChange?: (policy: ValidatedPolicy) => void;
   readonly onShareChange?: () => void;
 }
+
+const EXAMPLE_DRAFT = "Example handoff\n\nThis is sample text for trying SecureBin. Replace it with your own content before creating a share.";
 
 export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: ComposerProps = {}) {
   const [mode, setMode] = useState<ComposerMode>("note");
@@ -58,6 +61,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   const [unlockCodeShown, setUnlockCodeShown] = useState("");
   const [receiptData, setReceiptData] = useState<PrivacyReceiptData | null>(null);
   const [parcel, setParcel] = useState<Uint8Array | null>(null);
+  const [attachmentProgress, setAttachmentProgress] = useState<StagedCreateProgress | null>(null);
   const languageWasExplicitlySelectedRef = useRef(false);
   const pasteDetectionUsedRef = useRef(false);
 
@@ -87,6 +91,18 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
 
   function handleDraftChange(value: string) {
     setDraft(value);
+    resetPrepared();
+  }
+
+  function handleLoadExample(): void {
+    if (draft.trim() || attachedFiles.length > 0) {
+      setErrorMessage("Clear the current draft before loading the example.");
+      return;
+    }
+    setMode("note");
+    setMarkdownView("edit");
+    setDraft(EXAMPLE_DRAFT);
+    setErrorMessage("");
     resetPrepared();
   }
 
@@ -173,6 +189,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
     lastAttemptRef.current = attempt;
 
     setIsPending(true);
+    setAttachmentProgress(null);
     setErrorMessage("");
     if (onPhaseChange) onPhaseChange("creating");
 
@@ -190,6 +207,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
         files: attachedFiles,
         policy: attempt.policy,
         mask: attempt.mask,
+        onProgress: setAttachmentProgress,
       });
 
       setShareUrl(outcome.shareUrl);
@@ -210,6 +228,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
       if (onPhaseChange) onPhaseChange("draft");
     } finally {
       setIsPending(false);
+      setAttachmentProgress(null);
     }
   }
 
@@ -290,9 +309,10 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   return (
     <div className="surface-card composer-surface">
       <div className="composer-header">
-        <h2 className="surface-heading" id="composer-heading">
-          Create a private share
-        </h2>
+        <div className="composer-heading-row">
+          <h2 className="surface-heading" id="composer-heading">Create a private share</h2>
+          <button type="button" className="composer-example-button" onClick={handleLoadExample} disabled={isPending}>Load safe example</button>
+        </div>
         <p className="trust-line">Your browser encrypts this before it leaves the page.</p>
       </div>
 
@@ -321,6 +341,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
           files={attachedFiles}
           disabled={isPending}
           inputRef={fileInputRef}
+          progress={attachmentProgress}
           onInputChange={handleFileSelect}
           onFilesDropped={acceptFiles}
           onRemoveFile={handleRemoveFile}
@@ -361,6 +382,15 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
             {errorMessage}
           </div>
         )}
+
+        <div className="composer-checklist" aria-label="Share readiness checklist">
+          <p className="composer-checklist-heading">Ready when you are</p>
+          <ul>
+            <li className={draft.trim() || attachedFiles.length > 0 ? "complete" : ""}><span aria-hidden="true">✓</span> Add content or an attachment</li>
+            <li className={validatePolicyDraft(policyDraft).valid ? "complete" : ""}><span aria-hidden="true">✓</span> Review the access policy</li>
+            <li className={!protection.password || protection.password === protection.confirmPassword ? "complete" : ""}><span aria-hidden="true">✓</span> Confirm optional protection</li>
+          </ul>
+        </div>
 
         <div className="composer-submit-row">
           <button

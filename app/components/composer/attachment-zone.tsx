@@ -3,11 +3,13 @@
 import { useState, type ChangeEvent, type RefObject } from "react";
 import { MAX_FILE_PLAINTEXT_BYTES } from "../../../lib/crypto/file";
 import { formatBytes } from "./format";
+import type { StagedCreateProgress } from "../../hooks/use-staged-create";
 
 interface AttachmentZoneProps {
   readonly files: readonly File[];
   readonly disabled: boolean;
   readonly inputRef: RefObject<HTMLInputElement | null>;
+  readonly progress: StagedCreateProgress | null;
   onInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onFilesDropped: (files: File[]) => void;
   onRemoveFile: (index: number) => void;
@@ -17,6 +19,7 @@ export function AttachmentZone({
   files,
   disabled,
   inputRef,
+  progress,
   onInputChange,
   onFilesDropped,
   onRemoveFile,
@@ -69,6 +72,24 @@ export function AttachmentZone({
           </button>
         </div>
       ))}
+      {progress && files.length > 0 && (
+        <div className="attachment-progress" role="status" aria-live="polite">
+          <div className="attachment-progress-heading">
+            <span>{progress.phase === "sealing" ? "Encrypting attachments" : progress.phase === "uploading" ? "Uploading attachments" : "Finishing share"}</span>
+            <strong>{progress.current} / {progress.total}</strong>
+          </div>
+          <div
+            className="attachment-progress-track"
+            role="progressbar"
+            aria-label="Attachment preparation progress"
+            aria-valuemin={0}
+            aria-valuemax={progress.total}
+            aria-valuenow={progress.current}
+          >
+            <span style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }} />
+          </div>
+        </div>
+      )}
       <input
         type="file"
         ref={inputRef}

@@ -2,6 +2,21 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Remaining polish pass and open licensing
+
+- Added an IDE focus mode with Escape-to-exit, active documentation section
+  highlighting, a safe example loader, and a visible composer readiness
+  checklist.
+- Added staged attachment progress for browser encryption, Storage upload, and
+  share finalization, plus narrow/mobile/zoom layout safeguards for the
+  composer, documentation, landing preview, and application header.
+- Added the permissive MIT license, package metadata, and a `SECURITY.md`
+  reporting policy with explicit browser-compromise and recipient-copy limits.
+- Lint, typecheck, all 214 unit tests, source audit, and production build pass.
+  Playwright and Axe execution remains blocked before launch on this Ubuntu
+  26.04 host because no compatible Chromium binary is available. No push was
+  performed.
+
 ## Product-surface polish and evidence refresh
 
 - Made the landing page accurately surface existing notes, Markdown, code,

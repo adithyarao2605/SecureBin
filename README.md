@@ -27,6 +27,7 @@ visual identity.
 - [Self-host](#self-host)
 - [Judge demo flow](#judge-demo-flow)
 - [Implementation evidence map](#implementation-evidence-map)
+- [License and security](#license-and-security)
 - [Repository map](#repository-map)
 
 ## Live product and current focus
@@ -297,6 +298,18 @@ surface and then verify the corresponding source evidence:
 | Revocation is useful without overclaiming erasure | Revoke a share, then inspect the unavailable state and Privacy Receipt | Atomic lifecycle RPCs, uniform failure contracts, and receipt tests |
 | Offline portability remains local-only | Download a `.securebin` parcel and restore it through **Open parcel** | `lib/shares/parcel.ts`, parcel unit tests, and parcel browser coverage |
 | The repository is reproducible and reviewable | Check the CI badge and validation commands above | GitHub Actions, `pnpm validate`, reproducibility script, and `info/HANDOFF.md` |
+
+## License and security
+
+Original SecureBin code is released under the permissive [MIT License](LICENSE).
+You may use, modify, distribute, sublicense, and sell copies of it, provided
+the copyright and license notices are preserved. The license also provides the
+software without warranty and limits author liability to the extent permitted
+by law. Third-party dependencies remain under their own licenses.
+
+Please read the [security policy](SECURITY.md) before reporting a suspected
+vulnerability. Never include real secrets or private share material in a
+report.
 
 ## Repository map
 

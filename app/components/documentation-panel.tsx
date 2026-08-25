@@ -1,11 +1,64 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 type DocumentationPanelProps = {
   readonly onOpenParcel: () => void;
   readonly onCreateShare: () => void;
 };
 
+const GUIDE_SECTIONS = [
+  "guide-quickstart",
+  "guide-factors",
+  "guide-policies",
+  "guide-attachments",
+  "guide-parcels",
+  "guide-self-hosting",
+  "guide-security",
+] as const;
+
+type GuideSection = (typeof GUIDE_SECTIONS)[number];
+
+function isGuideSection(value: string): value is GuideSection {
+  return GUIDE_SECTIONS.includes(value as GuideSection);
+}
+
+function guideFromHash(hash: string): GuideSection {
+  const candidate = hash.slice(1);
+  return isGuideSection(candidate) ? candidate : GUIDE_SECTIONS[0];
+}
+
 export function DocumentationPanel({ onOpenParcel, onCreateShare }: DocumentationPanelProps) {
+  const [activeGuide, setActiveGuide] = useState<GuideSection>(GUIDE_SECTIONS[0]);
+
+  useEffect(() => {
+    const updateFromHash = () => setActiveGuide(guideFromHash(window.location.hash));
+    updateFromHash();
+    window.addEventListener("hashchange", updateFromHash);
+
+    const sections = GUIDE_SECTIONS.map((id) => document.getElementById(id)).filter(
+      (section): section is HTMLElement => section !== null,
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((left, right) => left.boundingClientRect.top - right.boundingClientRect.top);
+        const firstVisible = visible[0]?.target.id;
+        if (firstVisible && isGuideSection(firstVisible)) {
+          setActiveGuide(firstVisible);
+        }
+      },
+      { rootMargin: "-18% 0px -68% 0px", threshold: [0, 0.2, 0.8] },
+    );
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      window.removeEventListener("hashchange", updateFromHash);
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <section className="how-section" aria-labelledby="how-heading">
       <div className="how-header-block">
@@ -71,13 +124,13 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
       </section>
 
       <nav className="docs-nav-bar" aria-label="Documentation sections">
-        <a className="docs-nav-pill" href="#guide-quickstart">🚀 Quickstart</a>
-        <a className="docs-nav-pill" href="#guide-factors">🔐 Multi-Factor</a>
-        <a className="docs-nav-pill" href="#guide-policies">⏱️ Policies & Expiry</a>
-        <a className="docs-nav-pill" href="#guide-attachments">📎 Files & Replies</a>
-        <a className="docs-nav-pill" href="#guide-parcels">📦 Offline Parcels</a>
-        <a className="docs-nav-pill" href="#guide-self-hosting">🖥️ Self-Hosting</a>
-        <a className="docs-nav-pill" href="#guide-security">🛡️ Security Model</a>
+        <a className={`docs-nav-pill${activeGuide === "guide-quickstart" ? " active" : ""}`} aria-current={activeGuide === "guide-quickstart" ? "location" : undefined} href="#guide-quickstart">🚀 Quickstart</a>
+        <a className={`docs-nav-pill${activeGuide === "guide-factors" ? " active" : ""}`} aria-current={activeGuide === "guide-factors" ? "location" : undefined} href="#guide-factors">🔐 Multi-Factor</a>
+        <a className={`docs-nav-pill${activeGuide === "guide-policies" ? " active" : ""}`} aria-current={activeGuide === "guide-policies" ? "location" : undefined} href="#guide-policies">⏱️ Policies & Expiry</a>
+        <a className={`docs-nav-pill${activeGuide === "guide-attachments" ? " active" : ""}`} aria-current={activeGuide === "guide-attachments" ? "location" : undefined} href="#guide-attachments">📎 Files & Replies</a>
+        <a className={`docs-nav-pill${activeGuide === "guide-parcels" ? " active" : ""}`} aria-current={activeGuide === "guide-parcels" ? "location" : undefined} href="#guide-parcels">📦 Offline Parcels</a>
+        <a className={`docs-nav-pill${activeGuide === "guide-self-hosting" ? " active" : ""}`} aria-current={activeGuide === "guide-self-hosting" ? "location" : undefined} href="#guide-self-hosting">🖥️ Self-Hosting</a>
+        <a className={`docs-nav-pill${activeGuide === "guide-security" ? " active" : ""}`} aria-current={activeGuide === "guide-security" ? "location" : undefined} href="#guide-security">🛡️ Security Model</a>
       </nav>
 
       <div className="docs-grid" id="guide-quickstart">

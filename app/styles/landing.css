@@ -192,6 +192,9 @@
   color: var(--landing-muted);
   font-family: var(--font-mono);
   font-size: 0.68rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
 }
 
 .landing-preview-tabs .active {
