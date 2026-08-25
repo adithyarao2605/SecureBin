@@ -659,6 +659,25 @@
   padding: 1.5rem;
 }
 
+.decrypted-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.text-content-header {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 1.8rem;
+}
+
+.text-content-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .decrypted-text {
   margin: 0;
   white-space: pre-wrap;

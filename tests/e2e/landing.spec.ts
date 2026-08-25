@@ -12,7 +12,7 @@ test("landing page presents the technical shell and real create action", async (
   await expect(selfHostLink).toHaveAttribute("target", "_blank");
   await expect(primaryNav.getByRole("link", { name: "Docs", exact: true })).toHaveAttribute("href", "/new#how-it-works");
   await expect(page.locator(".landing-hero").getByRole("link", { name: /Create secure share/i })).toHaveAttribute("href", "/new");
-  await expect(page.getByText("Paste sensitive credentials, API keys, or notes here...", { exact: true })).toBeVisible();
+  await expect(page.getByText("A share preview: write sensitive content, choose its policy, and seal it in the browser.", { exact: true })).toBeVisible();
 });
 
 test("landing actions reach real destinations", async ({ page }) => {

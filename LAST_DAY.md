@@ -1,6 +1,10 @@
 # LAST_DAY: Release Freeze, Final Verification & Demo Rehearsal
 
-This document outlines the final remaining tasks, verification gates, and owner actions required for Day 7 release freeze and submission.
+This document outlines the final remaining verification gates and owner actions required for the Day 7 release freeze and submission.
+
+**Current status:** The implementation and local evidence gates are complete on
+`main`. The remaining unchecked items are fresh-clone, hosted-production, and
+owner-operated rehearsal steps; they are not missing product features.
 
 ---
 
@@ -27,10 +31,10 @@ This document outlines the final remaining tasks, verification gates, and owner 
 ## 2. Production Smoke Matrix (Owner-Operated)
 - [ ] Apply remote database migrations (`20260901000000_pre_freeze_lifecycle_uploads.sql`) on hosted Supabase.
 - [ ] Verify production deployment across all permutations:
-  - Plain note, Markdown (edit/split/preview), and Code sharing.
+  - Plain note, Markdown (edit/split/preview), and Code sharing through one editable IDE-style surface.
   - Password protection, Two-channel unlock code, and Combined factors.
   - Scheduled start time, Custom expiry, and Never expiry.
-  - Reveal limits: 1 (burn), 3, 5, 10, custom, and unlimited.
+  - Reveal limits: one-time, 3, 5, 10, custom, and unlimited.
   - Multi-file attachments (up to 5 files) & encrypted ZIP download.
   - Encrypted threaded discussion comments, edits, and deletions.
   - Release window countdown and automatic Privacy Veil auto-hide.
@@ -48,8 +52,8 @@ This document outlines the final remaining tasks, verification gates, and owner 
 
 ---
 
-## 4. Judge-First README & Rubric Mapping Table
-- [ ] Enhance [`README.md`](README.md) with an explicit CloneFest 2.0 Rubric Evidence Table mapping each judging criterion directly to:
+## 4. README & Implementation Evidence Mapping
+- [x] [`README.md`](README.md) includes an implementation evidence table mapping the product surfaces to:
   - Cryptographic design & Web Crypto implementation files.
   - Atomic database functions & PostgreSQL migrations.
   - Unit, integration, E2E, accessibility, and pgTAP test suites.

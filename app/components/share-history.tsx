@@ -30,6 +30,7 @@ export function ShareHistoryDesk({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [clipboardFallbackId, setClipboardFallbackId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null);
   const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null);
@@ -66,6 +67,7 @@ export function ShareHistoryDesk({
     } finally {
       refreshInFlight.current = false;
       setIsRefreshing(false);
+      setLastRefreshedAt(new Date());
     }
   }
 
@@ -159,7 +161,7 @@ export function ShareHistoryDesk({
         <p className="history-eyebrow">Local index · 0 shares</p>
         <h2 className="surface-heading" id="history-heading">No shares created yet</h2>
         <p className="history-empty-text">
-          Shares created on this browser will appear here. No account is required.
+          Stored only in this browser. Shares created here will appear after you create one; no account is required.
         </p>
         {feedback && <p className="history-feedback" role="status" aria-live="polite">{feedback}</p>}
         {onSwitchToCreate && (
@@ -176,6 +178,20 @@ export function ShareHistoryDesk({
   }
 
   const normalizedQuery = query.trim().toLowerCase();
+  const statusCounts = {
+    active: 0,
+    scheduled: 0,
+    expired: 0,
+    revoked: 0,
+  };
+  for (const item of history) {
+    const expired = item.expiresAt !== null && new Date(item.expiresAt).getTime() < Date.now();
+    const status = item.status ?? (expired ? "unavailable" : "active");
+    if (status === "active") statusCounts.active += 1;
+    if (status === "scheduled") statusCounts.scheduled += 1;
+    if (status === "revoked") statusCounts.revoked += 1;
+    if (status === "unavailable") statusCounts.expired += 1;
+  }
   const filteredHistory = history.filter((item) => {
     const expired = item.expiresAt !== null && new Date(item.expiresAt).getTime() < Date.now();
     const status = item.status ?? (expired ? "unavailable" : "active");
@@ -193,21 +209,25 @@ export function ShareHistoryDesk({
           <p className="history-eyebrow">Local management · {history.length} {history.length === 1 ? "share" : "shares"}</p>
           <h2 id="history-heading" className="history-heading">My shares</h2>
           <p className="history-sub">
-            Shares created on this browser can be managed here. No account is required.
+            Stored only in this browser. Shares created here can be managed without an account.
           </p>
         </div>
-        {isRefreshing && <p className="history-refreshing" role="status" aria-live="polite">Refreshing</p>}
-        {!clearConfirm ? (
-          <button type="button" className="history-clear-btn" onClick={() => setClearConfirm(true)} title="Clear all local history">
-            Clear history
-          </button>
-        ) : (
-          <div className="history-confirm history-confirm-clear" role="alert">
-            <span>Clear local history? This will not revoke shares.</span>
-            <button type="button" className="history-confirm-btn danger" onClick={handleClearAll}>Clear</button>
-            <button type="button" className="history-confirm-btn" onClick={() => setClearConfirm(false)}>Cancel</button>
-          </div>
-        )}
+        <div className="history-header-actions">
+          {isRefreshing && <p className="history-refreshing" role="status" aria-live="polite">Refreshing</p>}
+          {lastRefreshedAt && <span className="history-last-refresh">Updated {lastRefreshedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
+          <button type="button" className="history-refresh-btn" onClick={() => void refreshStatuses()} disabled={isRefreshing}>Refresh status</button>
+          {!clearConfirm ? (
+            <button type="button" className="history-clear-btn" onClick={() => setClearConfirm(true)} title="Clear all local history">
+              Clear history
+            </button>
+          ) : (
+            <div className="history-confirm history-confirm-clear" role="alert">
+              <span>Clear local history? This will not revoke shares.</span>
+              <button type="button" className="history-confirm-btn danger" onClick={handleClearAll}>Clear</button>
+              <button type="button" className="history-confirm-btn" onClick={() => setClearConfirm(false)}>Cancel</button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="history-controls" role="group" aria-label="Filter local shares">
@@ -215,11 +235,11 @@ export function ShareHistoryDesk({
         <input id="history-search" className="history-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search label or ID" />
         <label className="history-filter-label" htmlFor="history-filter">Status</label>
         <select id="history-filter" className="history-filter" value={filter} onChange={(event) => setFilter(event.target.value as typeof filter)}>
-          <option value="all">All</option>
-          <option value="active">Active</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="expired">Expired</option>
-          <option value="revoked">Revoked</option>
+          <option value="all">All ({history.length})</option>
+          <option value="active">Active ({statusCounts.active})</option>
+          <option value="scheduled">Scheduled ({statusCounts.scheduled})</option>
+          <option value="expired">Expired ({statusCounts.expired})</option>
+          <option value="revoked">Revoked ({statusCounts.revoked})</option>
         </select>
       </div>
 

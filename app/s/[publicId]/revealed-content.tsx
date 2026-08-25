@@ -23,6 +23,7 @@ type RevealedContentProps = {
 
 export function RevealedContent({ content, attachments, children }: RevealedContentProps) {
   const [zipPending, setZipPending] = useState(false);
+  const [textCopyStatus, setTextCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
 
   async function handleDownloadAll() {
     if (zipPending || attachments.length === 0) return;
@@ -54,6 +55,43 @@ export function RevealedContent({ content, attachments, children }: RevealedCont
     }
   }
 
+  async function handleCopyText() {
+    try {
+      if (!navigator.clipboard) throw new Error("clipboard_unavailable");
+      await navigator.clipboard.writeText(content.text);
+      setTextCopyStatus("copied");
+      window.setTimeout(() => setTextCopyStatus("idle"), 2000);
+    } catch {
+      setTextCopyStatus("failed");
+    }
+  }
+
+  function handleDownloadText() {
+    const extension = content.mode === "markdown" ? "md" : "txt";
+    const blob = new Blob([content.text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `securebin-note.${extension}`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  const textActions = content.mode === "note" || content.mode === "markdown"
+    ? (
+      <div className="text-content-actions" aria-label="Decrypted text actions">
+        <button type="button" className="code-copy-button" onClick={() => void handleCopyText()}>
+          {textCopyStatus === "copied" ? "Copied" : "Copy text"}
+        </button>
+        <button type="button" className="code-copy-button" onClick={handleDownloadText}>
+          Download {content.mode === "markdown" ? ".md" : ".txt"}
+        </button>
+      </div>
+    )
+    : null;
+
   return (
     <div className="viewer-opened-box">
       <p className="viewer-success-note">
@@ -64,12 +102,22 @@ export function RevealedContent({ content, attachments, children }: RevealedCont
         {content.text && (
           <div className="decrypted-content-container">
             {content.mode === "note" && (
-              <article className="decrypted-content-box" aria-label="Decrypted note">
-                <pre className="decrypted-text">{content.text}</pre>
-              </article>
+              <div className="decrypted-text-wrapper">
+                <div className="text-content-header">{textActions}</div>
+                {textCopyStatus === "failed" && <p className="code-copy-fallback" role="alert">Clipboard unavailable. Select the text and copy it manually.</p>}
+                <article className="decrypted-content-box" aria-label="Decrypted note">
+                  <pre className="decrypted-text">{content.text}</pre>
+                </article>
+              </div>
             )}
 
-            {content.mode === "markdown" && <MarkdownView markdown={content.text} />}
+            {content.mode === "markdown" && (
+              <div className="decrypted-text-wrapper">
+                <div className="text-content-header">{textActions}</div>
+                {textCopyStatus === "failed" && <p className="code-copy-fallback" role="alert">Clipboard unavailable. Select the text and copy it manually.</p>}
+                <MarkdownView markdown={content.text} />
+              </div>
+            )}
 
             {content.mode === "code" && <CodeView code={content.text} language={content.language} />}
           </div>

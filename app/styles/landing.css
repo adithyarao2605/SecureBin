@@ -221,6 +221,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   padding: 0.75rem 1.1rem;
   border-top: 1px solid var(--landing-line);
   background: color-mix(in srgb, var(--landing-text) 5%, transparent);
@@ -229,6 +230,8 @@
 }
 
 .landing-preview-footer span {
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: 0.35rem 0.5rem;
   border: 1px solid var(--landing-line);
   border-radius: 0.2rem;
@@ -260,6 +263,16 @@
   font-size: clamp(1.65rem, 3vw, 2.25rem);
   font-weight: 500;
   letter-spacing: -0.05em;
+}
+
+.landing-section-kicker {
+  margin: 0 0 0.7rem;
+  color: var(--landing-mineral);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .landing-section-intro p {
@@ -514,6 +527,13 @@
   }
   .landing-feature-wide {
     grid-column: auto;
+  }
+  .landing-preview-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .landing-preview-footer a {
+    text-align: center;
   }
 }
 

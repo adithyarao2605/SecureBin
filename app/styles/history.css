@@ -77,6 +77,46 @@
   font-weight: 600;
 }
 
+.history-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.history-last-refresh {
+  color: var(--muted-ink);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+}
+
+.history-refresh-btn {
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  color: var(--mineral);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  transition: all 150ms ease;
+  cursor: pointer;
+}
+
+.history-refresh-btn:hover:not(:disabled),
+.history-refresh-btn:focus-visible {
+  border-color: var(--mineral);
+  background: color-mix(in srgb, var(--mineral) 10%, transparent);
+}
+
+.history-refresh-btn:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .history-clear-btn {
   background: transparent;
   border: 1px solid var(--line);

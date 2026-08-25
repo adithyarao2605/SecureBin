@@ -26,7 +26,7 @@ visual identity.
 - [Run the validation suite](#run-the-validation-suite)
 - [Self-host](#self-host)
 - [Judge demo flow](#judge-demo-flow)
-- [Evaluation evidence map](#evaluation-evidence-map)
+- [Implementation evidence map](#implementation-evidence-map)
 - [Repository map](#repository-map)
 
 ## Live product and current focus
@@ -59,9 +59,9 @@ revocation cannot erase.
 
 | Area | Current capability |
 | --- | --- |
-| Content | Plain notes, GitHub-Flavored Markdown, and code with language detection, Edit/Split/Preview authoring, and highlighting |
+| Content | Plain notes, GitHub-Flavored Markdown, and code with first-paste language detection in one editable syntax-highlighted IDE |
 | Protection | Link fragment, password, 27-character second-channel unlock code, or combined factors |
-| Policies | Scheduled availability, custom expiry, Never expiry, burn-after-opening, custom reveal limits, and unlimited reveals |
+| Policies | Scheduled availability, custom expiry, Never expiry, one-time or custom reveal limits, and unlimited reveals |
 | Attachments | Up to five encrypted files, safe previews, individual downloads, and encrypted ZIP download |
 | Discussions | Encrypted threaded comments with client-held edit and delete proofs |
 | Sender tools | Privacy Receipt, local Share History, revocation, QR sharing, and deletion controls |
@@ -218,7 +218,7 @@ pnpm validate
 ```
 
 The recorded baseline includes 214 unit tests, 16 integration tests, 155
-pgTAP assertions, 19 development Playwright tests, 19 production-build
+pgTAP assertions, 20 development Playwright tests, 20 production-build
 Playwright tests, and 7 Axe checks. GitHub Actions should be used for the
 complete matrix when local Docker or hosted credentials are unavailable.
 
@@ -284,7 +284,7 @@ Use synthetic content and keep the story under 90 seconds:
 8. Show the uniform `unavailable` state.
 9. State the honest limits: browser compromise and recipient-saved copies remain possible.
 
-## Evaluation evidence map
+## Implementation evidence map
 
 The quickest way to understand the implementation is to follow the product
 surface and then verify the corresponding source evidence:

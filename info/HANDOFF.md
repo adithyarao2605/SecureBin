@@ -2,6 +2,26 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Product-surface polish and evidence refresh
+
+- Made the landing page accurately surface existing notes, Markdown, code,
+  attachments, encrypted discussion, Privacy Receipt, local history, revoke,
+  and offline parcel capabilities.
+- Replaced stale burn-after-reading and code-editor wording in the README,
+  active roadmap, and in-app documentation; refreshed the implementation
+  evidence counts to 214 unit, 20 development/20 production Playwright, and
+  7 Axe checks.
+- Added copy/download actions for revealed notes and Markdown, local-only
+  history wording with status refresh and filter counts, skip links, social
+  metadata, and a dynamically loaded documentation panel for the main
+  workspace.
+- `pnpm validate` passes: lint, typecheck, 214 unit tests, source audit, and
+  production build. Browser and accessibility suites were attempted but are
+  blocked before test execution because this Ubuntu 26.04 host has no system
+  Chromium and the pinned Playwright browser installer does not support this
+  host image. No push was performed.
+
+
 ## Full-width composer and evidence drawer
 
 - Moved the create-share composer out of the desktop two-column layout so code

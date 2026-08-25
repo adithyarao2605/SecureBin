@@ -1,6 +1,6 @@
 # SecureBin active roadmap
 
-Status: **Pre-freeze implementation and local evidence complete on `dev`; owner-hosted actions pending; release freeze not started.**
+Status: **Pre-freeze implementation and local evidence complete on `main`; owner-hosted actions pending; release freeze not started.**
 
 This is the single active roadmap. Historical plans remain in Git history and are summarized in `docs/archive/history.md`. Security/protocol contracts live in `docs/architecture.md`; experience requirements live in `docs/SPEC.md`; current operational state lives in `info/HANDOFF.md`.
 
@@ -9,10 +9,10 @@ This is the single active roadmap. Historical plans remain in Git history and ar
 - Browser-only encryption/decryption, versioned envelopes, strict render boundaries, and fragment-held link secrets.
 - Atomic lifecycle policy, expiry/revocation/reveal limits, request-token leases, private encrypted attachments, cleanup, and local history.
 - Password and two-channel factors, QR/native sharing, receipts, custom reveal counts, Never expiry, Markdown/code modes, multi-file ZIP, encrypted discussions with edit/delete, and batch status.
-- Public `/` and sharing app `/new`; release-window, privacy-veil, portable-parcel, local-manager, and self-host surfaces exist on `dev`.
+- Public `/` and sharing app `/new`; release-window, privacy-veil, portable-parcel, local-manager, and self-host surfaces exist on `main`.
 
 The pre-freeze gate passes locally: 214 unit tests, 16 integration tests,
-155 pgTAP assertions after clean reset/replay, 19 development and 19
+155 pgTAP assertions after clean reset/replay, 20 development and 20
 production-build Playwright tests, 7 Axe checks, nine reviewed screenshots,
 production build, reproducibility, dependency, and source/log audits. Remote
 migration, production promotion, and hosted cleanup verification remain owner-operated.
@@ -28,8 +28,8 @@ Execute [`../docs/before-day-7.md`](../docs/before-day-7.md) in this order:
 5. Complete the full light-first quiet-proof UI overhaul in [`../docs/UI-REDESIGN.md`](../docs/UI-REDESIGN.md): one primary surface, narrow evidence rail, compact mobile status strip, restrained proofline, honest copy, keyboard/mobile/contrast/reduced-motion coverage.
 6. Rerun every local gate and record exact evidence.
 
-No release-freeze work has begun; it begins only after the final evidence items
-are green.
+The release-freeze handoff begins only after the remaining owner-operated
+evidence items are recorded.
 
 ## Release freeze
 
@@ -41,7 +41,7 @@ Do not add without explicit approval: Secure Drop request links, recipient ackno
 
 ## Working rules
 
-- Develop and audit on `dev`; the owner promotes to `main` later.
+- Develop and audit on the active branch; the owner promotes the reviewed commit to the hosted deployment.
 - Use short Conventional Commit subjects with no day number.
 - Never modify `info/plan.md` or the challenge/reference material.
 - Keep public contracts synchronized with code and migrations.

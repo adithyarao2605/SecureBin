@@ -43,6 +43,28 @@ button {
   width: 1px;
 }
 
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-180%);
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--mineral);
+  border-radius: 0.35rem;
+  color: var(--ink);
+  background: var(--surface-bg, var(--linen));
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 150ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 .site-shell {
   margin: 0 auto;
   max-width: 1320px;
@@ -219,6 +241,17 @@ button {
 .tab-panel {
   width: 100%;
   animation: fadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.docs-loading {
+  min-height: 12rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  color: var(--muted-ink);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
 }
 
 @keyframes fadeIn {

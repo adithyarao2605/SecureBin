@@ -7,6 +7,17 @@ export const metadata: Metadata = {
   description: "Browser-encrypted sharing for sensitive notes and files.",
   applicationName: "SecureBin",
   referrer: "no-referrer",
+  openGraph: {
+    title: "SecureBin — private sharing, by design",
+    description: "Browser-encrypted sharing for sensitive notes and files.",
+    type: "website",
+    siteName: "SecureBin",
+  },
+  twitter: {
+    card: "summary",
+    title: "SecureBin — private sharing, by design",
+    description: "Browser-encrypted sharing for sensitive notes and files.",
+  },
   icons: {
     icon: "/icon.svg",
     apple: "/icon.svg",
