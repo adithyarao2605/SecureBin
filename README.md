@@ -62,7 +62,7 @@ revocation cannot erase.
 
 | Area | Current capability |
 | --- | --- |
-| Content | Plain notes, GitHub-Flavored Markdown, and code with language detection and highlighting |
+| Content | Plain notes, GitHub-Flavored Markdown, and code with language detection, Edit/Split/Preview authoring, and highlighting |
 | Protection | Link fragment, password, 27-character second-channel unlock code, or combined factors |
 | Policies | Scheduled availability, custom expiry, Never expiry, burn-after-opening, custom reveal limits, and unlimited reveals |
 | Attachments | Up to five encrypted files, safe previews, individual downloads, and encrypted ZIP download |
@@ -220,7 +220,7 @@ pnpm build
 pnpm validate
 ```
 
-The recorded baseline includes 191 unit tests, 16 integration tests, 155
+The recorded baseline includes 193 unit tests, 16 integration tests, 155
 pgTAP assertions, 19 development Playwright tests, 19 production-build
 Playwright tests, and 7 Axe checks. GitHub Actions should be used for the
 complete matrix when local Docker or hosted credentials are unavailable.

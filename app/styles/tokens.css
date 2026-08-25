@@ -87,3 +87,16 @@
 .hljs-symbol, .hljs-bullet, .hljs-variable {
   color: var(--mineral);
 }
+.hljs-attr, .hljs-attribute, .hljs-property, .hljs-name, .hljs-tag {
+  color: var(--mineral);
+}
+.hljs-title.function_, .hljs-title.class_, .hljs-title.function, .hljs-title.class {
+  color: var(--ink);
+  font-weight: 700;
+}
+.hljs-operator, .hljs-punctuation {
+  color: var(--muted-ink);
+}
+.hljs-regexp, .hljs-template-string, .hljs-meta-string {
+  color: var(--copper);
+}

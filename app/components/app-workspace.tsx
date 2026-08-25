@@ -211,7 +211,7 @@ export function AppWorkspace() {
               </div>
               <div className="docs-validation-strip" aria-label="Recorded CI validation baseline">
                 <span className="docs-validation-label">Recorded CI baseline</span>
-                <span><strong>191</strong> unit</span>
+                <span><strong>193</strong> unit</span>
                 <span><strong>16</strong> integration</span>
                 <span><strong>155</strong> pgTAP</span>
                 <span><strong>19 + 19</strong> browser</span>
@@ -270,7 +270,7 @@ export function AppWorkspace() {
                     <span className="docs-step-num">1</span>
                     <div className="docs-step-text">
                       <strong>Choose Your Mode</strong>
-                      <p>Select <em>Plain Text</em> for credentials, <em>Markdown</em> for rich documents (with split/preview mode), or <em>Code</em> for syntax-highlighted snippets.</p>
+                      <p>Select <em>Plain Text</em> for credentials, <em>Markdown</em> for rich documents (with split/preview mode), or <em>Code</em> for language-aware snippets with Edit, Split, and Preview views.</p>
                     </div>
                   </li>
                   <li className="docs-step-item">

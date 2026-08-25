@@ -52,4 +52,32 @@ describe("composer markdown edit / split / preview", () => {
     expect(split).toHaveFocus();
     expect(split).toHaveAttribute("aria-selected", "true");
   });
+
+  it("renders a language-aware Code preview without replacing the editor", () => {
+    render(<Composer />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Code" }));
+    fireEvent.change(screen.getByLabelText("Code content"), {
+      target: { value: "const answer: number = 42;" },
+    });
+    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+
+    expect(screen.queryByLabelText("Code content")).not.toBeInTheDocument();
+    const preview = screen.getByLabelText("Code authoring preview in typescript");
+    expect(preview).toBeInTheDocument();
+    expect(preview.querySelector(".hljs-keyword")).toBeInTheDocument();
+    expect(preview.querySelector(".hljs-number")).toBeInTheDocument();
+  });
+
+  it("stacks the Code editor and preview in split view", () => {
+    render(<Composer />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Code" }));
+    const textarea = screen.getByLabelText("Code content");
+    fireEvent.change(textarea, { target: { value: "print('hello')" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Split" }));
+
+    expect(textarea.closest(".code-split")).not.toBeNull();
+    expect(screen.getByLabelText("Code authoring preview in typescript")).toBeInTheDocument();
+  });
 });

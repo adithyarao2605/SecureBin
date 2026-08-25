@@ -24,12 +24,12 @@ import {
   type CreateAttempt,
 } from "../hooks/use-staged-create";
 import { ModeTabs, type ComposerMode } from "./composer/mode-tabs";
-import { EditorPane, type MarkdownViewMode } from "./composer/editor-pane";
+import { EditorPane, type CodeViewMode, type MarkdownViewMode } from "./composer/editor-pane";
 import { AttachmentZone } from "./composer/attachment-zone";
 import { ShareResultCard } from "./composer/share-result-card";
 import { detectCodeLanguage } from "../../lib/render/detect-language";
 
-export type { ComposerMode, MarkdownViewMode };
+export type { CodeViewMode, ComposerMode, MarkdownViewMode };
 
 export interface ComposerProps {
   readonly onPhaseChange?: (phase: ProoflinePhase) => void;
@@ -40,6 +40,7 @@ export interface ComposerProps {
 export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: ComposerProps = {}) {
   const [mode, setMode] = useState<ComposerMode>("note");
   const [markdownView, setMarkdownView] = useState<MarkdownViewMode>("edit");
+  const [codeView, setCodeView] = useState<CodeViewMode>("edit");
   const [language, setLanguage] = useState<CodeLanguage>("typescript");
   const [draft, setDraft] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -77,6 +78,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
     // rendered result.
     const desktop = window.matchMedia?.("(min-width: 768px)").matches ?? false;
     setMarkdownView(desktop ? "split" : "edit");
+    setCodeView(desktop ? "split" : "edit");
   }, []);
 
   function resetPrepared() {
@@ -94,6 +96,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   function handleModeChange(newMode: ComposerMode) {
     setMode(newMode);
     if (newMode !== "markdown") setMarkdownView("edit");
+    if (newMode !== "code") setCodeView("edit");
     resetPrepared();
   }
 
@@ -306,11 +309,13 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
         <EditorPane
           mode={mode}
           markdownView={markdownView}
+          codeView={codeView}
           draft={draft}
           language={language}
           disabled={isPending}
           onDraftChange={handleDraftChange}
           onMarkdownViewChange={setMarkdownView}
+          onCodeViewChange={setCodeView}
         />
 
         <AttachmentZone

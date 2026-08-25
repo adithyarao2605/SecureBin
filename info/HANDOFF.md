@@ -2,6 +2,19 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Code authoring polish update
+
+- Added Code-mode Edit, Split, and Preview views using the existing browser-only
+  `lowlight` renderer and language registry. The textarea remains the source of
+  truth; the preview is read-only and does not alter the encrypted payload.
+- Added responsive stacked preview behavior, keyboard-operable view tabs,
+  language-aware line numbers, an empty-preview state, and clearer light/dark
+  semantic token colors.
+- Updated README and in-product documentation to describe the authoring
+  preview accurately. The unit baseline is now 193 tests.
+- Validation: lint, typecheck, full unit suite (193 tests), targeted rendering
+  suite (25 tests), production build, and diff checks pass.
+
 ## Competitive presentation polish update
 
 - Reorganized the existing share-result surface into a sender workflow:
@@ -14,7 +27,7 @@ Updated: 2026-08-25 (UTC)
   existing crypto, lifecycle, parcel, browser, accessibility, and CI evidence.
 - Reset the copy status when starting another share and added composer UI
   assertions for the result-card proof surface.
-- Validation: lint, typecheck, full unit suite (191 tests), targeted composer
+- Validation: lint, typecheck, full unit suite (193 tests), targeted composer
   suite, production build, and diff checks pass. Local Playwright could not
   launch because the managed environment lacks the pinned Chromium executable;
   no browser assertion reached the application.
@@ -63,7 +76,7 @@ Updated: 2026-08-25 (UTC)
 
 ## Current core validation
 
-- `pnpm validate`: pass — 191 unit tests plus lint, typecheck, and production build.
+- `pnpm validate`: pass — 193 unit tests plus lint, typecheck, and production build.
 - `pnpm test:integration`: 16 pass.
 - `pnpm supabase:reset` followed by `pnpm supabase:test`: 155 pgTAP assertions pass.
 - `pnpm audit:prod` and `pnpm audit:source`: pass.
