@@ -18,6 +18,8 @@ Updated: 2026-08-25 (UTC)
   suite, production build, and diff checks pass. Local Playwright could not
   launch because the managed environment lacks the pinned Chromium executable;
   no browser assertion reached the application.
+- This presentation batch is committed as `aa7ab13` and is ready for owner
+  review before pushing.
 
 ## UI polish update
 
