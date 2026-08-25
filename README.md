@@ -14,6 +14,10 @@ visual identity.
 
 > Create share. Reveal once. Keep the key where it belongs: in the browser.
 
+| **Landing Page** | **Share Composer** | **Delivery & Evidence** |
+| :---: | :---: | :---: |
+| [![Landing Page](docs/assets/landing-hero.png)](docs/assets/landing-hero.png) | [![Share Composer](docs/assets/composer-workspace.png)](docs/assets/composer-workspace.png) | [![Delivery & Evidence](docs/assets/share-ready.png)](docs/assets/share-ready.png) |
+
 ## At a glance
 
 | Resource | Entry point |
@@ -48,7 +52,6 @@ visual identity.
 - [Run locally](#run-locally)
 - [Run the validation suite](#run-the-validation-suite)
 - [Self-host](#self-host)
-- [Judge demo flow](#judge-demo-flow)
 - [Implementation evidence map](#implementation-evidence-map)
 - [Documentation index](#documentation-index)
 - [License and security](#license-and-security)
@@ -276,7 +279,8 @@ database behavior.
 ## Self-host
 
 SecureBin can run with a self-managed Next.js server and Supabase-compatible
-database and Storage setup.
+database and Storage setup. 
+> (see [`docs/self-hosting.md`](docs/self-hosting.md) for more info)
 
 ### Local self-hosted stack
 
@@ -313,20 +317,6 @@ when that proxy overwrites forwarding headers correctly.
 
 Never share `.env` files, service-role keys, cleanup secrets, passwords,
 unlock codes, deletion capabilities, or fragment URLs.
-
-## Judge demo flow
-
-Use synthetic content and keep the story under 90 seconds:
-
-1. Create a Markdown share with an attachment.
-2. Enable password plus second-channel protection.
-3. Show the Privacy Receipt.
-4. Demonstrate that the link alone cannot unlock the share.
-5. Reveal and decrypt in the browser.
-6. Preview the attachment and show the release-window Privacy Veil.
-7. Revoke a second share.
-8. Show the uniform `unavailable` state.
-9. State the honest limits: browser compromise and recipient-saved copies remain possible.
 
 ## Implementation evidence map
 
