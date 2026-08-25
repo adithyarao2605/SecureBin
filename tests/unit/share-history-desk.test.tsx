@@ -46,6 +46,18 @@ describe("local share management", () => {
     expect(await screen.findByText(/still available to anyone with its link/u)).toBeInTheDocument();
   });
 
+  it("reloads after a revoked share is removed from local history", async () => {
+    const onRevokedShareRemoved = vi.fn();
+    saveShareToHistory({ ...sample, status: "revoked", deleteCapability: null });
+    render(<ShareHistoryDesk onRevokedShareRemoved={onRevokedShareRemoved} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Remove share/u }));
+    fireEvent.click(screen.getByRole("button", { name: /^Remove$/u }));
+
+    expect(onRevokedShareRemoved).toHaveBeenCalledOnce();
+    expect(screen.getByRole("heading", { name: "No shares created yet" })).toBeInTheDocument();
+  });
+
   it("requires confirmation before server revocation", async () => {
     saveShareToHistory(sample);
     render(<ShareHistoryDesk />);

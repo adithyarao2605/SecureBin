@@ -132,4 +132,17 @@ describe("Browser-local Share History Manager", () => {
     expect(merged[0]).toMatchObject({ status: "active", remainingReveals: 1, deleteCapability: sampleItem.deleteCapability });
     expect(loadShareHistory()[0]?.deleteCapability).toBe(sampleItem.deleteCapability);
   });
+
+  it("preserves a sender-local revoked label over the recipient unavailable state", () => {
+    saveShareToHistory({ ...sampleItem, status: "revoked", deleteCapability: null });
+    const merged = mergeShareStatuses([{
+      publicId: sampleItem.publicId,
+      status: {
+        status: "unavailable",
+      },
+    }]);
+
+    expect(merged[0]?.status).toBe("revoked");
+    expect(merged[0]?.remainingReveals).toBeNull();
+  });
 });

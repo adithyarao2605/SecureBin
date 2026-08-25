@@ -50,9 +50,8 @@ test("closes further releases after the chosen window elapses", async ({ page })
   await earlyPage.close();
 
   // After the window closes, a fresh recipient is uniformly unavailable.
-  await page.waitForTimeout(10_500);
-  await expect(page.getByText(NOTE)).not.toBeVisible();
   await expect(page.getByText(/This release window closed/iu)).toBeVisible();
+  await expect(page.getByText(NOTE)).not.toBeVisible();
   const latePage = await page.context().newPage();
   await latePage.goto(shareHref);
   await expect(

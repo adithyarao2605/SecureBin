@@ -123,9 +123,13 @@ export function mergeShareStatuses(statuses: readonly ShareStatusBatchItem[]): S
     const updated = current.map((item) => {
       const status = byPublicId.get(item.publicId);
       if (!status) return item;
+      // The server deliberately exposes revoked shares as uniformly
+      // unavailable to recipients. Preserve the sender's local distinction so
+      // the history desk can keep the revoke result and its follow-up action.
+      const mergedStatus: ShareHistoryItem["status"] = item.status === "revoked" ? "revoked" : status.status;
       return {
         ...item,
-        status: status.status,
+        status: mergedStatus,
         remainingReveals: status.status === "unavailable" ? null : status.remainingReveals,
       };
     });

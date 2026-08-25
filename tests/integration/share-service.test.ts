@@ -19,6 +19,11 @@ const fakeStorage: SecureStorage = {
 const publicId = "abcdefghijklmnopqrstug";
 const shareId = "11111111-1111-4111-8111-111111111111";
 const digest = "a".repeat(43);
+const FIXTURE_EXPIRES_AT = "2099-01-01T00:00:00.000Z";
+const FIXTURE_RETRY_EXPIRES_AT = "2099-01-01T00:05:00.000Z";
+const FIXTURE_WINDOW_ENDS_AT = "2099-01-01T01:00:00.000Z";
+const SCHEDULED_AVAILABLE_AT = "2099-02-01T12:00:00.000Z";
+const SCHEDULED_EXPIRES_AT = "2099-02-05T12:00:00.000Z";
 const discussionEnvelope = {
   version: 1,
   objectType: "discussion",
@@ -43,7 +48,7 @@ const createInput: CreateShareInput = {
   publicId,
   contentEnvelope,
   availableAt: null,
-  expiresAt: "2099-01-01T00:00:00.000Z",
+  expiresAt: FIXTURE_EXPIRES_AT,
   maxReveals: null,
   deleteTokenHash: digest,
   passwordRequired: false,
@@ -67,7 +72,7 @@ class FakeRpcClient implements RpcClient {
         return [{
           status: "active",
           available_at: null,
-          expires_at: "2099-01-01T00:00:00.000Z",
+          expires_at: FIXTURE_EXPIRES_AT,
           password_required: false,
           unlock_required: false,
           max_reveals: null,
@@ -78,7 +83,7 @@ class FakeRpcClient implements RpcClient {
           public_id: id,
           status: "active",
           available_at: null,
-          expires_at: "2099-01-01T00:00:00.000Z",
+          expires_at: FIXTURE_EXPIRES_AT,
           password_required: false,
           unlock_required: false,
           max_reveals: null,
@@ -92,15 +97,15 @@ class FakeRpcClient implements RpcClient {
           attachments: [],
           reveal_count: 1,
           max_reveals: null,
-          retry_expires_at: "2099-01-01T00:05:00.000Z",
-          window_ends_at: args.p_request_token_hash === SECOND_TOKEN_HASH ? "2099-01-01T01:00:00.000Z" : null,
+          retry_expires_at: FIXTURE_RETRY_EXPIRES_AT,
+          window_ends_at: args.p_request_token_hash === SECOND_TOKEN_HASH ? FIXTURE_WINDOW_ENDS_AT : null,
         }];
       case "revoke_share":
         return [{ valid_capability: true, revoked: true }];
       case "add_share_comment":
-        return [{ comment_id: "11111111-1111-4111-8111-111111111111", created_at: "2099-01-01T00:00:00.000Z" }];
+        return [{ comment_id: "11111111-1111-4111-8111-111111111111", created_at: FIXTURE_EXPIRES_AT }];
       case "edit_share_comment":
-        return [{ comment_id: "11111111-1111-4111-8111-111111111111", edited_at: "2099-01-01T00:00:00.000Z" }];
+        return [{ comment_id: "11111111-1111-4111-8111-111111111111", edited_at: FIXTURE_EXPIRES_AT }];
       case "delete_share_comment":
         return [{ deleted: true }];
       default:
@@ -153,12 +158,12 @@ describe("share service RPC mapping", () => {
     const rpc = new FakeRpcClient();
     const service = createShareService(rpc, fakeStorage);
 
-    await expect(service.getStatus(publicId)).resolves.toMatchObject({ status: "active", expiresAt: "2099-01-01T00:00:00.000Z" });
+    await expect(service.getStatus(publicId)).resolves.toMatchObject({ status: "active", expiresAt: FIXTURE_EXPIRES_AT });
     await expect(service.reveal(publicId, "raw-reveal-token")).resolves.toEqual({
       status: "authorized",
       contentEnvelope,
       files: [],
-      retryExpiresAt: "2099-01-01T00:05:00.000Z",
+      retryExpiresAt: FIXTURE_RETRY_EXPIRES_AT,
       releaseWindowEndsAt: null,
     });
     await expect(service.revoke(publicId, "raw-delete-capability")).resolves.toBe(true);
@@ -170,7 +175,7 @@ describe("share service RPC mapping", () => {
 
     // A set window maps through to the recipient response.
     await expect(service.reveal(publicId, "second")).resolves.toMatchObject({
-      releaseWindowEndsAt: "2099-01-01T01:00:00.000Z",
+      releaseWindowEndsAt: FIXTURE_WINDOW_ENDS_AT,
     });
   });
 
@@ -182,7 +187,7 @@ describe("share service RPC mapping", () => {
       status: {
         status: "active",
         availableAt: null,
-        expiresAt: "2099-01-01T00:00:00.000Z",
+        expiresAt: FIXTURE_EXPIRES_AT,
         passwordRequired: false,
         unlockRequired: false,
         maxReveals: null,
@@ -205,7 +210,7 @@ describe("share service RPC mapping", () => {
       capability: "A".repeat(43),
       editToken: rawToken,
       bodyEnvelope: discussionEnvelope,
-    })).resolves.toEqual({ commentId: "11111111-1111-4111-8111-111111111111", editedAt: "2099-01-01T00:00:00.000Z" });
+    })).resolves.toEqual({ commentId: "11111111-1111-4111-8111-111111111111", editedAt: FIXTURE_EXPIRES_AT });
     await expect(service.deleteComment(publicId, "11111111-1111-4111-8111-111111111111", {
       capability: "A".repeat(43),
       editToken: rawToken,
@@ -234,8 +239,8 @@ describe("share service RPC mapping", () => {
     // Scheduled
     const scheduledService = createShareService(new CustomRpcClient({
       status: "scheduled",
-      available_at: "2026-08-25T12:00:00+00:00",
-      expires_at: "2026-08-30T12:00:00+00:00",
+      available_at: SCHEDULED_AVAILABLE_AT,
+      expires_at: SCHEDULED_EXPIRES_AT,
       password_required: false,
       unlock_required: false,
       max_reveals: 5,
@@ -243,8 +248,8 @@ describe("share service RPC mapping", () => {
     }), fakeStorage);
     await expect(scheduledService.getStatus(publicId)).resolves.toEqual({
       status: "scheduled",
-      availableAt: "2026-08-25T12:00:00.000Z",
-      expiresAt: "2026-08-30T12:00:00.000Z",
+      availableAt: SCHEDULED_AVAILABLE_AT,
+      expiresAt: SCHEDULED_EXPIRES_AT,
       passwordRequired: false,
       unlockRequired: false,
       maxReveals: 5,
@@ -267,7 +272,7 @@ describe("share service RPC mapping", () => {
     const burnService = createShareService(new CustomRpcClient({
       status: "active",
       available_at: null,
-      expires_at: "2026-08-25T12:00:00+00:00",
+      expires_at: FIXTURE_EXPIRES_AT,
       password_required: true,
       unlock_required: false,
       max_reveals: 1,
@@ -276,7 +281,7 @@ describe("share service RPC mapping", () => {
     await expect(burnService.getStatus(publicId)).resolves.toEqual({
       status: "active",
       availableAt: null,
-      expiresAt: "2026-08-25T12:00:00.000Z",
+      expiresAt: FIXTURE_EXPIRES_AT,
       passwordRequired: true,
       unlockRequired: false,
       maxReveals: 1,

@@ -16,9 +16,15 @@ export interface ShareHistoryDeskProps {
   readonly refreshSignal?: number;
   readonly visible?: boolean;
   readonly onSwitchToCreate?: () => void;
+  readonly onRevokedShareRemoved?: () => void;
 }
 
-export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCreate }: ShareHistoryDeskProps) {
+export function ShareHistoryDesk({
+  refreshSignal,
+  visible = true,
+  onSwitchToCreate,
+  onRevokedShareRemoved,
+}: ShareHistoryDeskProps) {
   const [history, setHistory] = useState<ShareHistoryItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -120,11 +126,15 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
     }
   }
 
-  function handleRemove(publicId: string) {
-    removeShareFromHistory(publicId);
+  function handleRemove(item: ShareHistoryItem) {
+    removeShareFromHistory(item.publicId);
     setHistory(loadShareHistory());
     setRemoveConfirmId(null);
     setFeedback("Removed from this browser's local history. The share is still available to anyone with its link.");
+    if (item.status === "revoked") {
+      if (onRevokedShareRemoved) onRevokedShareRemoved();
+      else window.location.reload();
+    }
   }
 
   function handleClearAll() {
@@ -332,7 +342,7 @@ export function ShareHistoryDesk({ refreshSignal, visible = true, onSwitchToCrea
                 {removeConfirmId === item.publicId ? (
                   <div className="history-confirm history-confirm-remove" role="alert">
                     <span>Remove only from local history?</span>
-                    <button type="button" className="history-confirm-btn danger" onClick={() => handleRemove(item.publicId)}>Remove</button>
+                    <button type="button" className="history-confirm-btn danger" onClick={() => handleRemove(item)}>Remove</button>
                     <button type="button" className="history-confirm-btn" onClick={() => setRemoveConfirmId(null)}>Cancel</button>
                   </div>
                 ) : (
