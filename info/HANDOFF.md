@@ -36,7 +36,8 @@ Updated: 2026-08-25 (UTC)
 
 - Branch: `main`, aligned with `origin/main` before this polish batch.
 - Pre-freeze implementation and its complete local gate remain green; this
-  polish batch is ready for the next commit and hosted verification.
+  polish batch is committed as `4258a92` and awaits the owner's push/hosted
+  verification.
 - Required work is consolidated in `docs/before-day-7.md`; Day 7/release-freeze work has not begun.
 - The user's existing uncommitted `app/page.tsx` change was preserved.
 - Do not claim a hosted deployment until the owner verifies the remote migration, production promotion, cleanup schedule, and smoke path.
@@ -55,6 +56,7 @@ Updated: 2026-08-25 (UTC)
 
 ## Latest implementation commits
 
+- `4258a92` — `feat(ui): polish viewer discussion and history states`
 - `e4f7fa0` — `fix(security): close lifecycle gaps`
 - `9b4104d` — `feat(ui): unify quiet-proof experience`
 - `9895544` — `ci: harden reproducible release gates`
