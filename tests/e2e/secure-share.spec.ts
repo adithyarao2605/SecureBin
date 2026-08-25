@@ -160,7 +160,10 @@ test("the composer remains usable from the keyboard on a narrow viewport", async
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/new");
 
+  await expect(page.getByRole("button", { name: "Switch to light theme" })).toBeEnabled();
   const textarea = page.getByLabel("Note content");
+  await textarea.focus();
+  await expect(textarea).toBeFocused();
   await textarea.pressSequentially("Keyboard check");
   await expect(textarea).toHaveValue("Keyboard check");
 
