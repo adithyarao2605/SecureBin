@@ -2,6 +2,13 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Documentation label polish
+
+- Renamed the documentation summary eyebrow to `Summary` so the product UI
+  contains no evaluator-directed wording.
+- Lint, typecheck, and unit validation remain covered by the preceding
+  commit's passing `pnpm validate` gate. No push was performed.
+
 ## Product-surface polish and evidence refresh
 
 - Made the landing page accurately surface existing notes, Markdown, code,

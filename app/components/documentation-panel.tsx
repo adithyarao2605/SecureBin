@@ -17,7 +17,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
       <section className="docs-at-a-glance" aria-labelledby="docs-glance-heading">
         <div className="docs-glance-heading-row">
           <div>
-            <p className="eyebrow">Security at a glance</p>
+            <p className="eyebrow">Summary</p>
             <h3 id="docs-glance-heading">The four facts that matter first</h3>
           </div>
           <p className="docs-glance-note">A concise product explanation, visible before the detailed guides.</p>
