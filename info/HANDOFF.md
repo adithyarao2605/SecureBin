@@ -2,6 +2,25 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Friend-owned security/lifecycle takeover
+
+- Tightened the recipient reveal contract at both server and browser
+  boundaries: attachment rows now require exact fields, valid encrypted file
+  envelopes, owned Storage paths, bounded ciphertext sizes, unique slots
+  `0–4`, valid timestamps, and safe HTTP(S) signed URLs. All attachment
+  metadata is validated before any signed URL is requested.
+- Tightened encrypted discussion response parsing: comment rows now require
+  exact fields, UUID relationships, valid timestamps, strict encrypted
+  envelopes, and unique comment ids. Mutation responses are also strict.
+- Made cleanup fail closed on malformed candidate/result RPC payloads instead
+  of silently filtering rows and potentially calling an unscoped finalizer.
+- Added 19 regression tests. `pnpm test` passes with 212 tests; typecheck,
+  lint, build, and diff checks pass. The environment-backed integration
+  command ran the six share-service tests but the three Supabase-backed suites
+  require credentials that are not present in this workspace.
+- No production migration or deployment was performed. The owner still needs
+  to push this commit and verify the hosted migration and cleanup schedule.
+
 ## Code authoring polish update
 
 - Added Code-mode Edit, Split, and Preview views using the existing browser-only

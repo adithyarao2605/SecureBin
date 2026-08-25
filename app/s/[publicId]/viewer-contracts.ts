@@ -4,7 +4,13 @@ import {
   validateContentEnvelope,
   validateFileEnvelope,
 } from "../../../lib/crypto/envelope";
-import { isMaxReveals, type MaxReveals } from "../../../lib/shares/contracts";
+import {
+  isMaxReveals,
+  MAX_ATTACHMENTS,
+  MAX_FILE_CIPHERTEXT_SIZE,
+  parseIsoUtc,
+  type MaxReveals,
+} from "../../../lib/shares/contracts";
 import type { ProoflinePhase } from "../../../lib/shares/policy-ui";
 
 export type ActiveStatus = {
@@ -167,22 +173,33 @@ export function parseStatus(value: unknown): ShareStatus {
 export function parseReveal(value: unknown): ParsedReveal {
   if (!record(value)) throw new ViewerPayloadError();
   hasOnlyKeys(value, ["contentEnvelope", "files", "releaseWindowEndsAt", "retryExpiresAt", "status"], []);
-  if (value.status !== "authorized" || typeof value.retryExpiresAt !== "string") {
+  const retryExpiresAt = parseIsoUtc(value.retryExpiresAt);
+  if (value.status !== "authorized" || !retryExpiresAt) {
     throw new ViewerPayloadError();
   }
   const contentEnvelope = validateContentEnvelope(value.contentEnvelope);
 
-  if (!Array.isArray(value.files)) throw new ViewerPayloadError();
+  if (!Array.isArray(value.files) || value.files.length > MAX_ATTACHMENTS) throw new ViewerPayloadError();
+  const slots = new Set<number>();
   const files = value.files.map((entry): ParsedReveal["files"][number] => {
     if (!record(entry)) throw new ViewerPayloadError();
     exactKeys(entry, ["ciphertextSize", "downloadUrl", "envelope", "slot"]);
     if (
       typeof entry.ciphertextSize !== "number" ||
+      !Number.isSafeInteger(entry.ciphertextSize) ||
+      entry.ciphertextSize < 16 ||
+      entry.ciphertextSize > MAX_FILE_CIPHERTEXT_SIZE ||
       typeof entry.downloadUrl !== "string" ||
-      typeof entry.slot !== "number"
+      !isDownloadUrl(entry.downloadUrl) ||
+      typeof entry.slot !== "number" ||
+      !Number.isSafeInteger(entry.slot) ||
+      entry.slot < 0 ||
+      entry.slot >= MAX_ATTACHMENTS ||
+      slots.has(entry.slot)
     ) {
       throw new ViewerPayloadError();
     }
+    slots.add(entry.slot);
     const fileEnvelope = validateFileEnvelope(entry.envelope);
     return {
       slot: entry.slot,
@@ -191,18 +208,24 @@ export function parseReveal(value: unknown): ParsedReveal {
       downloadUrl: entry.downloadUrl,
     };
   });
+  const releaseWindowEndsAt = value.releaseWindowEndsAt === null ? null : parseIsoUtc(value.releaseWindowEndsAt);
+  if (value.releaseWindowEndsAt !== null && !releaseWindowEndsAt) throw new ViewerPayloadError();
 
   return {
     contentEnvelope,
     files,
-    retryExpiresAt: value.retryExpiresAt,
-    releaseWindowEndsAt:
-      value.releaseWindowEndsAt === null || value.releaseWindowEndsAt === undefined
-        ? null
-        : typeof value.releaseWindowEndsAt === "string"
-          ? value.releaseWindowEndsAt
-          : null,
+    retryExpiresAt,
+    releaseWindowEndsAt,
   };
+}
+
+function isDownloadUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (url.protocol === "https:" || url.protocol === "http:") && url.username === "" && url.password === "" && url.hash === "";
+  } catch {
+    return false;
+  }
 }
 
 export function prooflinePhaseFor(state: ViewerState): ProoflinePhase {

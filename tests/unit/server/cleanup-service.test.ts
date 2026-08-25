@@ -161,4 +161,40 @@ describe("cleanup service rotation queue", () => {
     });
     expect(result.deletedUploads).toBe(1);
   });
+
+  it("fails closed when the candidate RPC returns an unknown or malformed row", async () => {
+    const remove = vi.fn(async () => "deleted" as const);
+    const finalize = vi.fn(async () => [{
+      deleted_shares: 0,
+      deleted_uploads: 0,
+      deleted_rotated_uploads: 0,
+      deleted_leases: 0,
+      deleted_buckets: 0,
+    }]);
+    const rpc: RpcClient = {
+      call: vi.fn(async (name: string) => {
+        if (name === "list_cleanup_candidates") {
+          return [{
+            candidate_type: "share",
+            share_id: "22222222-2222-4222-8222-222222222222",
+            reservation_id: null,
+            object_path: queuedPath,
+            unexpected: true,
+          }];
+        }
+        if (name === "finalize_expired_securebin") return finalize();
+        throw new Error(`unexpected RPC: ${name}`);
+      }),
+    };
+    const storage: SecureStorage = {
+      createSignedUpload: vi.fn(),
+      createSignedDownload: vi.fn(),
+      inspectSize: vi.fn(),
+      remove,
+    };
+
+    await expect(createCleanupService(rpc, storage).runCleanup()).rejects.toThrow("Invalid cleanup candidate response");
+    expect(remove).not.toHaveBeenCalled();
+    expect(finalize).not.toHaveBeenCalled();
+  });
 });

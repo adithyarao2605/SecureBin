@@ -17,6 +17,7 @@ const fakeStorage: SecureStorage = {
 };
 
 const publicId = "abcdefghijklmnopqrstug";
+const shareId = "11111111-1111-4111-8111-111111111111";
 const digest = "a".repeat(43);
 const discussionEnvelope = {
   version: 1,
@@ -61,7 +62,7 @@ class FakeRpcClient implements RpcClient {
     this.calls.push({ functionName, args });
     switch (functionName) {
       case "create_share":
-        return [{ share_id: "share-1", public_id: publicId, created: true }];
+        return [{ share_id: shareId, public_id: publicId, created: true }];
       case "get_share_status":
         return [{
           status: "active",
@@ -86,7 +87,7 @@ class FakeRpcClient implements RpcClient {
       case "reveal_share":
         return [{
           status: "authorized",
-          share_id: "share-1",
+          share_id: shareId,
           content_envelope: contentEnvelope,
           attachments: [],
           reveal_count: 1,

@@ -29,6 +29,7 @@ async function commentsResponse(): Promise<Response> {
           body_envelope: await sealDiscussionText(key, "First sealed note"),
           nickname_envelope: await sealDiscussionText(key, "Ada"),
           created_at: "2026-08-20T10:00:00.000Z",
+          edited_at: null,
         },
         {
           comment_id: "22222222-2222-4222-8222-222222222222",

@@ -8,7 +8,7 @@ import {
 } from "../../lib/crypto/discussion";
 import { bytesToBase64Url, randomBytes } from "../../lib/crypto/encoding";
 import type { FactorMask } from "../../lib/crypto/factors";
-import { isDigest } from "../../lib/shares/contracts";
+import { isDigest, parseShareCommentRows, type ShareCommentRow } from "../../lib/shares/contracts";
 import { formatLocalizedDateTime } from "../../lib/shares/policy-ui";
 
 export type DiscussionThreadProps = {
@@ -18,15 +18,6 @@ export type DiscussionThreadProps = {
   readonly mask: FactorMask;
   readonly onCapabilityUsed?: () => void;
 };
-
-interface RawComment {
-  comment_id: unknown;
-  parent_comment_id: unknown;
-  body_envelope: unknown;
-  nickname_envelope: unknown;
-  created_at: unknown;
-  edited_at: unknown;
-}
 
 interface DecryptedComment {
   readonly id: string;
@@ -61,20 +52,15 @@ function saveCommentTokens(tokens: Record<string, string>): void {
   }
 }
 
-function parseComments(value: unknown): RawComment[] {
+function parseComments(value: unknown): ShareCommentRow[] | null {
   if (
     typeof value !== "object" ||
     value === null ||
     !Array.isArray((value as { comments?: unknown }).comments)
   ) {
-    return [];
+    return null;
   }
-  return ((value as { comments: unknown[] }).comments).filter(
-    (entry): entry is RawComment =>
-      typeof entry === "object" &&
-      entry !== null &&
-      typeof (entry as RawComment).comment_id === "string"
-  );
+  return parseShareCommentRows((value as { comments: unknown[] }).comments);
 }
 
 export function DiscussionThread({
@@ -124,6 +110,7 @@ export function DiscussionThread({
       if (seq !== loadSeq.current) return;
       if (!response.ok) throw new Error("comments_fetch_failed");
       const raw = parseComments(await response.json());
+      if (!raw) throw new Error("comments_response_invalid");
       if (seq !== loadSeq.current) return;
       const decrypted: DecryptedComment[] = [];
       for (const entry of raw) {
@@ -134,14 +121,12 @@ export function DiscussionThread({
             nicknameText = await openDiscussionText(key, entry.nickname_envelope);
           }
           decrypted.push({
-            id: entry.comment_id as string,
-            parentId:
-              typeof entry.parent_comment_id === "string" ? entry.parent_comment_id : null,
+            id: entry.comment_id,
+            parentId: entry.parent_comment_id,
             body,
             nickname: nicknameText,
-            createdAt:
-              typeof entry.created_at === "string" ? entry.created_at : new Date().toISOString(),
-            editedAt: typeof entry.edited_at === "string" ? entry.edited_at : null,
+            createdAt: entry.created_at,
+            editedAt: entry.edited_at,
           });
         } catch {
           // Undecryptable entries are skipped; the key is share-bound so this

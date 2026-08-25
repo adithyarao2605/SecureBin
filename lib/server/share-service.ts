@@ -2,10 +2,14 @@ import { Buffer } from "node:buffer";
 
 import {
   parseIsoUtc,
+  MAX_ATTACHMENTS,
+  MAX_FILE_CIPHERTEXT_SIZE,
   parseRpcEnvelope,
   parseRpcFileEnvelope,
+  parseShareCommentRows,
   parseStatus,
   isDigest,
+  isUuid,
   isPublicId,
   MAX_STATUS_BATCH_IDS,
   type AddCommentInput,
@@ -16,6 +20,7 @@ import {
   type RevealResult,
   type ShareStatusBatchItem,
   type ShareStatus,
+  type ShareCommentRow,
 } from "../shares/contracts";
 import {
   MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES,
@@ -47,7 +52,7 @@ export interface ShareService {
     payload: EditCommentInput
   ): Promise<{ commentId: string; editedAt: string }>;
   deleteComment(publicId: string, commentId: string, payload: DeleteCommentInput): Promise<boolean>;
-  listComments(publicId: string, capability: string): Promise<Array<Record<string, unknown>>>;
+  listComments(publicId: string, capability: string): Promise<ShareCommentRow[]>;
   revoke(publicId: string, deleteCapability: string): Promise<boolean>;
 }
 
@@ -67,8 +72,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const STORAGE_PATH_PATTERN = /^objects\/[0-9a-f]{48}\.bin$/;
+
+const REVEAL_ROW_KEYS = [
+  "attachments",
+  "content_envelope",
+  "max_reveals",
+  "retry_expires_at",
+  "reveal_count",
+  "share_id",
+  "status",
+  "window_ends_at",
+] as const;
+
+function isHttpUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const parsed = new URL(value);
+    return (parsed.protocol === "https:" || parsed.protocol === "http:") && parsed.username === "" && parsed.password === "" && parsed.hash === "";
+  } catch {
+    return false;
+  }
+}
 
 function bytesHex(value: string): string {
   return `\\x${Buffer.from(value, "base64url").toString("hex")}`;
@@ -231,44 +256,109 @@ export function createShareService(
           p_request_token_hash: bytesHex(sha256Base64Url(requestToken)),
         });
         const row = firstRow(value);
-        if (!row || (row.status !== "authorized" && row.status !== "unavailable" && row.status !== "request_expired")) {
+        if (
+          !row ||
+          !hasExactKeys(row, REVEAL_ROW_KEYS) ||
+          (row.status !== "authorized" && row.status !== "unavailable" && row.status !== "request_expired")
+        ) {
           throw new ShareServiceError("dependency");
         }
+
+        const retryExpiresAt = row.retry_expires_at === null ? null : parseIsoUtc(row.retry_expires_at);
+        if (row.retry_expires_at !== null && !retryExpiresAt) throw new ShareServiceError("dependency");
+
         if (row.status !== "authorized") {
+          if (
+            row.share_id !== null ||
+            row.content_envelope !== null ||
+            row.attachments !== null ||
+            row.reveal_count !== null ||
+            row.max_reveals !== null ||
+            row.window_ends_at !== null ||
+            (row.status === "unavailable" ? retryExpiresAt !== null : retryExpiresAt === null)
+          ) {
+            throw new ShareServiceError("dependency");
+          }
           return {
             status: row.status,
             contentEnvelope: null,
             files: [],
-            retryExpiresAt: typeof row.retry_expires_at === "string" ? parseIsoUtc(row.retry_expires_at) : null,
+            retryExpiresAt,
             releaseWindowEndsAt: null,
           };
         }
+
+        if (
+          !isUuid(row.share_id) ||
+          typeof row.reveal_count !== "number" ||
+          !Number.isSafeInteger(row.reveal_count) ||
+          row.reveal_count < 1 ||
+          (row.max_reveals !== null &&
+            (typeof row.max_reveals !== "number" ||
+              !Number.isSafeInteger(row.max_reveals) ||
+              row.max_reveals < 1 ||
+              row.max_reveals > 100 ||
+              row.reveal_count > row.max_reveals)) ||
+          !retryExpiresAt
+        ) {
+          throw new ShareServiceError("dependency");
+        }
+
         const contentEnvelope = parseRpcEnvelope(row.content_envelope);
-        const retryExpiresAt = typeof row.retry_expires_at === "string" ? parseIsoUtc(row.retry_expires_at) : null;
-        const releaseWindowEndsAt = typeof row.window_ends_at === "string" ? parseIsoUtc(row.window_ends_at) : null;
+        const releaseWindowEndsAt = row.window_ends_at === null ? null : parseIsoUtc(row.window_ends_at);
         if (!contentEnvelope || !retryExpiresAt) throw new ShareServiceError("dependency");
 
         const files: RevealAttachment[] = [];
-        if (Array.isArray(row.attachments)) {
-          for (const entry of row.attachments) {
-            if (!isRecord(entry)) throw new ShareServiceError("dependency");
-            const envelope = typeof entry.envelope === "object" && entry.envelope !== null
-              ? parseRpcFileEnvelope(entry.envelope)
-              : null;
-            const path = typeof entry.objectPath === "string" ? entry.objectPath : "";
-            const size = typeof entry.ciphertextSize === "number" ? entry.ciphertextSize : -1;
-            const slot = typeof entry.slot === "number" ? entry.slot : -1;
-            if (!envelope || !path || size < 16 || slot < 0) throw new ShareServiceError("dependency");
-            let downloadUrl: string;
-            try {
-              downloadUrl = await storage.createSignedDownload(path, 60);
-            } catch {
-              throw new ShareServiceError("dependency");
-            }
-            files.push({ slot, envelope, ciphertextSize: size, downloadUrl });
-          }
-        } else {
+        if (!Array.isArray(row.attachments) || row.attachments.length > MAX_ATTACHMENTS) {
           throw new ShareServiceError("dependency");
+        }
+        const slots = new Set<number>();
+        const pendingFiles: Array<{
+          readonly slot: number;
+          readonly envelope: NonNullable<ReturnType<typeof parseRpcFileEnvelope>>;
+          readonly path: string;
+          readonly size: number;
+        }> = [];
+        for (const entry of row.attachments) {
+          if (
+            !isRecord(entry) ||
+            !hasExactKeys(entry, ["ciphertextSize", "envelope", "objectPath", "slot"])
+          ) {
+            throw new ShareServiceError("dependency");
+          }
+          const envelope = parseRpcFileEnvelope(entry.envelope);
+          const path = entry.objectPath;
+          const size = entry.ciphertextSize;
+          const slot = entry.slot;
+          if (
+            !envelope ||
+            typeof path !== "string" ||
+            !STORAGE_PATH_PATTERN.test(path) ||
+            typeof size !== "number" ||
+            !Number.isSafeInteger(size) ||
+            size < 16 ||
+            size > MAX_FILE_CIPHERTEXT_SIZE ||
+            typeof slot !== "number" ||
+            !Number.isSafeInteger(slot) ||
+            slot < 0 ||
+            slot >= MAX_ATTACHMENTS ||
+            slots.has(slot)
+          ) {
+            throw new ShareServiceError("dependency");
+          }
+          slots.add(slot);
+          pendingFiles.push({ slot, envelope, path, size });
+        }
+
+        for (const pending of pendingFiles) {
+          let downloadUrl: string;
+          try {
+            downloadUrl = await storage.createSignedDownload(pending.path, 60);
+          } catch {
+            throw new ShareServiceError("dependency");
+          }
+          if (!isHttpUrl(downloadUrl)) throw new ShareServiceError("dependency");
+          files.push({ slot: pending.slot, envelope: pending.envelope, ciphertextSize: pending.size, downloadUrl });
         }
 
         return {
@@ -289,7 +379,7 @@ export function createShareService(
       // A present-but-malformed parent id would surface as a PG 22P02 cast
       // failure and map to a false dependency outage; reject it as invalid.
       const parentCommentId = typeof payload.parentCommentId === "string" ? payload.parentCommentId : "";
-      if (parentCommentId !== "" && !UUID_PATTERN.test(parentCommentId)) {
+      if (parentCommentId !== "" && !isUuid(parentCommentId)) {
         throw new ShareServiceError("invalid");
       }
       const editToken = typeof payload.editToken === "string" ? payload.editToken : "";
@@ -312,10 +402,18 @@ export function createShareService(
           p_nickname_envelope: payload.nicknameEnvelope ?? null,
         });
         const row = firstRow(value);
-        if (!row || typeof row.comment_id !== "string") throw new ShareServiceError("dependency");
+        const createdAt = row ? parseIsoUtc(row.created_at) : null;
+        if (
+          !row ||
+          !hasExactKeys(row, ["comment_id", "created_at"]) ||
+          !isUuid(row.comment_id) ||
+          !createdAt
+        ) {
+          throw new ShareServiceError("dependency");
+        }
         return {
           commentId: row.comment_id,
-          createdAt: typeof row.created_at === "string" ? row.created_at : new Date().toISOString(),
+          createdAt,
         };
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
@@ -329,7 +427,7 @@ export function createShareService(
     async editComment(publicId, commentId, payload) {
       const capability = typeof payload.capability === "string" ? payload.capability : "";
       const editToken = typeof payload.editToken === "string" ? payload.editToken : "";
-      if (!UUID_PATTERN.test(commentId) || !isDigest(capability) || !isDigest(editToken) || typeof payload.bodyEnvelope !== "object" || payload.bodyEnvelope === null) {
+      if (!isUuid(commentId) || !isDigest(capability) || !isDigest(editToken) || typeof payload.bodyEnvelope !== "object" || payload.bodyEnvelope === null) {
         throw new ShareServiceError("invalid");
       }
       try {
@@ -346,8 +444,16 @@ export function createShareService(
           p_body_envelope: payload.bodyEnvelope,
         });
         const row = firstRow(value);
-        if (!row || typeof row.comment_id !== "string" || typeof row.edited_at !== "string") throw new ShareServiceError("dependency");
-        return { commentId: row.comment_id, editedAt: row.edited_at };
+        const editedAt = row ? parseIsoUtc(row.edited_at) : null;
+        if (
+          !row ||
+          !hasExactKeys(row, ["comment_id", "edited_at"]) ||
+          !isUuid(row.comment_id) ||
+          !editedAt
+        ) {
+          throw new ShareServiceError("dependency");
+        }
+        return { commentId: row.comment_id, editedAt };
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
         if (error instanceof RpcRequestError && (error.code === "22023" || error.code === "P0001")) {
@@ -360,7 +466,7 @@ export function createShareService(
     async deleteComment(publicId, commentId, payload) {
       const capability = typeof payload.capability === "string" ? payload.capability : "";
       const editToken = typeof payload.editToken === "string" ? payload.editToken : "";
-      if (!UUID_PATTERN.test(commentId) || !isDigest(capability) || !isDigest(editToken)) {
+      if (!isUuid(commentId) || !isDigest(capability) || !isDigest(editToken)) {
         throw new ShareServiceError("invalid");
       }
       try {
@@ -371,7 +477,9 @@ export function createShareService(
           p_edit_token_hash: bytesHex(sha256Base64Url(editToken)),
         });
         const row = firstRow(value);
-        if (!row || typeof row.deleted !== "boolean") throw new ShareServiceError("dependency");
+        if (!row || !hasExactKeys(row, ["deleted"]) || typeof row.deleted !== "boolean") {
+          throw new ShareServiceError("dependency");
+        }
         return row.deleted;
       } catch (error) {
         if (error instanceof ShareServiceError) throw error;
@@ -389,9 +497,9 @@ export function createShareService(
           p_public_id: publicId,
           p_discussion_capability: bytesHex(capability),
         });
-        return Array.isArray(value) && value.every(isRecord)
-          ? (value as Array<Record<string, unknown>>)
-          : [];
+        const comments = parseShareCommentRows(value);
+        if (!comments) throw new ShareServiceError("dependency");
+        return comments;
       } catch (error) {
         if (error instanceof RpcRequestError && error.code === "22023") {
           throw discussionRpcError(error);

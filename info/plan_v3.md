@@ -11,7 +11,7 @@ This is the single active roadmap. Historical plans remain in Git history and ar
 - Password and two-channel factors, QR/native sharing, receipts, custom reveal counts, Never expiry, Markdown/code modes, multi-file ZIP, encrypted discussions with edit/delete, and batch status.
 - Public `/` and sharing app `/new`; release-window, privacy-veil, portable-parcel, local-manager, and self-host surfaces exist on `dev`.
 
-The pre-freeze gate passes locally: 191 unit tests, 16 integration tests,
+The pre-freeze gate passes locally: 212 unit tests, 16 integration tests,
 155 pgTAP assertions after clean reset/replay, 19 development and 19
 production-build Playwright tests, 7 Axe checks, nine reviewed screenshots,
 production build, reproducibility, dependency, and source/log audits. Remote

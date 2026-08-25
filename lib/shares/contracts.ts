@@ -2,6 +2,7 @@ import {
   MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES,
   MAX_DISCUSSION_NICKNAME_CIPHERTEXT_BYTES,
   validateDiscussionEnvelope,
+  type DiscussionEnvelope,
 } from "../crypto/discussion";
 
 /**
@@ -24,10 +25,13 @@ export const MAX_CONTENT_CIPHERTEXT_BYTES_V2 = 524_315;
 
 export const MAX_CONTENT_CIPHERTEXT_CHARS = MAX_CONTENT_CIPHERTEXT_CHARS_V2;
 export const MAX_FILE_CIPHERTEXT_SIZE = 10_486_422;
+export const MAX_ATTACHMENTS = 5;
 export const MAX_EXPIRY_DAYS = 30;
 
 const ISO_UTC_PATTERN =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]00(?::?00)?)$/;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type FactorMask =
   | "link"
@@ -183,6 +187,15 @@ export interface RevealResult {
   readonly releaseWindowEndsAt: string | null;
 }
 
+export interface ShareCommentRow {
+  readonly comment_id: string;
+  readonly parent_comment_id: string | null;
+  readonly body_envelope: DiscussionEnvelope;
+  readonly nickname_envelope: DiscussionEnvelope | null;
+  readonly created_at: string;
+  readonly edited_at: string | null;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -295,6 +308,60 @@ export function parseFileEnvelope(value: unknown): FileEnvelopeV2 | null {
   // Metadata-only file envelopes carry one fewer field (no ciphertext).
   const envelope = parseEnvelope(value, "file", false);
   return envelope as FileEnvelopeV2 | null;
+}
+
+export function isUuid(value: unknown): value is string {
+  return typeof value === "string" && UUID_PATTERN.test(value);
+}
+
+const SHARE_COMMENT_KEYS = [
+  "body_envelope",
+  "comment_id",
+  "created_at",
+  "edited_at",
+  "nickname_envelope",
+  "parent_comment_id",
+] as const;
+
+function parseShareCommentRow(value: unknown): ShareCommentRow | null {
+  if (!isRecord(value) || !hasExactKeys(value, SHARE_COMMENT_KEYS)) return null;
+  if (!isUuid(value.comment_id) || (value.parent_comment_id !== null && !isUuid(value.parent_comment_id))) return null;
+  if (!isRecord(value.body_envelope)) return null;
+  if (value.nickname_envelope !== null && !isRecord(value.nickname_envelope)) return null;
+
+  const createdAt = parseIsoUtc(value.created_at);
+  const editedAt = value.edited_at === null ? null : parseIsoUtc(value.edited_at);
+  if (!createdAt || (value.edited_at !== null && !editedAt)) return null;
+
+  try {
+    const bodyEnvelope = validateDiscussionEnvelope(value.body_envelope, MAX_DISCUSSION_BODY_CIPHERTEXT_BYTES);
+    const nicknameEnvelope = value.nickname_envelope === null
+      ? null
+      : validateDiscussionEnvelope(value.nickname_envelope, MAX_DISCUSSION_NICKNAME_CIPHERTEXT_BYTES);
+    return {
+      comment_id: value.comment_id,
+      parent_comment_id: value.parent_comment_id,
+      body_envelope: bodyEnvelope,
+      nickname_envelope: nicknameEnvelope,
+      created_at: createdAt,
+      edited_at: editedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function parseShareCommentRows(value: unknown): ShareCommentRow[] | null {
+  if (!Array.isArray(value)) return null;
+  const seen = new Set<string>();
+  const rows: ShareCommentRow[] = [];
+  for (const entry of value) {
+    const row = parseShareCommentRow(entry);
+    if (!row || seen.has(row.comment_id)) return null;
+    seen.add(row.comment_id);
+    rows.push(row);
+  }
+  return rows;
 }
 
 export function parseCreateShareInput(value: unknown, nowMillis: number = Date.now()): CreateShareInput | null {

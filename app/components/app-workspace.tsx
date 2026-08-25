@@ -211,7 +211,7 @@ export function AppWorkspace() {
               </div>
               <div className="docs-validation-strip" aria-label="Recorded CI validation baseline">
                 <span className="docs-validation-label">Recorded CI baseline</span>
-                <span><strong>193</strong> unit</span>
+                <span><strong>212</strong> unit</span>
                 <span><strong>16</strong> integration</span>
                 <span><strong>155</strong> pgTAP</span>
                 <span><strong>19 + 19</strong> browser</span>

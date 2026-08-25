@@ -29,12 +29,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function hasExactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+
+function isNonNegativeSafeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
 function isNullableUuid(value: unknown): value is string | null {
   return value === null || (typeof value === "string" && UUID_PATTERN.test(value));
 }
 
 function parseCandidate(value: unknown): CleanupCandidate | null {
   if (!isRecord(value)) return null;
+  if (!hasExactKeys(value, ["candidate_type", "object_path", "reservation_id", "share_id"])) return null;
   const candidateType = value.candidate_type;
   const item = value;
   if (
@@ -65,9 +76,15 @@ export function createCleanupService(
   return {
     async runCleanup(): Promise<CleanupResult> {
       const rawCandidates = await rpc.call("list_cleanup_candidates", {});
-      const candidates = Array.isArray(rawCandidates)
-        ? rawCandidates.map(parseCandidate).filter((candidate): candidate is CleanupCandidate => candidate !== null)
-        : [];
+      if (!Array.isArray(rawCandidates)) throw new Error("Invalid cleanup candidate response");
+      const parsedCandidates = rawCandidates.map(parseCandidate);
+      if (parsedCandidates.some((candidate) => candidate === null)) {
+        throw new Error("Invalid cleanup candidate response");
+      }
+      const candidates = parsedCandidates.map((candidate) => {
+        if (!candidate) throw new Error("Invalid cleanup candidate response");
+        return candidate;
+      });
 
       // A share may have several attachment candidates. Finalize it only
       // after every path in its group was deleted (or already missing), so a
@@ -120,17 +137,40 @@ export function createCleanupService(
       });
 
       const firstRow =
-        Array.isArray(finalizeResult) && isRecord(finalizeResult[0])
+        Array.isArray(finalizeResult) && finalizeResult.length === 1 && isRecord(finalizeResult[0])
           ? finalizeResult[0]
-          : {};
+          : null;
+      const resultKeys = [
+        "deleted_buckets",
+        "deleted_leases",
+        "deleted_rotated_uploads",
+        "deleted_shares",
+        "deleted_uploads",
+      ] as const;
+      if (!firstRow || !hasExactKeys(firstRow, resultKeys)) {
+        throw new Error("Invalid cleanup result response");
+      }
+      const deletedShares = firstRow.deleted_shares;
+      const deletedUploads = firstRow.deleted_uploads;
+      const deletedUploadRotations = firstRow.deleted_rotated_uploads;
+      const deletedLeases = firstRow.deleted_leases;
+      const deletedBuckets = firstRow.deleted_buckets;
+      if (
+        !isNonNegativeSafeInteger(deletedShares) ||
+        !isNonNegativeSafeInteger(deletedUploads) ||
+        !isNonNegativeSafeInteger(deletedUploadRotations) ||
+        !isNonNegativeSafeInteger(deletedLeases) ||
+        !isNonNegativeSafeInteger(deletedBuckets)
+      ) {
+        throw new Error("Invalid cleanup result response");
+      }
 
       return {
-        deletedShares: typeof firstRow.deleted_shares === "number" ? firstRow.deleted_shares : 0,
-        deletedUploads: typeof firstRow.deleted_uploads === "number" ? firstRow.deleted_uploads : 0,
-        deletedUploadRotations:
-          typeof firstRow.deleted_rotated_uploads === "number" ? firstRow.deleted_rotated_uploads : 0,
-        deletedLeases: typeof firstRow.deleted_leases === "number" ? firstRow.deleted_leases : 0,
-        deletedBuckets: typeof firstRow.deleted_buckets === "number" ? firstRow.deleted_buckets : 0,
+        deletedShares,
+        deletedUploads,
+        deletedUploadRotations,
+        deletedLeases,
+        deletedBuckets,
       };
     },
   };

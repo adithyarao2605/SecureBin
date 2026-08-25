@@ -76,8 +76,7 @@ export function createCommentHandlers(dependencies: CommentRouteDependencies): {
       // lands in proxy or access logs.
       const capability = request.headers.get("x-discussion-capability") ?? "";
       try {
-        const comments: Array<Record<string, unknown>> =
-          await dependencies.service.listComments(publicId, capability);
+        const comments = await dependencies.service.listComments(publicId, capability);
         return jsonResponse({ comments });
       } catch (error) {
         return mapError(error);
