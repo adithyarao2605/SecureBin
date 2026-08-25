@@ -12,7 +12,7 @@ This document is the single consolidated record of all implemented features, cry
   - Content payload key: `securebin/v2/link/content`
   - Attachment file key: `securebin/v2/link/file`
 - **Multi-Factor Protection Masks:**
-  - `link`: Base 128-bit key in URL fragment.
+  - `link`: 256-bit key in the URL fragment.
   - `link+password`: Fragment key combined with user password via PBKDF2-HMAC-SHA-256 (600,000 iterations, 16-byte random salt).
   - `link+unlock`: Fragment key combined with a 27-character base-28 second-channel unlock code (carrying 124 bits of entropy plus checksum).
   - `link+password+unlock`: All three independent factors required to reconstruct the root key.
@@ -72,9 +72,9 @@ This document is the single consolidated record of all implemented features, cry
 
 ## 4. Verification & Testing Evidence
 
-- **Unit Tests:** 191 unit tests passing via `vitest` covering crypto primitives, envelope codecs, policy parsers, and component flows.
+- **Unit Tests:** 217 unit tests passing via `vitest` covering crypto primitives, envelope codecs, policy parsers, and component flows.
 - **Database Tests:** 155 pgTAP assertions passing against a clean Supabase migration reset.
 - **Integration Tests:** 16 backend API and service-layer integration tests passing.
-- **E2E Tests:** 19 Playwright end-to-end browser tests passing in Chromium across all user flows and production builds.
+- **E2E Tests:** 20 development and 20 production-build Playwright tests passing in Chromium across the release flows.
 - **Accessibility:** 7 Axe accessibility checks passing with 0 critical or serious violations (WCAG 2.1 AA compliant).
 - **Security & Reproducibility Audits:** `verify-reproducibility.py` and `source-audit.mjs` pass cleanly with zero secret diagnostics.

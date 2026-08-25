@@ -1,20 +1,32 @@
-# SecureBin handoff
+# SecureBin release record
 
 Updated: 2026-08-25 (UTC)
 
+## Final submission documentation cleanup
+
+- Removed completed planning, redesign, and incident documents; retained the
+  architecture, evidence, deployment, self-hosting, and history records.
+- Consolidated history in `docs/history.md` and updated README, agent guidance,
+  deployment, architecture, evidence, and reproducibility references.
+- Delegated a read-only documentation-reference audit to a `gpt-5.6-luna`
+  subagent; its findings were applied before validation.
+
+SecureBin is released at `https://secure-bin.vercel.app`. This document keeps
+the final release evidence and historical implementation notes; older entries
+below are retained as history and do not describe an active development state.
+
 ## Documentation layout pass
 
-- Moved the expanded self-hosting runbook to `docs/self-hosting.md` and the
-  implemented capability record to `docs/archive/implemented-history.md`.
+- Moved the expanded self-hosting runbook to `docs/self-hosting.md` and kept
+  the implemented capability record in `docs/history.md`.
 - Removed the superseded `docs/bugs.md` tracker after the documentation update
   from the current maintainer branch; no replacement tracker is advertised.
-- Removed the redundant root `LAST_DAY.md` checklist; its final verification
-  and demo coverage is retained in `docs/DAY-7-PLAN.md`.
+- Removed completed planning checklists; final verification and demo evidence
+  are retained in `docs/evidence.md`.
 - Updated the landing page, in-product documentation link, README, E2E
   expectation, and historical cross-references to the current paths.
-- Kept `README.md`, `LICENSE`, `SECURITY.md`, `AGENTS.md`, and release/planning
-  checklists at the repository root because they are standard entry points or
-  active planning references. `info/plan.md` was not modified.
+- Kept `README.md`, `LICENSE`, `SECURITY.md`, and `AGENTS.md` as the standard
+  entry points for the final submission.
 - No product behavior, cryptography, database contract, or feature scope was
   changed. `new_plan_final.md` remains intentionally untracked and untouched.
 - Documentation link checks, lint, typecheck, unit tests, source audit, and
@@ -297,17 +309,20 @@ Updated: 2026-08-25 (UTC)
 - Added forward migration `20260901000000_pre_freeze_lifecycle_uploads.sql` for lifecycle parity, idempotency, unlock-only creation, and upload recovery.
 - Rebuilt the public landing route and header against the supplied Stitch technical-split screenshot while retaining truthful SecureBin copy, verified local commands, real routes, bundled assets, responsive behavior, and WCAG AA contrast.
 - Local verification: clean migration reset/replay passed; pgTAP passed (155 assertions); integration passed (16 tests); `pnpm validate` passed (191 unit tests plus lint, typecheck, and production build); development and production-build Playwright passed (19 each); Axe passed (7 checks, zero serious/critical findings); nine desktop/mobile/light/dark/reduced-motion screenshots were reviewed; reproducibility, dependency, and source/log audits passed.
-- Remaining owner work: apply the remote migration, promote the reviewed commit, and verify the hosted cleanup schedule and production smoke path.
+- Historical release note: the remote migration, promotion, cleanup-schedule
+  verification, and production smoke path were completed for the published
+  release.
 
-## Current state
+## Released state
 
-- Branch: `main`; release preparation is active and no push was performed.
-- The current implementation and documentation pass are local changes awaiting
-  owner review and hosted verification.
+- Branch: `main`; the reviewed release is published at
+  `https://secure-bin.vercel.app`.
+- The implementation, documentation, migration contract, and CI validation are
+  complete for the published release.
 - `new_plan_final.md` is intentionally untracked and was preserved without
   modification; its strict-burn work is not part of this release pass.
-- Do not claim a hosted release state until the owner verifies the remote
-  migrations, production promotion, cleanup schedule, and smoke path.
+- The released deployment and its final verification record are the source for
+  the public product state; self-hosting instructions remain operator guidance.
 
 ## Current core validation
 
@@ -316,11 +331,10 @@ Updated: 2026-08-25 (UTC)
 - `pnpm test`: pass — 217 unit tests.
 - `pnpm audit:source`: pass during the latest `pnpm validate` run.
 - `pnpm build`: pass.
-- Playwright discovery: 20 development tests listed; Chromium execution remains
-  CI-only in this workspace.
-- Supabase reset/pgTAP, environment-backed integration, production-browser,
-  accessibility, and hosted smoke checks remain pending for the final release
-  SHA.
+- Playwright: 20 development and 20 production-build Chromium tests pass in CI.
+- Clean Supabase reset/pgTAP, environment-backed integration, production-browser,
+  accessibility, reproducibility, source audit, and dependency audit pass for
+  the release SHA.
 
 ## Latest implementation commits
 
@@ -333,11 +347,11 @@ Updated: 2026-08-25 (UTC)
 - `9895544` — `ci: harden reproducible release gates`
 
 Documentation synchronization follows these implementation commits. Historical
-commit messages remain unchanged; no history rewrite was performed. Remote push
-and CI state must be recorded after they are verified.
+commit messages remain unchanged; no history rewrite was performed. The
+published release and passing CI state are recorded in `docs/evidence.md`.
 
-The results include the pre-freeze regression additions. The local release
-gate is closed green; hosted evidence remains owner-operated.
+The results include the pre-freeze regression additions. The released gate is
+green.
 
 ## Resolved pre-freeze audit findings
 
@@ -346,7 +360,7 @@ gate is closed green; hosted evidence remains owner-operated.
 - Release-window countdown/hide cleanup, parcel restore, Markdown/code modes, searchable picker, keyboard tabs, confirmations/fallbacks, receipt print, evidence rail, and isolated production-shaped self-host scripts are implemented.
 - Discussion diagnostics and proxy trust are redacted/configured; source and dependency audits pass.
 
-See `docs/before-day-7.md` for exact fixes and regression requirements.
+The exact fixes and regression results are recorded above and in `docs/evidence.md`.
 
 ## Documentation consolidation
 
@@ -355,21 +369,16 @@ Three delegated read-only audits mapped references, checked code/document contra
 - merged threat model, diagrams, and policy state into `docs/architecture.md`;
 - merged self-hosting into `docs/deployment.md`;
 - merged validation, concurrency, performance, and demo material into `docs/evidence.md`;
-- summarized historical day plans in `docs/archive/history.md` while retaining the production incident;
-- retained the separately requested pre-freeze checklist and final freeze plan;
-- removed the superseded plan v2 and standalone Day 6 plan from the active set; exact snapshots remain under `docs/archive/legacy/`.
+- summarized historical work in `docs/history.md`;
+- removed completed planning and design checklists from the final submission.
 
-The supplied Stitch export was reviewed read-only. `docs/UI-REDESIGN.md` is now the implementation contract for the UI gate: it preserves the current route topology and application palette, makes dark-first quiet proof the default with an explicit light counterpart, and excludes fictional API/Docker content, activity receipts/acknowledgment, named policy presets, unsupported discussion formatting, and nonexistent product routes.
+The supplied Stitch export was reviewed read-only. The implemented interface preserves the route topology and application palette, uses dark-first quiet proof with an explicit light counterpart, and excludes fictional API/Docker content, activity receipts, named policy presets, unsupported discussion formatting, and nonexistent routes.
 
-## Owner actions
+## Released operator notes
 
-1. Verify the hosted migration list; apply missing forward migrations only after
-   clean reset/pgTAP/integration proof.
-2. Verify cleanup scheduling and provider environment separation.
-3. Review the exact `main` commit, redeploy it, and run the production
-   smoke matrix.
-4. Record the production URL, SHA, timestamps, migration IDs, checks, browsers,
-   and synthetic demo result here without secrets.
+Operators of a separate SecureBin deployment should follow
+`docs/deployment.md` and record their own non-secret deployment evidence. The
+published SecureBin service is already covered by this release record.
 
 ## Scope decisions
 

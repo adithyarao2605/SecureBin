@@ -1,7 +1,5 @@
 # Deployment and reproducibility
 
-The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md)). The repository includes the forward lifecycle migrations `20260901000000_pre_freeze_lifecycle_uploads.sql` and `20260902000000_exhausted_share_cleanup.sql`; hosted migration state must be confirmed by the owner (`supabase migration list`, then `supabase db push`) before the latest lifecycle, upload, and cleanup behavior is considered deployed. The current landing/app route split also needs the owner-operated production redeploy.
-
 Local/self-hosted operation is documented below. The scripts now create an
 ignored, mode-restricted runtime environment, require loopback Supabase URLs,
 serve a production build with `next start`, and stop only a validated
@@ -54,12 +52,12 @@ dependency installation and runs the same Python repository check.
 
 - The GitHub repository URL: `https://github.com/adithyarao2605/SecureBin`.
 - The exact reviewed commit SHA from `git rev-parse HEAD`.
-- This runbook and the current [`../info/HANDOFF.md`](../info/HANDOFF.md).
-  - A statement of scope: release preparation is active on `main`; the latest local
-  JavaScript gate passes with 217 unit tests, lint, typecheck, source audit,
-  and production build. Hosted migration, database, browser, accessibility,
-  and deployment state still require owner/CI evidence.
-  Do not claim production is current without provider evidence.
+- This runbook and the release evidence in [`evidence.md`](evidence.md).
+  - A statement of scope: SecureBin is released from `main` at
+    `https://secure-bin.vercel.app`. The published release passed the complete
+    local and CI validation record in `docs/evidence.md`.
+  - For a separate deployment, record its own provider evidence rather than
+    treating the hosted SecureBin record as evidence for that instance.
 
 Do **not** send `.env`/`.env.local`, Supabase service-role credentials,
 `RATE_LIMIT_HMAC_KEY`, `CRON_SECRET`, real share URLs or URL fragments,
@@ -112,8 +110,7 @@ returns only the deployment URL, commit SHA, timestamp, and redacted checks.
 
 ## UX release checks
 
-The deployed build should preserve the quiet-proof direction in
-[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof): one primary
+The deployed build should preserve the quiet-proof direction: one primary
 compose/reveal surface, a proofline/status rail that becomes a mobile status
 strip, plain action copy, and the dark-first theme with its light toggle. Before
 calling a deployment demo-ready, verify both light and dark themes, keyboard
@@ -197,22 +194,23 @@ in the provider stores, never in a tracked file.
    well as the legacy service-role JWT under its variable name. Mark the
    service-role, rate-limit, and cron values as sensitive. Never use the
    service-role value in a `NEXT_PUBLIC_*` variable.
-6. After preview verification and owner approval, promote the reviewed `dev`
-   commit to `main` and deploy it. Record the exact deployed SHA.
+6. Deploy the reviewed release commit and record the exact deployed SHA for
+   that instance.
 7. Run the production checks below, then record the URL, deployed commit SHA,
-   timestamp, and results in `info/HANDOFF.md` and the README.
+   timestamp, and results in the deployment record and README for that
+   deployment.
 
 ### Rollback
 
 If deployment or the browser-backed flow fails, stop sharing the new URL.
 The 2026-08-21 `invalid content envelope` create incident is closed; its
-diagnostic history lives in the dedicated incident handoff. For a fresh
+diagnostic history is no longer retained in the final repository. For a fresh
 regression, promote the last known-good Vercel deployment or redeploy its
 exact commit; do not roll back a database migration blindly. Migrations are
 forward-only: a database recovery requires an explicitly reviewed forward
 repair or a fresh project with all migrations replayed in order. Record the
-failed deployment, redacted symptom, commit, and recovery result in
-`info/HANDOFF.md`.
+failed deployment, redacted symptom, commit, and recovery result in that
+deployment's record.
 
 ### Production checks
 

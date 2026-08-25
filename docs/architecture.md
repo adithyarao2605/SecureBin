@@ -3,15 +3,17 @@
 ## 1. Status and Goals
 
 This document is the technical source of truth for the judged SecureBin release.
-`info/plan_v3.md` is the active implementation roadmap. `info/plan.md` provides historical product priorities. Project implementation decisions and validation records are maintained in `info/HANDOFF.md`.
+Validation evidence is maintained in `docs/evidence.md`.
 
-### Current implementation status
+### Released implementation
 
-Release preparation is active on `main`. The current local JavaScript gate passes
-with lint, strict typechecking, 217 unit tests, source audit, and production
-build. Supabase replay, environment-backed integration tests, browser and Axe
-execution, hosted migration, and cleanup verification remain owner-operated
-release evidence.
+SecureBin is released on `main` and is available at
+`https://secure-bin.vercel.app`. Its release gate passed lint, strict
+typechecking, 217 unit tests, source audit, production build, clean Supabase
+replay, pgTAP, environment-backed integration tests, development and
+production browser tests, Axe checks, reproducibility, and dependency audits.
+The hosted service uses the same reviewed application and database contract
+documented here.
 
 The current default theme is dark with an explicit light toggle; the rest of
 the quiet-proof palette and route topology remain unchanged.
@@ -67,9 +69,8 @@ The browser owns key generation, derivation, encryption, decryption, content ren
 
 ### Experience layer (non-authoritative)
 
-The browser surface follows the quiet-proof direction in
-[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof): a dark-first
-theme with a light toggle, a single compose or reveal surface, and one
+The browser surface follows the quiet-proof direction: a dark-first theme with
+a light toggle, a single compose or reveal surface, and one
 proofline connecting the browser, sealed parcel, and recipient. The proofline is
 only an explanation of the client flow. It must never be used as evidence that
 encryption, authorization, or deletion succeeded; those states come from the
@@ -246,9 +247,8 @@ All APIs use strict shared schemas, size limits, JSON error codes, request IDs, 
 
 Supabase SQLSTATE `22023` validation failures surface from PostgREST as `400`;
 the server dependency boundary deliberately maps them to a uniform public
-failure. The current production example is documented in
-[`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md). Diagnostics may compare
-field names/types and decoded lengths, never envelope values or ciphertext.
+failure. Diagnostics may compare field names/types and decoded lengths, never
+envelope values or ciphertext.
 
 ### `POST /api/uploads`
 

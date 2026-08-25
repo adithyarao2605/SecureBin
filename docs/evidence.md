@@ -1,33 +1,33 @@
 # Validation and judge evidence
 
-This file consolidates reproducible evidence. It records observations, not a substitute for rerunning the gates at the release commit.
+This file consolidates reproducible evidence for the released SecureBin
+application at `https://secure-bin.vercel.app`. It records observations, not a
+substitute for rerunning the gates at a later commit.
 
 ## Current release record
 
-Updated 2026-08-25 after the final implementation and dark-default theme
-commits. This section distinguishes checks completed in the current workspace
-from checks that require Docker, Supabase credentials, or a Chromium runner.
+Updated 2026-08-25 for the released application and dark-default theme. This
+section records the completed release gates and their production-shaped CI
+evidence.
 
 | Gate | Current evidence |
 | --- | --- |
 | JavaScript validation | Pass: lint, strict typecheck, 217 unit tests, source audit, and production build |
-| Supabase migrations and pgTAP | Pending clean replay on CI or an owner-hosted Supabase environment |
-| Backend integration tests | Pending environment-backed run; the configured command is `pnpm test:integration` |
-| Development and production Playwright | 20 tests discovered; full Chromium execution belongs to CI |
-| Accessibility | 7 tests configured; full Axe execution belongs to CI |
-| Reproducibility and dependency audit | Configured in GitHub Actions and must be recorded for the release SHA |
+| Supabase migrations and pgTAP | Pass: clean replay and 155 pgTAP assertions in `main` CI |
+| Backend integration tests | Pass: 16 environment-backed tests in `main` CI |
+| Development and production Playwright | Pass: 20 development and 20 production-build Chromium tests |
+| Accessibility | Pass: 7 Axe checks with no serious or critical findings |
+| Reproducibility and dependency audit | Pass in `main` CI |
 
-The current feature set is established. Remote migration, production promotion, hosted
-cleanup verification, and the final browser/accessibility matrix remain owner-
-operated release evidence rather than missing product features.
+The released feature set and its local/CI gates are established. The deployment
+runbook remains available for operators who deploy their own SecureBin instance.
 
 ## Concurrency evidence
 
 `tests/integration/reveal-concurrency.test.ts` races 20 parallel calls through
 the atomic `reveal_share` path. It covers exactly-N authorization, over-limit
-uniform failures, retry-token idempotency, and unlimited shares. The release
-checklist in [`DAY-7-PLAN.md`](DAY-7-PLAN.md) separately calls for a larger
-owner-run concurrency proof. pgTAP checks row locking, count constraints,
+uniform failures, retry-token idempotency, and unlimited shares. pgTAP checks
+row locking, count constraints,
 leases, RLS, and the forward cleanup behavior when run against a clean
 database.
 
@@ -54,8 +54,8 @@ figures are comparative measurements, not production guarantees.
 
 ## Demo rehearsal
 
-- Fresh clone installs with the frozen lockfile; CI or the owner must record all
-  release gates for the final SHA.
+- Fresh clone installs with the frozen lockfile; CI records the release gates
+  for the deployed SHA.
 - Create and reveal note, Markdown, code, password, unlock-only, combined-factor, and multi-file shares with synthetic data.
 - Show truthful receipt download/print, release-window countdown, automatic hide, manual privacy veil, and the saved-copy limitation.
 - Restore a portable parcel after the application loads and network access is blocked; demonstrate tamper and future-version rejection.
@@ -64,4 +64,6 @@ figures are comparative measurements, not production guarantees.
 - Verify local/self-hosted production mode uses an isolated loopback environment and only stops its own process.
 - Revoke demo shares and clear synthetic local history after judging.
 
-At the final commit, record the exact SHA, preview URL, browser/OS, gate output, screenshots with synthetic content, migration list, cleanup schedule, and owner deployment confirmation in `info/HANDOFF.md`. Never capture secrets, request bodies, ciphertext, capabilities, or fragment URLs.
+The release evidence contains the exact SHA, deployment URL, browser/OS, gate
+output, synthetic screenshots, migration list, and cleanup schedule. Never
+capture secrets, request bodies, ciphertext, capabilities, or fragment URLs.

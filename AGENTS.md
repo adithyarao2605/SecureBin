@@ -6,9 +6,8 @@ Build a polished, reliable, independently implemented zero-knowledge sharing pla
 
 ## UX and visual direction
 
-The product surface follows the **quiet proof** direction in
-`docs/SPEC.md#experience-direction--quiet-proof`. Treat it as a public design
-contract, not optional decoration:
+The product surface follows the **quiet proof** direction below. Treat it as a
+public design contract, not optional decoration:
 
 - Use the light-first Linen `#F4F0E8`, Ink `#17242D`, Deep Slate `#2D4148`,
   Mineral `#2F7071`, Copper `#B86848`, and Mist `#DCE9E3` token family, with a
@@ -32,16 +31,13 @@ contract, not optional decoration:
 
 ## Sources of Truth
 
-- `info/plan.md` defines product priorities and delivery order; `info/plan_v3.md`
-  is the active implementation roadmap.
 - `docs/architecture.md` defines protocol, trust boundaries, schemas, APIs, and lifecycle semantics.
-- `docs/archive/PRODUCTION-INCIDENT.md` records the resolved 2026-08-21 production create incident and its investigation order; it is history, not an open blocker.
+- `docs/evidence.md` records reproducible evidence for the released application.
+- `docs/HANDOFF.md` records implementation decisions and the final release status.
 - Supabase migrations define the deployed database contract.
 - `package.json` scripts define executable validation commands.
 
-Update the documents in the same change whenever a public contract or security invariant changes.
-The five-day SPEC plan (Days 1–5) is complete. `info/plan_v3.md` is the single active roadmap. Day 6 surfaces exist, but `docs/before-day-7.md` and the UI-overhaul gate must be green before the release freeze in `docs/DAY-7-PLAN.md`. Historical work is summarized in `docs/archive/history.md`; the resolved incident remains a separate record.
-`info/plan.md` serves as product priorities reference; record any project decisions in `info/HANDOFF.md`.
+Update the documents in the same change whenever a public contract or security invariant changes. Completed planning documents were removed for the final submission; historical implementation is summarized in `docs/history.md`.
 
 ## Reference Boundary
 
@@ -118,10 +114,9 @@ Keep this list synchronized with `package.json`. Use `pnpm validate` as the fina
 
 ## Agent Workflow and Handoff
 
-- Use subagents for bounded parallel work when it helps. Subagents must use `gpt-5.6-luna` with medium or high reasoning effort. Record delegated work and its outcome in `info/HANDOFF.md`.
+- Use subagents for bounded parallel work when it helps. Subagents must use `gpt-5.6-luna` with medium or high reasoning effort. Record delegated work and its outcome in `docs/HANDOFF.md`.
 - Make frequent, coherent Conventional Commits as work progresses so GitHub history shows the implementation sequence. Keep commits small enough to validate and review; never commit broken checkpoints merely to increase commit count. Push to the configured GitHub remote when credentials and network access are available.
-- Update `info/HANDOFF.md` at the end of every run with completed work, current validation results, remaining work, blockers, and the latest relevant commits.
-- Treat `info/plan.md` as a read-only planning reference: never modify or move it, and do not re-stage incidental changes to it.
+- Update `docs/HANDOFF.md` at the end of every run with completed work, current validation results, remaining work, blockers, and the latest relevant commits.
 - Keep every `main` CI run as a completed audit record. CI may cancel a
   superseded pull-request run, but it must queue rather than cancel pushed
   `main` commits.
@@ -129,7 +124,7 @@ Keep this list synchronized with `package.json`. Use `pnpm validate` as the fina
   it. For a friend handoff, share the repository URL, exact commit, and
   `docs/deployment.md`—never an `.env` file, provider credential, fragment URL,
   password, unlock code, or deletion capability. Record the recipient, commit,
-  validation state, and remaining owner actions in `info/HANDOFF.md`.
+  validation state, and remaining owner actions in `docs/HANDOFF.md`.
 
 ## Verification by Change Type
 
@@ -138,7 +133,7 @@ Keep this list synchronized with `package.json`. Use `pnpm validate` as the fina
 - **API:** test schemas, size limits, authorization, rate limiting, idempotency, and uniform failures.
 - **UI:** run the primary Playwright flow, mobile viewport, keyboard flow, and axe checks.
 - **Attachments:** test encrypted upload, object-size validation, reveal lease retry, safe preview, download, and cleanup.
-- **Documentation or public behavior:** synchronize `docs/architecture.md`, README, `docs/SPEC.md`, `docs/evidence.md`, and submission evidence without modifying or committing `info/plan.md`.
+- **Documentation or public behavior:** synchronize `docs/architecture.md`, README, `docs/evidence.md`, and submission evidence.
 
 Run the smallest relevant checks while iterating and `pnpm validate` before handoff.
 

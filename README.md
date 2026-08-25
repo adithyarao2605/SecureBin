@@ -340,7 +340,7 @@ surface and then verify the corresponding source evidence:
 | The recipient experience handles real boundaries | Open a generated link and exercise reveal, expiry, release window, attachments, or discussions | `app/s/[publicId]/`, browser suites, and Axe checks |
 | Revocation is useful without overclaiming erasure | Revoke a share, then inspect the unavailable state and Privacy Receipt | Atomic lifecycle RPCs, uniform failure contracts, and receipt tests |
 | Offline portability remains local-only | Download a `.securebin` parcel and restore it through **Open parcel** | `lib/shares/parcel.ts`, parcel unit tests, and parcel browser coverage |
-| The repository is reproducible and reviewable | Check the CI badge and validation commands above | GitHub Actions, `pnpm validate`, reproducibility script, and `info/HANDOFF.md` |
+| The repository is reproducible and reviewable | Check the CI badge and validation commands above | GitHub Actions, `pnpm validate`, reproducibility script, and [`docs/evidence.md`](docs/evidence.md) |
 
 ## Documentation index
 
@@ -350,11 +350,10 @@ Use the shortest document that answers the question:
 | --- | --- |
 | Product behavior, setup, demo, and security summary | This README |
 | Protocol, trust boundaries, schemas, RPCs, and lifecycle semantics | [`docs/architecture.md`](docs/architecture.md) |
-| UX direction and accessibility expectations | [`docs/SPEC.md`](docs/SPEC.md) |
+| UX direction and accessibility expectations | This README, the in-app **How it works** panel, and [`AGENTS.md`](AGENTS.md) |
 | Deployment, environment variables, migrations, and smoke checks | [`docs/deployment.md`](docs/deployment.md) and [`docs/self-hosting.md`](docs/self-hosting.md) |
-| Validation evidence and what still needs owner verification | [`docs/evidence.md`](docs/evidence.md) and [`info/HANDOFF.md`](info/HANDOFF.md) |
-| Final verification and demo checklist | [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) |
-| Historical decisions and resolved incidents | [`docs/archive/implemented-history.md`](docs/archive/implemented-history.md) and [`docs/archive/`](docs/archive/) |
+| Validation and final verification | [`docs/evidence.md`](docs/evidence.md) |
+| Historical implementation record | [`docs/history.md`](docs/history.md) |
 
 The in-app **How it works** panel at [`/new#how-it-works`](https://secure-bin.vercel.app/new#how-it-works) is the quickest product-level explanation; the documents above provide the implementation evidence behind it.
 
@@ -382,8 +381,6 @@ report.
 | `supabase/tests/` | pgTAP policy, lifecycle, RLS, concurrency, attachment, and cleanup checks |
 | `tests/` | Unit, integration, browser, production-build, and accessibility tests |
 | `scripts/` | Reproducibility, local runtime, source audit, and smoke tooling |
-| `docs/` | Architecture, UX specification, deployment, evidence, final verification, and historical references |
-| `info/plan_v3.md` | Active roadmap and current release status |
-| `info/HANDOFF.md` | Current implementation status and owner handoff record |
-| `docs/archive/implemented-history.md` | Consolidated implementation history and capability record |
+| `docs/` | Architecture, deployment, evidence, self-hosting, and historical references |
+| `docs/history.md` | Consolidated implementation history and capability record |
 | `docs/self-hosting.md` | Expanded self-hosting reference |
