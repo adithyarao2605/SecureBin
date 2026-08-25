@@ -353,7 +353,7 @@ Use the shortest document that answers the question:
 | UX direction and accessibility expectations | [`docs/SPEC.md`](docs/SPEC.md) |
 | Deployment, environment variables, migrations, and smoke checks | [`docs/deployment.md`](docs/deployment.md) and [`docs/self-hosting.md`](docs/self-hosting.md) |
 | Validation evidence and what still needs owner verification | [`docs/evidence.md`](docs/evidence.md) and [`info/HANDOFF.md`](info/HANDOFF.md) |
-| Final verification and demo checklist | [`LAST_DAY.md`](LAST_DAY.md) and [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) |
+| Final verification and demo checklist | [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) |
 | Historical decisions and resolved incidents | [`docs/archive/implemented-history.md`](docs/archive/implemented-history.md) and [`docs/archive/`](docs/archive/) |
 
 The in-app **How it works** panel at [`/new#how-it-works`](https://secure-bin.vercel.app/new#how-it-works) is the quickest product-level explanation; the documents above provide the implementation evidence behind it.
@@ -383,7 +383,6 @@ report.
 | `tests/` | Unit, integration, browser, production-build, and accessibility tests |
 | `scripts/` | Reproducibility, local runtime, source audit, and smoke tooling |
 | `docs/` | Architecture, UX specification, deployment, evidence, final verification, and historical references |
-| `LAST_DAY.md` | Release-freeze and final demo checklist |
 | `info/plan_v3.md` | Active roadmap and current release status |
 | `info/HANDOFF.md` | Current implementation status and owner handoff record |
 | `docs/archive/implemented-history.md` | Consolidated implementation history and capability record |

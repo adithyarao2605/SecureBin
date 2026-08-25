@@ -23,8 +23,7 @@ The current release pass prioritizes documentation, repository hygiene, bug
 fixes, and verification of the already-shipped behavior. New capabilities and
 protocol changes remain outside this release scope.
 
-Before submission, follow [`../docs/DAY-7-PLAN.md`](../docs/DAY-7-PLAN.md) and
-[`../LAST_DAY.md`](../LAST_DAY.md) for:
+Before submission, follow [`../docs/DAY-7-PLAN.md`](../docs/DAY-7-PLAN.md) for:
 
 1. A fresh-clone install and the complete CI matrix.
 2. Clean Supabase migration replay, including

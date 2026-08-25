@@ -8,6 +8,8 @@ Updated: 2026-08-25 (UTC)
   implemented capability record to `docs/archive/implemented-history.md`.
 - Removed the superseded `docs/bugs.md` tracker after the documentation update
   from the current maintainer branch; no replacement tracker is advertised.
+- Removed the redundant root `LAST_DAY.md` checklist; its final verification
+  and demo coverage is retained in `docs/DAY-7-PLAN.md`.
 - Updated the landing page, in-product documentation link, README, E2E
   expectation, and historical cross-references to the current paths.
 - Kept `README.md`, `LICENSE`, `SECURITY.md`, `AGENTS.md`, and release/planning

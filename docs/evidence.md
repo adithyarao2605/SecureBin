@@ -25,11 +25,11 @@ operated release evidence rather than missing product features.
 
 `tests/integration/reveal-concurrency.test.ts` races 20 parallel calls through
 the atomic `reveal_share` path. It covers exactly-N authorization, over-limit
-uniform failures, retry-token idempotency, and unlimited shares. Upload tests
-cover concurrent reservation convergence and conflicts. The release checklist
-in [`LAST_DAY.md`](../LAST_DAY.md) separately calls for a larger owner-run
-concurrency proof. pgTAP checks row locking, count constraints, leases, RLS,
-and the forward cleanup behavior when run against a clean database.
+uniform failures, retry-token idempotency, and unlimited shares. The release
+checklist in [`DAY-7-PLAN.md`](DAY-7-PLAN.md) separately calls for a larger
+owner-run concurrency proof. pgTAP checks row locking, count constraints,
+leases, RLS, and the forward cleanup behavior when run against a clean
+database.
 
 ```bash
 pnpm supabase:start
