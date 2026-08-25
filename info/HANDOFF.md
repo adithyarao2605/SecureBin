@@ -2,6 +2,28 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Test and revoked-history polish update
+
+- Replaced the reveal-window E2E test's fixed 10.5-second sleep with a wait on
+  the actual user-visible closed-window state, leaving the browser timer room
+  to complete on a busy CI runner.
+- Replaced date-of-run-looking integration fixtures with named far-future
+  constants so the RPC mapping suite remains deterministic as the calendar
+  advances.
+- Preserved the sender-local `revoked` history label across recipient-facing
+  `unavailable` status refreshes. Removing that revoked row now reloads the
+  workspace; ordinary local-history removal remains in place. Added two unit
+  regressions for the merge and reload behavior.
+- `pnpm validate` passes with 214 unit tests, lint, typecheck, source audit,
+  and production build. The targeted history suite passes (13 tests), and the
+  share-service mapper suite passes (6 tests).
+- `pnpm test:integration` still runs the mapper suite locally, while cleanup,
+  reveal-concurrency, and upload-service require Supabase credentials that are
+  supplied by CI after `supabase start`. Playwright lists all 19 E2E tests and
+  7 accessibility tests; browser execution was not rerun locally because the
+  managed workspace lacks the pinned Chromium executable.
+- No push was performed. Implementation commit: `0cdce55`.
+
 ## Friend-owned security/lifecycle takeover
 
 - Tightened the recipient reveal contract at both server and browser
@@ -87,7 +109,7 @@ Updated: 2026-08-25 (UTC)
 
 ## Current state
 
-- Branch: `main`, three commits ahead of `origin/main`; no push was performed.
+- Branch: `main`, six commits ahead of `origin/main`; no push was performed.
 - Pre-freeze implementation and its complete local gate remain green; the
   latest security/lifecycle batch is committed as `9ba6b4f` and awaits the
   owner's push/hosted verification.
@@ -97,7 +119,7 @@ Updated: 2026-08-25 (UTC)
 
 ## Current core validation
 
-- `pnpm validate`: pass — 212 unit tests plus lint, source audit, typecheck, and production build.
+- `pnpm validate`: pass — 214 unit tests plus lint, source audit, typecheck, and production build.
 - `pnpm test:integration`: 6 share-service tests pass; cleanup, reveal-concurrency,
   and upload-service suites require Supabase credentials not present locally.
 - `pnpm supabase:reset` followed by `pnpm supabase:test`: 155 pgTAP assertions pass.
@@ -110,6 +132,7 @@ Updated: 2026-08-25 (UTC)
 
 ## Latest implementation commits
 
+- `0cdce55` — `fix(ui): refresh revoked history removal and CI tests`
 - `9ba6b4f` — `fix(security): harden response and cleanup contracts`
 - `51f65eb` — `feat(ui): add live code authoring preview`
 - `4258a92` — `feat(ui): polish viewer discussion and history states`

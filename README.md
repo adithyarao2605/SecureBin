@@ -220,7 +220,7 @@ pnpm build
 pnpm validate
 ```
 
-The recorded baseline includes 212 unit tests, 16 integration tests, 155
+The recorded baseline includes 214 unit tests, 16 integration tests, 155
 pgTAP assertions, 19 development Playwright tests, 19 production-build
 Playwright tests, and 7 Axe checks. GitHub Actions should be used for the
 complete matrix when local Docker or hosted credentials are unavailable.
