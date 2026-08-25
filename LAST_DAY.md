@@ -29,7 +29,12 @@ owner-operated rehearsal steps; they are not missing product features.
 ---
 
 ## 2. Production Smoke Matrix (Owner-Operated)
-- [ ] Apply remote database migrations (`20260901000000_pre_freeze_lifecycle_uploads.sql`) on hosted Supabase.
+- [ ] Apply remote database migrations, including
+  `20260901000000_pre_freeze_lifecycle_uploads.sql` and
+  `20260902000000_exhausted_share_cleanup.sql`, on hosted Supabase.
+- [ ] Configure and verify an authenticated schedule for
+  `/api/internal/cleanup`; the current repository does not claim a provider
+  scheduler is configured until the owner records it.
 - [ ] Verify production deployment across all permutations:
   - Plain note, Markdown (edit/split/preview), and Code sharing through one editable IDE-style surface.
   - Password protection, Two-channel unlock code, and Combined factors.

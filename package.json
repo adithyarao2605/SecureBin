@@ -4,6 +4,14 @@
   "private": true,
   "license": "MIT",
   "description": "Browser-encrypted sharing with explicit lifecycle controls.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adithyarao2605/SecureBin.git"
+  },
+  "homepage": "https://secure-bin.vercel.app/",
+  "bugs": {
+    "url": "https://github.com/adithyarao2605/SecureBin/issues"
+  },
   "packageManager": "pnpm@10.15.1",
   "engines": {
     "node": ">=22.23.2"

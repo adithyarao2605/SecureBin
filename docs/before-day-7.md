@@ -1,21 +1,21 @@
 # Before Day 7: pre-freeze remediation plan
 
-Status: **complete locally; owner-operated hosted evidence remains**. This plan applies to
-`dev`; production promotion remains owner-operated. Preserve unrelated user
-changes, especially the existing edit to `app/page.tsx`.
+Status: **historical pre-freeze remediation complete locally; owner-operated
+hosted evidence remains**. This checklist is retained as an audit record. The
+the current release scope is limited to verification and release-blocking
+regressions; do not reopen completed remediation work without evidence.
 
 ## Outcome
 
-Days 1–6 implementation work is on `dev`. Lifecycle, cleanup, compatibility,
-upload recovery, parcel, self-host, composer, accessibility, and quiet-proof UI
-remediation is implemented and covered by the complete local gate. Chromium
-development and production Playwright, mobile, keyboard, reduced-motion,
-screenshot, and Axe evidence is recorded. Only the remote migration,
-production promotion, and hosted cleanup verification remain owner-operated.
+The implementation includes lifecycle, cleanup, compatibility, upload
+recovery, parcel, self-host, composer, accessibility, and quiet-proof UI
+remediation. The current local JavaScript gate is green; environment-backed
+database, Chromium, mobile, keyboard, reduced-motion, screenshot, and Axe
+evidence must be rerun for the final SHA. Remote migration, production
+promotion, and hosted cleanup verification remain owner-operated.
 
-The implementation and UI gates are green locally. Release-freeze work may
-begin only as a separate owner-authorized phase. Optional roadmap
-items remain deferred: Secure Drop, recipient acknowledgment, ciphertext-size
+The implementation and UI work are complete locally. Optional roadmap items
+remain deferred: Secure Drop, recipient acknowledgment, ciphertext-size
 padding, accounts/rooms, and the other explicit `info/plan_v3.md` non-goals.
 
 ## 1. Restore security and lifecycle correctness
@@ -178,8 +178,8 @@ Extend upload-reservation responses to:
   download/print, self-hosting, unlock-only shares, cleanup, and failures.
 - Record delegated audits and final validation in `info/HANDOFF.md`. Never
   modify `info/plan.md`.
-- Complete the **full UI overhaul in [`UI-REDESIGN.md`](UI-REDESIGN.md) before Day 7**. It must
-  follow the light-first quiet-proof contract: one primary surface plus a
+- The historical **full UI overhaul in [`UI-REDESIGN.md`](UI-REDESIGN.md)** is
+  complete. Its current contract is dark-first quiet proof: one primary surface plus a
   narrow evidence rail, compact mobile status strip, restrained proofline,
   honest copy, responsive keyboard use, and no regression to security or
   accessibility. This document records the mandatory TODO; its design and

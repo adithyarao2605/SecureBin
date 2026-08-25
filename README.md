@@ -27,6 +27,7 @@ visual identity.
 - [Self-host](#self-host)
 - [Judge demo flow](#judge-demo-flow)
 - [Implementation evidence map](#implementation-evidence-map)
+- [Documentation index](#documentation-index)
 - [License and security](#license-and-security)
 - [Repository map](#repository-map)
 
@@ -34,10 +35,10 @@ visual identity.
 
 The deployed application is available at **[secure-bin.vercel.app](https://secure-bin.vercel.app/)**.
 
-The current product feature set is frozen. Active work is limited to fixing
-bugs, hardening existing flows, and improving reliability, accessibility,
-performance, and visual polish. New roadmap capabilities are intentionally
-out of scope until the current experience is stable.
+The current product feature set is established. The release pass is limited to
+fixing bugs, verifying hosted behavior, and polishing documentation,
+repository hygiene, reliability, accessibility, performance, and visual
+details. New roadmap capabilities are intentionally out of scope.
 
 The application includes its own guided documentation surface. The **How it
 works** section in the `/new` workspace explains the product as it is used,
@@ -90,7 +91,7 @@ The server stores encrypted envelopes and bounded lifecycle metadata. It
 atomically enforces:
 
 - Scheduled availability, expiry, and revocation.
-- Reveal limits and short retry leases.
+- Reveal limits and short retry leases for reliable delivery.
 - Upload reservations and attachment size limits.
 - Rate limits using HMAC-derived network discriminators.
 - Private Storage access and cleanup.
@@ -153,7 +154,7 @@ Discussion behavior:
 
 This is an encrypted threaded discussion feature, not a realtime encrypted
 room. Realtime rooms and collaborative editing remain outside the current
-feature freeze.
+release scope.
 
 ## Run locally
 
@@ -223,10 +224,12 @@ pnpm build
 pnpm validate
 ```
 
-The recorded baseline includes 214 unit tests, 16 integration tests, 155
-pgTAP assertions, 20 development Playwright tests, 20 production-build
-Playwright tests, and 7 Axe checks. GitHub Actions should be used for the
-complete matrix when local Docker or hosted credentials are unavailable.
+The latest local validation record reports 217 unit tests passing alongside
+lint, strict typechecking, the source audit, and the production build. The
+complete matrix also includes Supabase migration/pgTAP checks, integration
+tests, development and production-build Playwright suites, and Axe checks;
+GitHub Actions is the authoritative place to verify those environment-backed
+gates after a release commit.
 
 A read-only health check is available with:
 
@@ -268,9 +271,11 @@ CRON_SECRET=independent-random-cleanup-secret
 SECUREBIN_PROXY_TRUST=none
 ```
 
-Apply the committed database migrations in order, create the private
-`securebin-files` Storage bucket, and schedule an hourly authenticated request
-to `/api/internal/cleanup`. Use a trusted reverse proxy configuration only
+Apply the committed database migrations in order, including the latest
+forward lifecycle cleanup migration, create the private `securebin-files`
+Storage bucket, and schedule an authenticated request to
+`/api/internal/cleanup` (an hourly baseline is suitable for a self-hosted
+deployment). Use a trusted reverse proxy configuration only
 when that proxy overwrites forwarding headers correctly.
 
 Never share `.env` files, service-role keys, cleanup secrets, passwords,
@@ -304,6 +309,22 @@ surface and then verify the corresponding source evidence:
 | Offline portability remains local-only | Download a `.securebin` parcel and restore it through **Open parcel** | `lib/shares/parcel.ts`, parcel unit tests, and parcel browser coverage |
 | The repository is reproducible and reviewable | Check the CI badge and validation commands above | GitHub Actions, `pnpm validate`, reproducibility script, and `info/HANDOFF.md` |
 
+## Documentation index
+
+Use the shortest document that answers the question:
+
+| Need | Read |
+| --- | --- |
+| Product behavior, setup, demo, and security summary | This README |
+| Protocol, trust boundaries, schemas, RPCs, and lifecycle semantics | [`docs/architecture.md`](docs/architecture.md) |
+| UX direction and accessibility expectations | [`docs/SPEC.md`](docs/SPEC.md) |
+| Deployment, environment variables, migrations, and smoke checks | [`docs/deployment.md`](docs/deployment.md) and [`self_hosting.md`](self_hosting.md) |
+| Validation evidence and what still needs owner verification | [`docs/evidence.md`](docs/evidence.md) and [`info/HANDOFF.md`](info/HANDOFF.md) |
+| Final verification and demo checklist | [`LAST_DAY.md`](LAST_DAY.md) and [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) |
+| Historical decisions and resolved incidents | [`history.md`](history.md) and [`docs/archive/`](docs/archive/) |
+
+The in-app **How it works** panel at [`/new#how-it-works`](https://secure-bin.vercel.app/new#how-it-works) is the quickest product-level explanation; the documents above provide the implementation evidence behind it.
+
 ## License and security
 
 Original SecureBin code is released under the permissive [MIT License](LICENSE).
@@ -328,8 +349,9 @@ report.
 | `supabase/tests/` | pgTAP policy, lifecycle, RLS, concurrency, attachment, and cleanup checks |
 | `tests/` | Unit, integration, browser, production-build, and accessibility tests |
 | `scripts/` | Reproducibility, local runtime, source audit, and smoke tooling |
+| `docs/` | Architecture, UX specification, deployment, evidence, final verification, and historical references |
 | `LAST_DAY.md` | Release-freeze and final demo checklist |
-| `info/plan_v3.md` | Active roadmap and feature-freeze decisions |
+| `info/plan_v3.md` | Active roadmap and current release status |
 | `info/HANDOFF.md` | Current implementation status and owner handoff record |
 | `history.md` | Consolidated implementation history and capability record |
 | `self_hosting.md` | Expanded self-hosting reference |

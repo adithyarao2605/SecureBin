@@ -1,13 +1,14 @@
 You are performing a COMPLETE UI/UX redesign and visual-system unification of the existing SecureBin web application.
 
-Implementation status (2026-08-24, `dev`): the quiet-proof shell, light-first
-Linen palette, shared brand treatment, evidence rail/mobile status strip,
+Implementation status (2026-08-25, `main`): the quiet-proof shell, dark-first
+default with an explicit light toggle, shared brand treatment, evidence rail/mobile status strip,
 proofline, route/state surfaces, Markdown/code authoring, parcel utility,
 viewer, receipt, keyboard behavior, and failure/empty/loading states are
 implemented in the current application. The Chromium desktop/mobile,
 keyboard, reduced-motion, Axe, and nine-screenshot visual review is green.
 Owner-hosted verification remains an operational action. This document
-describes completed pre-freeze UI work; release-freeze work has not begun.
+describes the completed UI work and its visual rationale; current work is
+limited to verification, documentation, and release-blocking regressions.
 The public landing route now closely matches the supplied Stitch technical
 split screenshot, including its rounded header shell, two-column hero/editor,
 proof chips, capability grid, self-host panel, density, and footer. Its copy,
@@ -173,7 +174,7 @@ Minor color changes are allowed ONLY when fixing a genuine:
 2. LANDING PAGE THEME DIRECTION
 ========================================================
 
-The landing page `/` is the only major area where a substantial new visual treatment is allowed, but it remains part of SecureBin's light-first quiet-proof contract.
+The landing page `/` is the only major area where a substantial new visual treatment is allowed, but it remains part of SecureBin's dark-first quiet-proof contract.
 
 The landing should use a Stitch-inspired:
 
@@ -205,7 +206,8 @@ Dark landing counterpart:
 - tiny mono technical labels
 - large human-readable display typography
 
-The landing may be visually richer than the application. Light mode is the default experience; dark mode may use the Stitch OLED reference selectively.
+The landing may be visually richer than the application. Dark mode is the
+default experience; light mode remains an explicit user-selectable counterpart.
 
 It must still feel connected to the existing product through:
 
@@ -596,7 +598,7 @@ This should be the strongest and richest visual page in the product.
 
 PRIMARY LIGHT DESIGN:
 
-- light-first Linen canvas
+- Linen canvas for the light counterpart
 - warm technical surfaces
 - Ink typography
 - restrained Mineral/Copper accents
@@ -2143,7 +2145,8 @@ They should visibly belong to one product.
 
 Important nuance:
 
-The landing may be more visually ambitious: light-first quiet proof by default, with the OLED technical-editorial treatment reserved for its dark counterpart.
+The landing may be more visually ambitious: dark-first quiet proof by default,
+with the Linen treatment reserved for its light counterpart.
 
 The APPLICATION keeps its existing approved colors.
 
@@ -2220,8 +2223,8 @@ The redesign is complete only when:
 - the application still feels like SecureBin rather than a copied Stitch demo
 - existing application colors are preserved
 - only the landing page receives a substantial new color/background treatment
-- landing defaults to the light-first Linen quiet-proof system
-- landing dark mode may use a restrained OLED-black technical-editorial counterpart
+- landing defaults to the dark-first OLED quiet-proof system
+- landing light mode may use a restrained Linen technical-editorial counterpart
 - landing light mode is not generic white SaaS
 - landing and application still feel related
 - /new remains highly usable
@@ -2259,7 +2262,8 @@ The landing page should be the visually impressive front door.
 The application should remain calmer, functional, and familiar.
 
 Landing:
-new Stitch-inspired technical-editorial visual treatment, light-first with a restrained OLED dark counterpart.
+new Stitch-inspired technical-editorial visual treatment, dark-first with a
+restrained Linen light counterpart.
 
 Existing application:
 existing SecureBin colors + significantly improved design discipline, hierarchy, consistency, responsiveness, and UX.

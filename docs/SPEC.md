@@ -22,17 +22,15 @@ clearly marked as future work.
 
 ## Progress snapshot
 
-Days 1 through 6 implementation work is on `dev`. The pre-freeze lifecycle,
-recovery, parcel, composer, accessibility, self-host, and quiet-proof UI work
-is implemented; 191 unit tests, 16 integration tests, 155 pgTAP assertions
-after clean reset/replay, 19 development and 19 production-build Playwright
-tests, 7 Axe checks, nine reviewed screenshots, reproducibility, dependency,
-and source/log audits pass. Hosted migration, promotion, cleanup, and smoke
-evidence remains owner-operated. Release-freeze work has not begun.
+Release preparation is active on `main`. The current local JavaScript gate passes
+with lint, strict typechecking, 217 unit tests, source audit, and production
+build. Supabase replay, environment-backed integration tests, browser and Axe
+execution, hosted migration, promotion, cleanup, and smoke evidence remain
+owner-operated release checks.
 
 The production incident is closed.
 
-Later work added custom reveal counts, Never expiry, Markdown authoring, multi-file attachments, encrypted discussions, release-window, veil, self-host, and parcel surfaces. Named policy presets were removed by owner decision; custom controls remain. Current completion status lives in [`info/plan_v3.md`](../info/plan_v3.md), remediation in [`before-day-7.md`](before-day-7.md), and final freeze work in [`DAY-7-PLAN.md`](DAY-7-PLAN.md).
+Later work added custom reveal counts, Never expiry, Markdown authoring, multi-file attachments, encrypted discussions, release-window, veil, self-host, and parcel surfaces. Named policy presets were removed by owner decision; custom controls remain. Current completion status lives in [`info/plan_v3.md`](../info/plan_v3.md), remediation in [`before-day-7.md`](before-day-7.md), and final verification in [`DAY-7-PLAN.md`](DAY-7-PLAN.md).
 
 When another maintainer or friend continues the schedule, hand them the exact commit and [`docs/deployment.md`](deployment.md), have them reproduce the gates from a fresh clone, and exchange provider access through team membership rather than copied secrets.
 
@@ -324,7 +322,9 @@ handoff and README rather than silently presenting roadmap work as shipped.
 
 Recipient-bound accounts/passkeys, Secure Rooms, device-key management, localization, service-worker caching, alternate storage adapters, SDKs/extensions, interoperability import, Argon2id, padding, key transparency, sender signatures, and richer traffic-analysis defenses are future roadmap work. They must not destabilize the judged release and must never be represented as implemented in the demo or submission evidence. Encrypted discussions, custom reveal counts, "Never" expiry, multi-file attachments, code auto-detection, and the Day 4 factor work are no longer deferred: they are implemented and tested as recorded above.
 
-The remaining roadmap lives in [`info/plan_v3.md`](../info/plan_v3.md). The required pre-freeze gate is [`before-day-7.md`](before-day-7.md); only then does the final release freeze begin.
+The remaining roadmap lives in [`info/plan_v3.md`](../info/plan_v3.md). The
+pre-release remediation record is [`before-day-7.md`](before-day-7.md); final
+verification follows [`DAY-7-PLAN.md`](DAY-7-PLAN.md).
 
 ## Per-day handoff checklist
 

@@ -1,6 +1,11 @@
 # Self-Hosting SecureBin
 
-SecureBin is designed to be fully self-hostable with zero external SaaS dependencies. You can run the entire zero-knowledge platform on your own server, VPS, or local machine with Docker and Node.js.
+SecureBin is designed to be self-hostable without depending on the hosted
+competition deployment. You can run the application, PostgreSQL database, and
+private Storage on infrastructure you control with Docker and Node.js.
+
+For the shorter setup and security overview, start with the
+[main README](README.md). This file is the expanded operator runbook.
 
 ---
 
@@ -9,7 +14,7 @@ SecureBin is designed to be fully self-hostable with zero external SaaS dependen
 Run a complete, isolated local stack (Next.js web app + local Supabase PostgreSQL + local Supabase Storage):
 
 ### Prerequisites
-- **Node.js:** `v22.23.2` (or active Node LTS)
+- **Node.js:** `v22.23.2` from `.nvmrc` (or the repository's pinned runtime)
 - **pnpm:** `v10.15.1` (managed via Corepack)
 - **Docker:** Docker Engine / Docker Desktop (running)
 
@@ -46,7 +51,8 @@ pnpm local:stop
 ### Architecture Overview
 1. **Frontend / API Server:** Next.js (Node.js runtime or standalone output).
 2. **Database & Storage:** PostgreSQL with Supabase Storage (or standard PostgreSQL + S3-compatible storage via Supabase backend).
-3. **Automated Cleanup Cron:** Scheduled hourly task calling `/api/internal/cleanup`.
+3. **Cleanup worker:** An authenticated scheduled task calling
+   `/api/internal/cleanup`; hourly is a reasonable self-hosted baseline.
 
 ---
 
@@ -81,7 +87,8 @@ SECUREBIN_PROXY_TRUST=forwarded
 ## 3. Database & Storage Initialization
 
 1. Start your PostgreSQL database.
-2. Apply the committed SQL migrations in order from `supabase/migrations/`:
+2. Apply every committed SQL migration in order from `supabase/migrations/`,
+   including the latest lifecycle cleanup migration:
    ```bash
    pnpm exec supabase link --project-ref <your-project-id>
    pnpm exec supabase db push
@@ -153,7 +160,9 @@ server {
 
 ## 6. Scheduled Cleanup Task
 
-SecureBin automatically deletes expired ciphertexts, revoked shares, and temporary upload reservations. Configure an hourly cron job on your server:
+SecureBin exposes cleanup but does not run a scheduler inside the application.
+Configure an authenticated hourly cron job on your server to remove expired,
+revoked, exhausted, and orphaned encrypted material:
 
 ```bash
 # Crontab entry (/etc/cron.hourly/securebin-cleanup or crontab -e)

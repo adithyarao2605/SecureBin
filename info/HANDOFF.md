@@ -2,6 +2,22 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Documentation and repository hygiene pass
+
+- Synchronized the README, evidence record, active roadmap, architecture,
+  deployment runbook, self-hosting guide, UI brief, history record, and final
+  checklist with the current dark-first implementation.
+- Added a concise documentation index, corrected stale validation claims,
+  named the latest lifecycle cleanup migration, and removed the implication
+  that `vercel.json` already configures a cleanup scheduler.
+- Added repository metadata for GitHub, the live application, and issue
+  reporting. No product behavior, cryptography, database function, or feature
+  scope was changed.
+- `pnpm lint`, `pnpm typecheck`, `pnpm test` (217 tests), and `pnpm build`
+  pass. `new_plan_final.md` remains intentionally untracked and untouched.
+- Supabase replay, environment-backed integration tests, and browser/Axe
+  execution remain CI/owner-hosted checks. No push was performed.
+
 ## Dark default theme
 
 - Restored dark mode as the first-visit/default theme across the pre-hydration
@@ -264,26 +280,26 @@ Updated: 2026-08-25 (UTC)
 
 ## Current state
 
-- Branch: `main`, six commits ahead of `origin/main`; no push was performed.
-- Pre-freeze implementation and its complete local gate remain green; the
-  latest security/lifecycle batch is committed as `9ba6b4f` and awaits the
-  owner's push/hosted verification.
-- Required work is consolidated in `docs/before-day-7.md`; Day 7/release-freeze work has not begun.
-- The user's existing uncommitted `app/page.tsx` change was preserved.
-- Do not claim a hosted deployment until the owner verifies the remote migration, production promotion, cleanup schedule, and smoke path.
+- Branch: `main`; release preparation is active and no push was performed.
+- The current implementation and documentation pass are local changes awaiting
+  owner review and hosted verification.
+- `new_plan_final.md` is intentionally untracked and was preserved without
+  modification; its strict-burn work is not part of this release pass.
+- Do not claim a hosted release state until the owner verifies the remote
+  migrations, production promotion, cleanup schedule, and smoke path.
 
 ## Current core validation
 
-- `pnpm validate`: pass — 214 unit tests plus lint, source audit, typecheck, and production build.
-- `pnpm test:integration`: 6 share-service tests pass; cleanup, reveal-concurrency,
-  and upload-service suites require Supabase credentials not present locally.
-- `pnpm supabase:reset` followed by `pnpm supabase:test`: 155 pgTAP assertions pass.
-- `pnpm audit:prod` and `pnpm audit:source`: pass.
-- `pnpm test:e2e`: 19 pass (Chromium).
-- `pnpm test:e2e:prod`: 19 pass (Chromium production build).
-- `pnpm test:a11y`: 7 pass; zero serious or critical Axe findings.
-- Visual review: 9 screenshots pass across major routes/states, 320/390 px mobile, light/dark, and reduced motion.
-- `.venv/bin/python scripts/verify-reproducibility.py`: pass.
+- `pnpm lint`: pass.
+- `pnpm typecheck`: pass.
+- `pnpm test`: pass — 217 unit tests.
+- `pnpm audit:source`: pass during the latest `pnpm validate` run.
+- `pnpm build`: pass.
+- Playwright discovery: 20 development tests listed; Chromium execution remains
+  CI-only in this workspace.
+- Supabase reset/pgTAP, environment-backed integration, production-browser,
+  accessibility, and hosted smoke checks remain pending for the final release
+  SHA.
 
 ## Latest implementation commits
 
@@ -322,15 +338,17 @@ Three delegated read-only audits mapped references, checked code/document contra
 - retained the separately requested pre-freeze checklist and final freeze plan;
 - removed the superseded plan v2 and standalone Day 6 plan from the active set; exact snapshots remain under `docs/archive/legacy/`.
 
-The supplied Stitch export was reviewed read-only. `docs/UI-REDESIGN.md` is now the implementation contract for the UI gate: it preserves the current route topology and application palette, makes light-first quiet proof the default, keeps OLED treatment to the landing's dark counterpart, and excludes fictional API/Docker content, activity receipts/acknowledgment, named policy presets, unsupported discussion formatting, and nonexistent product routes.
+The supplied Stitch export was reviewed read-only. `docs/UI-REDESIGN.md` is now the implementation contract for the UI gate: it preserves the current route topology and application palette, makes dark-first quiet proof the default with an explicit light counterpart, and excludes fictional API/Docker content, activity receipts/acknowledgment, named policy presets, unsupported discussion formatting, and nonexistent product routes.
 
 ## Owner actions
 
-1. Complete and validate the pre-freeze plan on `dev`.
-2. Verify the hosted migration list; apply missing forward migrations only after local reset/pgTAP/integration proof.
-3. Verify cleanup scheduling and provider environment separation.
-4. Review the preview, then promote the exact reviewed commit to `main` and redeploy.
-5. Record production URL, SHA, timestamps, migration IDs, checks, browsers, and synthetic demo result here without secrets.
+1. Verify the hosted migration list; apply missing forward migrations only after
+   clean reset/pgTAP/integration proof.
+2. Verify cleanup scheduling and provider environment separation.
+3. Review the exact `main` commit, redeploy it, and run the production
+   smoke matrix.
+4. Record the production URL, SHA, timestamps, migration IDs, checks, browsers,
+   and synthetic demo result here without secrets.
 
 ## Scope decisions
 

@@ -1,6 +1,6 @@
 # SecureBin active roadmap
 
-Status: **Pre-freeze implementation and local evidence complete on `main`; owner-hosted actions pending; release freeze not started.**
+Status: **Release preparation is active on `main`; implementation and local JavaScript validation are complete; owner-hosted release evidence is pending.**
 
 This is the single active roadmap. Historical plans remain in Git history and are summarized in `docs/archive/history.md`. Security/protocol contracts live in `docs/architecture.md`; experience requirements live in `docs/SPEC.md`; current operational state lives in `info/HANDOFF.md`.
 
@@ -11,29 +11,28 @@ This is the single active roadmap. Historical plans remain in Git history and ar
 - Password and two-channel factors, QR/native sharing, receipts, custom reveal counts, Never expiry, Markdown/code modes, multi-file ZIP, encrypted discussions with edit/delete, and batch status.
 - Public `/` and sharing app `/new`; release-window, privacy-veil, portable-parcel, local-manager, and self-host surfaces exist on `main`.
 
-The pre-freeze gate passes locally: 214 unit tests, 16 integration tests,
-155 pgTAP assertions after clean reset/replay, 20 development and 20
-production-build Playwright tests, 7 Axe checks, nine reviewed screenshots,
-production build, reproducibility, dependency, and source/log audits. Remote
-migration, production promotion, and hosted cleanup verification remain owner-operated.
+The current local JavaScript gate passes with lint, strict typechecking, 217
+unit tests, source audit, and production build. Supabase replay, environment-
+backed integration tests, browser execution, accessibility execution, remote
+migration, production promotion, and hosted cleanup verification remain
+owner-operated release evidence.
 
-## Required before the release freeze
+## Current release-preparation state
 
-Execute [`../docs/before-day-7.md`](../docs/before-day-7.md) in this order:
+The current release pass prioritizes documentation, repository hygiene, bug
+fixes, and verification of the already-shipped behavior. New capabilities and
+protocol changes remain outside this release scope.
 
-1. Restore lifecycle, idempotency, cleanup, discussion, logging, and proxy correctness with forward migrations and regressions.
-2. Freeze deployed cryptographic labels/unlock format and add strict vectors and parcel validation.
-3. Complete release-window hide behavior, parcel evidence, upload recovery, safe self-hosting, and cleanup scheduling.
-4. Fix Markdown/code composer distinction, detection/language expansion, tabs, feedback, destructive actions, receipts, and accessibility gates.
-5. Complete the full light-first quiet-proof UI overhaul in [`../docs/UI-REDESIGN.md`](../docs/UI-REDESIGN.md): one primary surface, narrow evidence rail, compact mobile status strip, restrained proofline, honest copy, keyboard/mobile/contrast/reduced-motion coverage.
-6. Rerun every local gate and record exact evidence.
+Before submission, follow [`../docs/DAY-7-PLAN.md`](../docs/DAY-7-PLAN.md) and
+[`../LAST_DAY.md`](../LAST_DAY.md) for:
 
-The release-freeze handoff begins only after the remaining owner-operated
-evidence items are recorded.
-
-## Release freeze
-
-Follow [`../docs/DAY-7-PLAN.md`](../docs/DAY-7-PLAN.md): no features; fresh-clone reproduction; full test matrix; security and secret/log audit; Chromium/mobile/keyboard/Axe checks; production-shaped performance; repository cleanup; judge demo rehearsal; owner migration/deployment evidence; rubric mapping; early submission buffer.
+1. A fresh-clone install and the complete CI matrix.
+2. Clean Supabase migration replay, including
+   `20260902000000_exhausted_share_cleanup.sql`.
+3. Hosted smoke coverage for creation, factors, policies, attachments,
+   discussions, parcels, revocation, and unavailable states.
+4. A recorded final SHA, deployment URL, migration list, cleanup schedule,
+   browser/accessibility results, and synthetic demo rehearsal.
 
 ## Deferred by decision
 

@@ -7,15 +7,14 @@ This document is the technical source of truth for the judged SecureBin release.
 
 ### Current implementation status
 
-Days 1–6 implementation work is on `dev`. Lifecycle, cleanup, recovery,
-parcel-validation, accessibility, and quiet-proof UI remediation is implemented
-and covered by 191 unit tests, 16 integration tests, 155 pgTAP assertions after
-clean reset/replay, 19 development and 19 production-build Playwright tests,
-7 Axe checks, nine reviewed screenshots, reproducibility, dependency, and
-source/log audits. Hosted migration and cleanup verification remains owner-operated;
-release-freeze work has not begun.
+Release preparation is active on `main`. The current local JavaScript gate passes
+with lint, strict typechecking, 217 unit tests, source audit, and production
+build. Supabase replay, environment-backed integration tests, browser and Axe
+execution, hosted migration, and cleanup verification remain owner-operated
+release evidence.
 
-Development happens on the `dev` branch (Vercel preview); `main` is production.
+The current default theme is dark with an explicit light toggle; the rest of
+the quiet-proof palette and route topology remain unchanged.
 
 SecureBin provides anonymous, browser-encrypted sharing with server-enforced availability, expiry (including "Never"), revocation, and reveal limits from 1 to unlimited. The server stores ciphertext, a discussion-capability digest, and lifecycle metadata but never receives content keys, passwords, unlock codes, discussion capabilities, filenames, plaintext MIME types, or plaintext content.
 
@@ -443,4 +442,4 @@ Reveal limits cannot prevent a recipient from copying already released ciphertex
 | Compromised application/browser/device | CSP, no remote assets on secret routes, reviewed Web Crypto boundary | Runtime compromise can capture plaintext and keys. |
 | Logs and diagnostics | Redacted structured logging and no-store responses | Provider network metadata remains visible. |
 
-The lifecycle and sequence sections above replace the former standalone diagram, threat-model, and policy-state documents. Release-window semantics are contractual: revocation and expiry override retry leases immediately; the same authorized token may retry across reveal exhaustion or window closure only during its five-minute lease. The forward pre-freeze migration and regression suite enforce this contract on `dev`.
+The lifecycle and sequence sections above replace the former standalone diagram, threat-model, and policy-state documents. Release-window semantics are contractual: revocation and expiry override retry leases immediately; the same authorized token may retry across reveal exhaustion or window closure only during its five-minute lease. The forward lifecycle migrations and regression suite enforce this contract in the reviewed release source; hosted application of those migrations remains an owner check.

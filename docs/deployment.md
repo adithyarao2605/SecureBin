@@ -1,14 +1,16 @@
 # Deployment and reproducibility
 
-The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md)). Local `dev` includes the forward pre-freeze migration `20260901000000_pre_freeze_lifecycle_uploads.sql`; hosted migration state must be confirmed by the owner (`supabase migration list`, then `supabase db push`) before the latest lifecycle, upload, and cleanup behavior is considered deployed. The current landing/app route split also needs the owner-operated production redeploy.
+The current production host is `https://secure-bin.vercel.app/`. The previous Day 1 production incident is resolved (see [`archive/PRODUCTION-INCIDENT.md`](archive/PRODUCTION-INCIDENT.md)). The repository includes the forward lifecycle migrations `20260901000000_pre_freeze_lifecycle_uploads.sql` and `20260902000000_exhausted_share_cleanup.sql`; hosted migration state must be confirmed by the owner (`supabase migration list`, then `supabase db push`) before the latest lifecycle, upload, and cleanup behavior is considered deployed. The current landing/app route split also needs the owner-operated production redeploy.
 
 Local/self-hosted operation is documented below. The scripts now create an
 ignored, mode-restricted runtime environment, require loopback Supabase URLs,
 serve a production build with `next start`, and stop only a validated
-SecureBin-owned PID. Cleanup is configured hourly in `vercel.json`; provider
-deployment and hosted migration confirmation remain owner-operated.
+SecureBin-owned PID. Cleanup scheduling is an owner/provider operation; the
+current `vercel.json` does not claim that a scheduler has been configured.
 
-Branch model: development happens on `dev`, which Vercel builds as a preview deployment; `main` is production. Verify features on the preview URL before promoting to `main`.
+Branch model: `main` is the reviewed release branch. Verify any change on its
+preview/deployment target before treating the exact commit as production
+evidence.
 
 
 ## Local prerequisites
@@ -53,11 +55,10 @@ dependency installation and runs the same Python repository check.
 - The GitHub repository URL: `https://github.com/adithyarao2605/SecureBin`.
 - The exact reviewed commit SHA from `git rev-parse HEAD`.
 - This runbook and the current [`../info/HANDOFF.md`](../info/HANDOFF.md).
-- A statement of scope: pre-freeze implementation is on `dev` and core local
-  verification passes (191 unit, 16 integration, 155 pgTAP after clean reset,
-  19 development and 19 production Playwright tests, 7 Axe checks, nine
-  reviewed screenshots, reproducibility, dependency, and source/log audits).
-  Hosted migration/deployment state still requires owner evidence.
+  - A statement of scope: release preparation is active on `main`; the latest local
+  JavaScript gate passes with 217 unit tests, lint, typecheck, source audit,
+  and production build. Hosted migration, database, browser, accessibility,
+  and deployment state still require owner/CI evidence.
   Do not claim production is current without provider evidence.
 
 Do **not** send `.env`/`.env.local`, Supabase service-role credentials,
@@ -114,7 +115,7 @@ returns only the deployment URL, commit SHA, timestamp, and redacted checks.
 The deployed build should preserve the quiet-proof direction in
 [`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof): one primary
 compose/reveal surface, a proofline/status rail that becomes a mobile status
-strip, plain action copy, and the Linen/Ink/Mineral/Copper token family. Before
+strip, plain action copy, and the dark-first theme with its light toggle. Before
 calling a deployment demo-ready, verify both light and dark themes, keyboard
 focus, contrast, reduced motion, narrow mobile layout, and the uniform
 `Unavailable` state on the real host. Remove accidental neon, terminal, matrix,
@@ -136,8 +137,8 @@ logs, or the submission notes.
 ## Manual production deployment (repository owner)
 
 The repository owner performs this release; agents must not deploy it without
-an explicit request. Start from a clean `main` checkout and keep every secret in
-the provider stores, never in a tracked file.
+an explicit request. Start from a clean `main` checkout and keep every secret
+in the provider stores, never in a tracked file.
 
 1. Reproduce the verified build locally:
 
@@ -243,9 +244,10 @@ Return these non-secret facts to the repository maintainer:
 2. Apply migrations from a clean database and run RLS/integration tests.
 3. Configure the exact environment variables in the Vercel project; preview and
    production values must be separate.
-4. Keep the hourly cleanup trigger pointed at `POST /api/internal/cleanup`
-   with the `CRON_SECRET` bearer header; verify it returns 200 and the counts
-   stay at zero once backlog is drained.
+4. Configure the cleanup scheduler to call `POST /api/internal/cleanup` with
+   the `CRON_SECRET` bearer header; verify it returns 200 and the counts stay
+   at zero once backlog is drained. Record the provider and schedule rather
+   than implying that `vercel.json` already supplies one.
 5. Verify security headers, `no-store`, private object access, and the health
    endpoint on the deployed commit.
 6. Run `APP_URL=https://<verified-host> scripts/demo-smoke.sh` from a clean

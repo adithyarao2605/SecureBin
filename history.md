@@ -1,6 +1,8 @@
 # SecureBin: Implemented History & Capabilities
 
-This document is the single consolidated record of all implemented features, cryptographic protocols, backend architecture, and UI systems in SecureBin.
+This is a historical capability record, not the live validation scoreboard.
+For current status and release evidence, use [`info/HANDOFF.md`](info/HANDOFF.md)
+and [`docs/evidence.md`](docs/evidence.md).
 
 ---
 
@@ -12,7 +14,7 @@ This document is the single consolidated record of all implemented features, cry
   - Content payload key: `securebin/v2/link/content`
   - Attachment file key: `securebin/v2/link/file`
 - **Multi-Factor Protection Masks:**
-  - `link`: Base 128-bit key in URL fragment.
+  - `link`: 256-bit key in the URL fragment.
   - `link+password`: Fragment key combined with user password via PBKDF2-HMAC-SHA-256 (600,000 iterations, 16-byte random salt).
   - `link+unlock`: Fragment key combined with a 27-character base-28 second-channel unlock code (carrying 124 bits of entropy plus checksum).
   - `link+password+unlock`: All three independent factors required to reconstruct the root key.
@@ -56,7 +58,8 @@ This document is the single consolidated record of all implemented features, cry
   - Responsive 320px, 390px, tablet, and desktop layout scaling.
 - **Default Dark Mode:** High-contrast OLED dark theme with zero-flash pre-hydration script and instant light/dark toggle.
 - **Authoring Experience:**
-  - Plain note, Markdown (edit/split/preview modes), and Code editor with automatic language detection.
+  - Plain note, Markdown (edit/split/preview modes), and one editable Code IDE
+    with first-paste language detection and explicit language selection.
   - Drag-and-drop attachment dropzone with file list, size badges, and deletion controls.
 - **Flexible Access Policies:**
   - Availability: Immediate or Scheduled UTC start date/time.
@@ -72,9 +75,8 @@ This document is the single consolidated record of all implemented features, cry
 
 ## 4. Verification & Testing Evidence
 
-- **Unit Tests:** 191 unit tests passing via `vitest` covering crypto primitives, envelope codecs, policy parsers, and component flows.
-- **Database Tests:** 155 pgTAP assertions passing against a clean Supabase migration reset.
-- **Integration Tests:** 16 backend API and service-layer integration tests passing.
-- **E2E Tests:** 19 Playwright end-to-end browser tests passing in Chromium across all user flows and production builds.
-- **Accessibility:** 7 Axe accessibility checks passing with 0 critical or serious violations (WCAG 2.1 AA compliant).
-- **Security & Reproducibility Audits:** `verify-reproducibility.py` and `source-audit.mjs` pass cleanly with zero secret diagnostics.
+The earlier release evidence was captured in prior handoffs. The
+current local JavaScript gate has 217 unit tests passing with lint, strict
+typechecking, source audit, and production build. Supabase, integration,
+Chromium, and Axe results must be refreshed for the final release SHA in CI or
+the owner-hosted environment; see [`docs/evidence.md`](docs/evidence.md).
