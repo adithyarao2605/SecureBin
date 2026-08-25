@@ -99,10 +99,109 @@
 }
 
 /* Evidence Rail */
+.evidence-drawer {
+  border: 1px solid var(--line);
+  border-radius: .55rem;
+  background: var(--surface-bg);
+}
+
+.evidence-drawer-summary {
+  display: grid;
+  grid-template-columns: auto minmax(8rem, auto) repeat(3, minmax(0, 1fr)) auto;
+  align-items: center;
+  gap: .65rem;
+  min-height: 3.25rem;
+  padding: .65rem 1rem;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+
+.evidence-drawer-summary::-webkit-details-marker {
+  display: none;
+}
+
+.evidence-drawer-summary::after {
+  content: "+";
+  color: var(--mineral);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.evidence-drawer[open] .evidence-drawer-summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.evidence-drawer[open] .evidence-drawer-summary::after {
+  content: "−";
+}
+
+.evidence-drawer-indicator {
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  background: var(--deep-slate);
+}
+
+.evidence-drawer-indicator.status-creating,
+.evidence-drawer-indicator.status-created,
+.evidence-drawer-indicator.status-ready,
+.evidence-drawer-indicator.status-revealing,
+.evidence-drawer-indicator.status-opened {
+  background: var(--mineral);
+}
+
+.evidence-drawer-indicator.status-scheduled,
+.evidence-drawer-indicator.status-unavailable {
+  background: var(--copper);
+}
+
+.evidence-drawer-status,
+.evidence-drawer-fact,
+.evidence-drawer-action {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evidence-drawer-status,
+.evidence-drawer-action {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.evidence-drawer-fact {
+  color: var(--muted-ink);
+  font-size: .78rem;
+}
+
+.evidence-drawer-action {
+  color: var(--mineral);
+}
+
+.evidence-drawer-content {
+  padding: 1rem;
+}
+
 .evidence-rail {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .evidence-drawer-summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .evidence-drawer-fact {
+    display: none;
+  }
 }
 
 .evidence-section {

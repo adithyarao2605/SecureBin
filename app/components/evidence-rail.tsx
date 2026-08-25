@@ -7,6 +7,27 @@ export interface EvidenceRailProps {
   readonly policy: ValidatedPolicy;
 }
 
+function phaseLabel(phase: ProoflinePhase): string {
+  switch (phase) {
+    case "creating":
+      return "Sealing parcel…";
+    case "created":
+      return "Sealed parcel ready";
+    case "scheduled":
+      return "Scheduled availability";
+    case "ready":
+      return "Ready to reveal";
+    case "revealing":
+      return "Authorizing release…";
+    case "opened":
+      return "Opened locally";
+    case "unavailable":
+      return "Unavailable";
+    case "draft":
+      return "Local draft";
+  }
+}
+
 export function EvidenceRail({ phase, policy }: EvidenceRailProps) {
   const isPolicyValid = policy.valid;
   const availableText = isPolicyValid
@@ -22,7 +43,17 @@ export function EvidenceRail({ phase, policy }: EvidenceRailProps) {
   const revealsText = isPolicyValid ? formatRevealLimitLabel(policy.maxReveals) : "—";
 
   return (
-    <aside className="evidence-rail" aria-label="Evidence rail">
+    <details className="evidence-drawer" aria-label="Evidence rail">
+      <summary className="evidence-drawer-summary">
+        <span className={`evidence-drawer-indicator status-${phase}`} aria-hidden="true" />
+        <span className="evidence-drawer-status">{phaseLabel(phase)}</span>
+        <span className="evidence-drawer-fact">{availableText}</span>
+        <span className="evidence-drawer-fact">{expiresText}</span>
+        <span className="evidence-drawer-fact">{revealsText}</span>
+        <span className="evidence-drawer-action">View proof</span>
+      </summary>
+      <div className="evidence-drawer-content">
+        <aside className="evidence-rail" aria-label="Detailed evidence rail">
       <Proofline phase={phase} />
 
       {/* Access policy live summary */}
@@ -110,6 +141,8 @@ export function EvidenceRail({ phase, policy }: EvidenceRailProps) {
           </div>
         </div>
       </div>
-    </aside>
+        </aside>
+      </div>
+    </details>
   );
 }

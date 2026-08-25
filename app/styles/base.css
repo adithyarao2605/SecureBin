@@ -414,24 +414,8 @@ button {
 
 .desk-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(260px, 0.8fr);
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-}
-
-.evidence-rail-container {
-  position: sticky;
-  top: 1rem;
-}
-
-@media (max-width: 900px) {
-  .desk-grid {
-    grid-template-columns: 1fr;
-  }
-  .evidence-rail-container {
-    position: static;
-    order: -1;
-  }
 }
 
 /* Surface Cards */

@@ -2,6 +2,17 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Full-width composer and evidence drawer
+
+- Moved the create-share composer out of the desktop two-column layout so code
+  and long-line editing use the full available width.
+- Replaced the always-visible evidence sidebar with a compact full-width
+  summary below the composer. It keeps phase, availability, expiry, and reveal
+  facts visible; the proofline, policy details, and zero-knowledge flow remain
+  available through the expandable `View proof` drawer.
+- Lint, typecheck, and focused composer/policy tests pass. No push was
+  performed.
+
 ## Single-panel code editor
 
 - Replaced the code-mode Edit/Split/Preview layout with one editable IDE-style

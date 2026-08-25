@@ -166,10 +166,8 @@ export function AppWorkspace() {
                 onShareChange={() => setHistorySignal((prev) => prev + 1)}
               />
             </div>
-            <div className="evidence-rail-container">
-              <EvidenceRail phase={phase} policy={policy} />
-            </div>
           </div>
+          <EvidenceRail phase={phase} policy={policy} />
         </div>
 
         <div id="panel-parcel" hidden={activeTab !== "parcel"} className="tab-panel utility-panel">
