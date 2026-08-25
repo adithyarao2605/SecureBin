@@ -2,6 +2,15 @@
 
 Updated: 2026-08-25 (UTC)
 
+## README focus update
+
+- Removed the release checklist, deferred-scope inventory, and contribution
+  rules from the public README as requested. The README now ends with the
+  evaluation evidence map and repository map, keeping implementation and
+  judge-facing product information prominent.
+- Removed the corresponding table-of-contents links and confirmed the edited
+  Markdown passes `git diff --check`.
+
 ## Test and revoked-history polish update
 
 - Replaced the reveal-window E2E test's fixed 10.5-second sleep with a wait on

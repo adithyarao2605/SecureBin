@@ -28,9 +28,6 @@ visual identity.
 - [Judge demo flow](#judge-demo-flow)
 - [Evaluation evidence map](#evaluation-evidence-map)
 - [Repository map](#repository-map)
-- [Release checklist](#release-checklist)
-- [Scope and deferred work](#scope-and-deferred-work)
-- [Contribution rules](#contribution-rules)
 
 ## Live product and current focus
 
@@ -319,50 +316,3 @@ surface and then verify the corresponding source evidence:
 | `history.md` | Consolidated implementation history and capability record |
 | `self_hosting.md` | Expanded self-hosting reference |
 | `bugs.md` | Known bug and interaction tracker |
-
-## Release checklist
-
-Before declaring the current release complete:
-
-- [ ] Confirm the deployed commit and hosted migration state.
-- [ ] Run the full GitHub Actions validation workflow.
-- [ ] Exercise the production smoke matrix across policies, attachments,
-      discussions, parcels, revocation, and refresh behavior.
-- [ ] Capture one-reveal and three-reveal concurrency evidence.
-- [ ] Verify retry and lifecycle race behavior.
-- [ ] Review the security boundary and confirm no secrets or plaintext enter
-      logs, URLs, Storage paths, or server-side payloads.
-- [ ] Rehearse the judge/demo flow with synthetic content.
-- [ ] Keep the working tree clean and record the exact release commit.
-
-## Scope and deferred work
-
-The feature set is frozen while existing functionality is hardened. Do not
-start new roadmap capabilities without an explicit scope decision.
-
-Deferred features include:
-
-- Secure Drop request links.
-- Recipient acknowledgment.
-- Ciphertext-size padding.
-- Accounts, passkeys, and device-bound sharing.
-- Encrypted rooms and realtime collaboration.
-- Argon2id/WASM password derivation.
-- Localization waves.
-- Alternate databases or Kubernetes deployment.
-- PrivateBin compatibility.
-- Blockchain or AI features.
-
-## Contribution rules
-
-- Use the Node and pnpm versions pinned by the repository.
-- Keep browser crypto separate from server credentials and database code.
-- Never implement cryptographic primitives manually.
-- Do not log plaintext, secrets, fragments, capabilities, filenames, MIME
-  types, request bodies, or ciphertext bodies.
-- Preserve strict schemas, bounded inputs, atomic lifecycle transitions, and
-  uniform recipient-facing failures.
-- Use small Conventional Commits and keep changes focused.
-- Do not modify `info/plan.md` or read-only challenge/reference material.
-- Run the smallest relevant checks while iterating and the full CI gate before
-  handoff.
