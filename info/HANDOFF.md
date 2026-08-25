@@ -14,6 +14,8 @@ Updated: 2026-08-25 (UTC)
   preview accurately. The unit baseline is now 193 tests.
 - Validation: lint, typecheck, full unit suite (193 tests), targeted rendering
   suite (25 tests), production build, and diff checks pass.
+- This Code-mode batch is committed as `51f65eb` and is ready for owner review
+  before pushing.
 
 ## Competitive presentation polish update
 
@@ -67,9 +69,9 @@ Updated: 2026-08-25 (UTC)
 ## Current state
 
 - Branch: `main`, aligned with `origin/main` before this polish batch.
-- Pre-freeze implementation and its complete local gate remain green; this
-  polish batch is committed as `4258a92` and awaits the owner's push/hosted
-  verification.
+- Pre-freeze implementation and its complete local gate remain green; the
+  latest local Code-mode polish is committed as `51f65eb` and awaits the
+  owner's push/hosted verification.
 - Required work is consolidated in `docs/before-day-7.md`; Day 7/release-freeze work has not begun.
 - The user's existing uncommitted `app/page.tsx` change was preserved.
 - Do not claim a hosted deployment until the owner verifies the remote migration, production promotion, cleanup schedule, and smoke path.
@@ -88,6 +90,7 @@ Updated: 2026-08-25 (UTC)
 
 ## Latest implementation commits
 
+- `51f65eb` — `feat(ui): add live code authoring preview`
 - `4258a92` — `feat(ui): polish viewer discussion and history states`
 - `e4f7fa0` — `fix(security): close lifecycle gaps`
 - `9b4104d` — `feat(ui): unify quiet-proof experience`
