@@ -149,6 +149,9 @@ describe("composer staged creation flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create share" }));
 
     await waitFor(() => expect(screen.getByRole("textbox", { name: "Share link" })).toBeVisible());
+    expect(screen.getByRole("heading", { name: "Share ready" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Verify what was sealed" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open recipient view" })).toHaveAttribute("href", expect.stringContaining("/s/"));
 
     const [create] = callsTo(fetchMock, "/api/shares");
     // The digest travels; the raw capability never leaves the browser.

@@ -1,4 +1,78 @@
 /* Results & Revoke Box */
+.share-result-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.share-result-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--mineral);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.share-result-lede {
+  max-width: 56ch;
+  margin: 0.35rem 0 0;
+  color: var(--muted-ink);
+  line-height: 1.5;
+}
+
+.share-result-state {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--mineral);
+  border-radius: 999px;
+  color: var(--mineral);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.share-result-section,
+.share-danger-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.share-result-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.share-result-section-heading h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  line-height: 1.25;
+}
+
+.share-result-section-heading .share-result-eyebrow {
+  margin-bottom: 0.25rem;
+}
+
+.share-primary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.share-danger-section {
+  border-top-color: color-mix(in srgb, var(--copper) 42%, var(--line));
+}
+
 .share-link-box {
   display: flex;
   width: 100%;
@@ -42,6 +116,12 @@
   font-size: 0.85rem;
   margin: 0.25rem 0 0.5rem;
   line-height: 1.5;
+}
+
+.share-hint code {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
 }
 
 .share-proof-summary {
@@ -240,6 +320,24 @@
 .qr-panel img {
   border-radius: 6px;
   border: 1px solid var(--line);
+}
+
+@media (max-width: 640px) {
+  .share-result-header,
+  .share-result-section-heading {
+    flex-direction: column;
+  }
+
+  .share-result-state {
+    align-self: flex-start;
+  }
+
+  .share-primary-actions,
+  .share-primary-actions .action-button,
+  .share-danger-section .share-actions-row,
+  .share-danger-section .share-actions-row .action-button {
+    width: 100%;
+  }
 }
 
 @media print {

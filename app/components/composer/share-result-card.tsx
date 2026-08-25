@@ -67,145 +67,190 @@ export function ShareResultCard({
   onReset,
 }: ShareResultCardProps) {
   return (
-    <div className="surface-card result-card" role="region" aria-label="Share created">
-      <h2 className="surface-heading">Share created</h2>
-      <div className="share-link-box">
-        <input
-          type="text"
-          className="share-link-input"
-          readOnly
-          value={shareUrl}
-          aria-label="Share link"
-          onFocus={(e) => e.target.select()}
-        />
-      </div>
-      <p className="share-hint">
-        The key stays in the link fragment. Keep the full link.
-      </p>
+    <div className="surface-card result-card" role="region" aria-labelledby="share-result-heading">
+      <header className="share-result-header">
+        <div>
+          <p className="share-result-eyebrow">Sealed locally · sender view</p>
+          <h2 className="surface-heading" id="share-result-heading">Share ready</h2>
+          <p className="share-result-lede">Your browser encrypted the content before the server received it.</p>
+        </div>
+        <span className="share-result-state">Browser encrypted</span>
+      </header>
+
+      <section className="share-result-section" aria-labelledby="share-delivery-heading">
+        <div className="share-result-section-heading">
+          <div>
+            <p className="share-result-eyebrow">01 / Delivery</p>
+            <h3 id="share-delivery-heading">Send the complete link</h3>
+          </div>
+          <span className="share-proof-chip">Fragment-held key</span>
+        </div>
+        <div className="share-link-box">
+          <input
+            type="text"
+            className="share-link-input"
+            readOnly
+            value={shareUrl}
+            aria-label="Share link"
+            onFocus={(e) => e.target.select()}
+          />
+        </div>
+        <p className="share-hint">
+          Keep the full link intact. Its <code>#fragment</code> carries the decryption key and is never sent in an HTTP request.
+        </p>
+        <div className="share-primary-actions">
+          <button type="button" className="action-button primary-button" onClick={onCopyLink}>
+            {copyStatus === "copied" ? "Copied" : "Copy link"}
+          </button>
+          <a className="action-button secondary-button" href={shareUrl}>Open recipient view</a>
+        </div>
+        {copyStatus === "failed" && <p className="composer-error" role="alert">Clipboard access is unavailable. Select the link above and copy it manually.</p>}
+      </section>
+
+      {unlockCodeShown && (
+        <section className="share-result-section" aria-labelledby="unlock-heading">
+          <div className="share-result-section-heading">
+            <div>
+              <p className="share-result-eyebrow">02 / Second channel</p>
+              <h3 id="unlock-heading">Deliver this code separately</h3>
+            </div>
+            <span className="share-proof-chip">Two-channel unlock</span>
+          </div>
+          <div className="unlock-code-box" role="status">
+            <p className="unlock-heading">Unlock code</p>
+            <p className="unlock-code">{unlockCodeShown}</p>
+            <p className="policy-hint">
+              Send the link and this code through different channels. The link alone cannot unlock the share, and the code alone is useless.
+            </p>
+            <p className="policy-hint">
+              This code is shown only once and is never stored on the server. Save it before leaving this page.
+            </p>
+          </div>
+        </section>
+      )}
 
       {receiptData && (
-        <div className="share-proof-summary" aria-label="Share policy summary">
-          <div className="share-proof-chips">
-            <span className="share-proof-chip">{receiptData.contentType ?? "Note"}</span>
-            <span className="share-proof-chip">{factorLabel(receiptData.mask)}</span>
-            <span className="share-proof-chip">{revealLabel(receiptData.maxReveals)}</span>
-            <span className="share-proof-chip">
-              {receiptData.expiresAt ? `Expires ${formatLocalizedDateTime(receiptData.expiresAt)}` : "Never expires"}
-            </span>
+        <section className="share-result-section" aria-labelledby="share-proof-heading">
+          <div className="share-result-section-heading">
+            <div>
+              <p className="share-result-eyebrow">03 / Proof</p>
+              <h3 id="share-proof-heading">Verify what was sealed</h3>
+            </div>
+            <span className="share-proof-chip">No plaintext uploaded</span>
           </div>
-          <p className="share-fingerprint-line">
-            <span>Ciphertext fingerprint</span>
-            <code>{receiptData.fingerprint.slice(0, 16)}…</code>
-          </p>
-          <p className="share-fingerprint-note">
-            This identifies the sealed material; it is not proof that someone opened or read it.
-          </p>
-        </div>
+          <div className="share-proof-summary" aria-label="Share policy summary">
+            <div className="share-proof-chips">
+              <span className="share-proof-chip">{receiptData.contentType ?? "Note"}</span>
+              <span className="share-proof-chip">{factorLabel(receiptData.mask)}</span>
+              <span className="share-proof-chip">{revealLabel(receiptData.maxReveals)}</span>
+              <span className="share-proof-chip">
+                {receiptData.expiresAt ? `Expires ${formatLocalizedDateTime(receiptData.expiresAt)}` : "Never expires"}
+              </span>
+            </div>
+            <p className="share-fingerprint-line">
+              <span>Ciphertext fingerprint</span>
+              <code>{receiptData.fingerprint.slice(0, 16)}…</code>
+            </p>
+            <p className="share-fingerprint-note">
+              This identifies the sealed material; it is not proof that someone opened or read it.
+            </p>
+          </div>
+          <PrivacyReceipt data={receiptData} />
+        </section>
       )}
 
       {parcel && receiptData && (
-        <div className="parcel-export-box">
-          <button
-            type="button"
-            className="action-button secondary-button"
-            onClick={() => downloadParcel(parcel, receiptData.publicId)}
-          >
-            Download .securebin parcel
-          </button>
-          <p className="policy-hint">
-            A portable copy of the encrypted material only — it holds no key,
-            password, unlock code, or revoke ability. Open it offline via
-            “Restore a .securebin parcel” plus the link’s fragment.
-          </p>
-        </div>
-      )}
-
-      {unlockCodeShown && (
-        <div className="unlock-code-box" role="status">
-          <p className="unlock-heading">Second-channel unlock code</p>
-          <p className="unlock-code">{unlockCodeShown}</p>
-          <p className="policy-hint">
-            This share needs <strong>two things</strong> to open: the link above (which carries the decryption
-            key) and this code. Send them separately — for example the link by email and the code by text
-            message — so no single channel can unlock it.
-          </p>
-          <ul className="policy-hint">
-            <li>The link alone: shows a locked prompt.</li>
-            <li>This code alone: useless without the link.</li>
-            <li>Both together, in the same browser: content decrypts locally.</li>
-          </ul>
-          <p className="policy-hint">
-            The code is shown only once and is never stored on the server. Copy it somewhere safe before
-            leaving this page.
-          </p>
-        </div>
-      )}
-
-      <div className="share-copy-row">
-        <button type="button" className="action-button primary-button" onClick={onCopyLink}>
-          {copyStatus === "copied" ? "Copied" : "Copy link"}
-        </button>
-      </div>
-      {copyStatus === "failed" && <p className="composer-error" role="alert">Clipboard access is unavailable. Select the link above and copy it manually.</p>}
-
-      {receiptData && <PrivacyReceipt data={receiptData} />}
-
-      <ShareActions shareUrl={shareUrl} />
-
-      <div className="share-actions-row">
-
-        <a className="action-button secondary-button" href={shareUrl}>Open</a>
-
-        {activeDeleteCapability && !revokedMessage && !showRevokeConfirm && (
-          <button
-            type="button"
-            className="action-button secondary-button"
-            onClick={() => setShowRevokeConfirm(true)}
-          >
-            Revoke share
-          </button>
-        )}
-
-        <button
-          type="button"
-          className="action-button tertiary-button"
-          onClick={onReset}
-        >
-          Create another
-        </button>
-      </div>
-
-      {showRevokeConfirm && !revokedMessage && (
-        <div className="revoke-confirmation-box" role="alert">
-          <p className="revoke-warning">
-            Stop future reveals? This cannot remove content already opened or downloaded.
-          </p>
-          <div className="revoke-actions">
-            <button
-              type="button"
-              className="action-button danger-button"
-              disabled={isRevoking}
-              onClick={onRevoke}
-            >
-              {isRevoking ? "Revoking…" : "Revoke share"}
-            </button>
+        <section className="share-result-section" aria-labelledby="parcel-heading">
+          <div className="share-result-section-heading">
+            <div>
+              <p className="share-result-eyebrow">04 / Offline copy</p>
+              <h3 id="parcel-heading">Carry the ciphertext locally</h3>
+            </div>
+            <span className="share-proof-chip">No network required to restore</span>
+          </div>
+          <div className="parcel-export-box">
             <button
               type="button"
               className="action-button secondary-button"
-              disabled={isRevoking}
-              onClick={() => setShowRevokeConfirm(false)}
+              onClick={() => downloadParcel(parcel, receiptData.publicId)}
             >
-              Cancel
+              Download .securebin parcel
             </button>
+            <p className="policy-hint">
+              The parcel contains encrypted material only—not the link key, password, unlock code, revoke ability, or discussion capability. Restore it from the parcel utility with the original factors.
+            </p>
           </div>
-        </div>
+        </section>
       )}
 
-      {revokedMessage && (
-        <div className="revoked-status-box" role="status">
-          <p className="revoked-status-text">{revokedMessage}</p>
+      <section className="share-result-section" aria-labelledby="share-tools-heading">
+        <div className="share-result-section-heading">
+          <div>
+            <p className="share-result-eyebrow">05 / Transport</p>
+            <h3 id="share-tools-heading">Choose how to pass it on</h3>
+          </div>
         </div>
-      )}
+        <ShareActions shareUrl={shareUrl} />
+      </section>
+
+      <section className="share-danger-section" aria-labelledby="share-controls-heading">
+        <div className="share-result-section-heading">
+          <div>
+            <p className="share-result-eyebrow">Sender controls</p>
+            <h3 id="share-controls-heading">Manage this share</h3>
+          </div>
+        </div>
+        <div className="share-actions-row">
+          {activeDeleteCapability && !revokedMessage && !showRevokeConfirm && (
+            <button
+              type="button"
+              className="action-button danger-button"
+              onClick={() => setShowRevokeConfirm(true)}
+            >
+              Revoke share
+            </button>
+          )}
+          <button
+            type="button"
+            className="action-button tertiary-button"
+            onClick={onReset}
+          >
+            Create another
+          </button>
+        </div>
+
+        {showRevokeConfirm && !revokedMessage && (
+          <div className="revoke-confirmation-box" role="alert">
+            <p className="revoke-warning">
+              Stop future reveals? This cannot remove content already opened or downloaded.
+            </p>
+            <div className="revoke-actions">
+              <button
+                type="button"
+                className="action-button danger-button"
+                disabled={isRevoking}
+                onClick={onRevoke}
+              >
+                {isRevoking ? "Revoking…" : "Confirm revoke"}
+              </button>
+              <button
+                type="button"
+                className="action-button secondary-button"
+                disabled={isRevoking}
+                onClick={() => setShowRevokeConfirm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {revokedMessage && (
+          <div className="revoked-status-box" role="status">
+            <p className="revoked-status-text">{revokedMessage}</p>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

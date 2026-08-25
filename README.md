@@ -26,6 +26,7 @@ visual identity.
 - [Run the validation suite](#run-the-validation-suite)
 - [Self-host](#self-host)
 - [Judge demo flow](#judge-demo-flow)
+- [Evaluation evidence map](#evaluation-evidence-map)
 - [Repository map](#repository-map)
 - [Release checklist](#release-checklist)
 - [Scope and deferred work](#scope-and-deferred-work)
@@ -285,6 +286,20 @@ Use synthetic content and keep the story under 90 seconds:
 7. Revoke a second share.
 8. Show the uniform `unavailable` state.
 9. State the honest limits: browser compromise and recipient-saved copies remain possible.
+
+## Evaluation evidence map
+
+The quickest way to understand the implementation is to follow the product
+surface and then verify the corresponding source evidence:
+
+| What to verify | Product surface | Supporting evidence |
+| --- | --- | --- |
+| Plaintext is encrypted before upload and the key stays out of requests | Create a share, then read **How it works** | `lib/crypto/`, `docs/architecture.md`, crypto and source-audit tests |
+| Factors and lifecycle rules are visible to the sender and recipient | Policy controls, result-card proof summary, and recipient policy strip | `lib/shares/`, `supabase/migrations/`, lifecycle and concurrency tests |
+| The recipient experience handles real boundaries | Open a generated link and exercise reveal, expiry, release window, attachments, or discussions | `app/s/[publicId]/`, browser suites, and Axe checks |
+| Revocation is useful without overclaiming erasure | Revoke a share, then inspect the unavailable state and Privacy Receipt | Atomic lifecycle RPCs, uniform failure contracts, and receipt tests |
+| Offline portability remains local-only | Download a `.securebin` parcel and restore it through **Open parcel** | `lib/shares/parcel.ts`, parcel unit tests, and parcel browser coverage |
+| The repository is reproducible and reviewable | Check the CI badge and validation commands above | GitHub Actions, `pnpm validate`, reproducibility script, and `info/HANDOFF.md` |
 
 ## Repository map
 

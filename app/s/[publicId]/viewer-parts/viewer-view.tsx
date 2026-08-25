@@ -21,6 +21,20 @@ function formatCountdown(milliseconds: number): string {
     : `${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
 }
 
+function factorSummary(passwordRequired: boolean, unlockRequired: boolean): string {
+  const factors = ["Link fragment"];
+  if (passwordRequired) factors.push("Password");
+  if (unlockRequired) factors.push("Second-channel code");
+  return factors.join(" + ");
+}
+
+function releaseSummary(maxReveals: number | null, remainingReveals: number | null): string {
+  if (maxReveals === null) return "Unlimited releases";
+  return remainingReveals === null
+    ? `Up to ${maxReveals} release${maxReveals === 1 ? "" : "s"}`
+    : `${remainingReveals} of ${maxReveals} remaining`;
+}
+
 export type ViewerViewProps = {
   publicId: string;
   state: ViewerState;
@@ -73,6 +87,9 @@ export function ViewerView({
    releaseWindowRemainingMs,
 }: ViewerViewProps) {
   const activeStatus = shareStatus?.status === "active" ? shareStatus : null;
+  const policyStatus = shareStatus && (shareStatus.status === "active" || shareStatus.status === "scheduled")
+    ? shareStatus
+    : null;
   const isDecrypted = state === "opened" && content !== null;
   const viewerHeading = isDecrypted
     ? "Decrypted share"
@@ -99,6 +116,27 @@ export function ViewerView({
           <h2 className="surface-heading" id="viewer-heading">{viewerHeading}</h2>
           <p className="trust-line">{viewerTrustLine}</p>
         </div>
+
+        {policyStatus && state !== "opened" && state !== "unavailable" && (
+          <dl className="viewer-policy-strip" aria-label="Share policy summary">
+            <div>
+              <dt>Access</dt>
+              <dd>{factorSummary(policyStatus.passwordRequired, policyStatus.unlockRequired)}</dd>
+            </div>
+            <div>
+              <dt>Releases</dt>
+              <dd>{releaseSummary(policyStatus.maxReveals, policyStatus.remainingReveals)}</dd>
+            </div>
+            <div>
+              <dt>Available</dt>
+              <dd>{policyStatus.availableAt ? formatLocalizedDateTime(policyStatus.availableAt) : "Now"}</dd>
+            </div>
+            <div>
+              <dt>Expires</dt>
+              <dd>{formatLocalizedDateTime(policyStatus.expiresAt)}</dd>
+            </div>
+          </dl>
+        )}
 
         {notice && state !== "opened" && (
           <div role="status">

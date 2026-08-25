@@ -219,6 +219,38 @@ export function AppWorkspace() {
               </div>
             </section>
 
+            <section className="docs-proof-path" aria-labelledby="docs-proof-heading">
+              <div className="docs-proof-header">
+                <div>
+                  <p className="eyebrow">Complete experience</p>
+                  <h3 id="docs-proof-heading">See the protection in one pass</h3>
+                </div>
+                <p>Each step uses an existing SecureBin surface and leaves a concrete boundary to inspect.</p>
+              </div>
+              <ol className="docs-proof-steps">
+                <li>
+                  <span className="docs-proof-number">01</span>
+                  <strong>Seal a share</strong>
+                  <span>Choose factors, expiry, reveal policy, files, or discussion.</span>
+                </li>
+                <li>
+                  <span className="docs-proof-number">02</span>
+                  <strong>Inspect the proof</strong>
+                  <span>Read the policy chips, fingerprint, Privacy Receipt, and full-link warning.</span>
+                </li>
+                <li>
+                  <span className="docs-proof-number">03</span>
+                  <strong>Reveal locally</strong>
+                  <span>Open the recipient view and watch the browser apply factors and release policy.</span>
+                </li>
+                <li>
+                  <span className="docs-proof-number">04</span>
+                  <strong>Test the boundary</strong>
+                  <span>Use the release window, parcel utility, discussion thread, or revoke control.</span>
+                </li>
+              </ol>
+            </section>
+
             <nav className="docs-nav-bar" aria-label="Documentation sections">
               <a className="docs-nav-pill" href="#guide-quickstart">🚀 Quickstart</a>
               <a className="docs-nav-pill" href="#guide-factors">🔐 Multi-Factor</a>

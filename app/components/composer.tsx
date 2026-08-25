@@ -255,6 +255,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
     setActivePublicId(null);
     setShowRevokeConfirm(false);
     setRevokedMessage("");
+    setCopyStatus("idle");
     setErrorMessage("");
     setEnableDiscussion(false);
     discussionCapabilityRef.current = null;

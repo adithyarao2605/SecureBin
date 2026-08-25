@@ -2,6 +2,23 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Competitive presentation polish update
+
+- Reorganized the existing share-result surface into a sender workflow:
+  delivery, second-channel factors, sealed-material proof, offline parcel,
+  transport options, and sender controls.
+- Added an honest recipient policy strip before reveal and a four-step proof
+  path to the in-product documentation center so the current depth is visible
+  during a short evaluation.
+- Added a README evidence map linking observable product surfaces to the
+  existing crypto, lifecycle, parcel, browser, accessibility, and CI evidence.
+- Reset the copy status when starting another share and added composer UI
+  assertions for the result-card proof surface.
+- Validation: lint, typecheck, full unit suite (191 tests), targeted composer
+  suite, production build, and diff checks pass. Local Playwright could not
+  launch because the managed environment lacks the pinned Chromium executable;
+  no browser assertion reached the application.
+
 ## UI polish update
 
 - Repaired local-history status badge styling so active, scheduled, checking,

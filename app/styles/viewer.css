@@ -884,6 +884,40 @@
   gap: 0.25rem;
 }
 
+.viewer-policy-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem 1rem;
+  margin: 0;
+  padding: 0.85rem 0;
+  border-block: 1px solid var(--line);
+}
+
+.viewer-policy-strip div {
+  min-width: 0;
+}
+
+.viewer-policy-strip dt {
+  color: var(--muted-ink);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.viewer-policy-strip dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .viewer-policy-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .brand-header {
   display: flex;
   flex-direction: row;

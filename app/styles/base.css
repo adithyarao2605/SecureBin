@@ -641,6 +641,98 @@ button {
   font-size: 0.85rem;
 }
 
+.docs-proof-path {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.docs-proof-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.docs-proof-header h3 {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.docs-proof-header p:last-child {
+  max-width: 340px;
+  margin: 0;
+  color: var(--muted-ink);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.docs-proof-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.docs-proof-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 140px;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--surface-subtle);
+}
+
+.docs-proof-number {
+  color: var(--mineral);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.docs-proof-steps strong {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+}
+
+.docs-proof-steps li > span:last-child {
+  color: var(--muted-ink);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .docs-proof-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .docs-proof-header p:last-child {
+    max-width: none;
+    text-align: left;
+  }
+
+  .docs-proof-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .docs-proof-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
 .eyebrow {
   display: flex;
   align-items: center;
