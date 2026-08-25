@@ -2,6 +2,18 @@
 
 Updated: 2026-08-25 (UTC)
 
+## CI accessibility contrast hardening
+
+- Fixed the dark landing preview link and primary action so their foreground
+  follows the theme-aware mineral accent instead of forcing white text onto
+  `#79b8b0`.
+- Changed danger actions to use a dark foreground against both copper theme
+  values, avoiding another low-contrast accent button.
+- Lint, typecheck, all 214 unit tests, production build, and the seven-test
+  accessibility suite listing pass. Chromium execution remains CI-only in
+  this workspace because no local browser binary is installed.
+- No push was performed.
+
 ## CI attachment and selector hardening
 
 - Increased the first real attachment reveal assertions to a 30-second budget

@@ -293,7 +293,7 @@
 
 .danger-button {
   background: var(--copper);
-  color: #ffffff;
+  color: #000000;
 }
 
 .danger-button:hover:not(:disabled) {

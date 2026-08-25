@@ -6,6 +6,7 @@
   --landing-line: rgba(23, 36, 45, 0.16);
   --landing-card-line: rgba(23, 36, 45, 0.28);
   --landing-mineral: #2f7071;
+  --landing-on-mineral: #ffffff;
   min-height: 100dvh;
   overflow-x: hidden;
   background: var(--landing-bg);
@@ -137,7 +138,7 @@
 }
 
 .landing-primary-action {
-  color: #fff;
+  color: var(--landing-on-mineral);
   background: var(--landing-mineral);
 }
 
@@ -236,7 +237,7 @@
 .landing-preview-footer a {
   padding: 0.42rem 0.9rem;
   border-radius: 0.22rem;
-  color: #fff;
+  color: var(--landing-on-mineral);
   background: var(--landing-mineral);
   text-decoration: none;
 }
@@ -425,11 +426,7 @@
   --landing-line: rgba(121, 184, 176, 0.24);
   --landing-card-line: rgba(121, 184, 176, 0.4);
   --landing-mineral: #79b8b0;
-}
-
-.dark .landing-primary-action {
-  color: #000;
-  background: var(--landing-mineral);
+  --landing-on-mineral: #000000;
 }
 
 .dark .landing-footer {
