@@ -118,6 +118,48 @@ describe("cleanup service rotation queue", () => {
     expect(result.deletedShares).toBe(1);
   });
 
+  it("finalizes an expired note-only share without touching Storage", async () => {
+    const shareId = "44444444-4444-4444-8444-444444444444";
+    const remove = vi.fn(async () => "deleted" as const);
+    const rpc: RpcClient = {
+      call: vi.fn(async (name: string) => {
+        if (name === "list_cleanup_candidates") {
+          return [{
+            candidate_type: "share",
+            share_id: shareId,
+            reservation_id: null,
+            object_path: null,
+          }];
+        }
+        if (name === "finalize_expired_securebin") {
+          return [{
+            deleted_shares: 1,
+            deleted_uploads: 0,
+            deleted_rotated_uploads: 0,
+            deleted_leases: 0,
+            deleted_buckets: 0,
+          }];
+        }
+        throw new Error(`unexpected RPC: ${name}`);
+      }),
+    };
+    const storage: SecureStorage = {
+      createSignedUpload: vi.fn(),
+      createSignedDownload: vi.fn(),
+      inspectSize: vi.fn(),
+      remove,
+    };
+
+    const result = await createCleanupService(rpc, storage).runCleanup();
+    expect(remove).not.toHaveBeenCalled();
+    expect(rpc.call).toHaveBeenLastCalledWith("finalize_expired_securebin", {
+      p_share_ids: [shareId],
+      p_reservation_ids: null,
+      p_rotation_ids: null,
+    });
+    expect(result.deletedShares).toBe(1);
+  });
+
   it("cleans up orphaned upload reservations", async () => {
     const resId = "33333333-3333-4333-8333-333333333333";
     const resPath = "objects/cccccccccccccccccccccccccccccccccccccccccccccccc.bin";

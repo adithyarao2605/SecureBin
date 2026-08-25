@@ -50,7 +50,7 @@ export function EvidenceRail({ phase, policy }: EvidenceRailProps) {
         <span className="evidence-drawer-fact">{availableText}</span>
         <span className="evidence-drawer-fact">{expiresText}</span>
         <span className="evidence-drawer-fact">{revealsText}</span>
-        <span className="evidence-drawer-action">View proof</span>
+        <span className="evidence-drawer-action">View security flow</span>
       </summary>
       <div className="evidence-drawer-content">
         <aside className="evidence-rail" aria-label="Detailed evidence rail">
@@ -79,7 +79,7 @@ export function EvidenceRail({ phase, policy }: EvidenceRailProps) {
       <div className="evidence-section flowchart-section">
         <div className="evidence-title-row">
           <h2 className="evidence-heading">Zero-Knowledge Flow</h2>
-          <span className="evidence-badge">Client Proof</span>
+          <span className="evidence-badge">Protocol summary</span>
         </div>
 
         <p className="evidence-copy">

@@ -13,14 +13,16 @@ class StorageMock implements Storage {
   setItem(key: string, value: string): void { this.values.set(key, value); }
 }
 
+const samplePublicId = "AQEBAQEBAQEBAQEBAQEBAQ";
+const otherPublicId = "AgICAgICAgICAgICAgICAg";
 const sample: ShareHistoryItem = {
-  publicId: "sample-public-id",
-  shareUrl: "https://example.test/s/sample-public-id#local-secret",
+  publicId: samplePublicId,
+  shareUrl: `http://localhost:3000/s/${samplePublicId}#${"A".repeat(43)}`,
   createdAt: "2026-08-21T12:00:00.000Z",
   expiresAt: "2026-09-21T12:00:00.000Z",
   availableAt: null,
   maxReveals: 3,
-  deleteCapability: "delete-capability",
+  deleteCapability: "A".repeat(43),
   label: "Design notes",
 };
 
@@ -90,14 +92,14 @@ describe("local share management", () => {
 
   it("filters local rows and keeps an explicit Open action", async () => {
     saveShareToHistory(sample);
-    saveShareToHistory({ ...sample, publicId: "other-public-id", label: "Release brief", shareUrl: "https://example.test/s/other-public-id#key" });
+    saveShareToHistory({ ...sample, publicId: otherPublicId, label: "Release brief", shareUrl: `http://localhost:3000/s/${otherPublicId}#${"A".repeat(43)}` });
     render(<ShareHistoryDesk />);
 
     const search = await screen.findByRole("searchbox", { name: "Search shares" });
     fireEvent.change(search, { target: { value: "release brief" } });
-    expect(screen.getByText("other-public-id")).toBeInTheDocument();
-    expect(screen.queryByText("sample-public-id")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", expect.stringContaining("other-public-id"));
+    expect(screen.getByText(otherPublicId)).toBeInTheDocument();
+    expect(screen.queryByText(samplePublicId)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", expect.stringContaining(otherPublicId));
   });
 
   it("announces revoke failures after confirmation", async () => {

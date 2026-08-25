@@ -38,6 +38,11 @@ class MockStorage implements Storage {
 }
 
 describe("Browser-local Share History Manager", () => {
+  const publicId = "AQEBAQEBAQEBAQEBAQEBAQ";
+  const otherPublicId = "AgICAgICAgICAgICAgICAg";
+  const fragment = "A".repeat(43);
+  const deleteCapability = "A".repeat(43);
+
   beforeEach(() => {
     const mock = new MockStorage();
     Object.defineProperty(globalThis, "window", {
@@ -50,14 +55,13 @@ describe("Browser-local Share History Manager", () => {
   });
 
   const sampleItem: ShareHistoryItem = {
-    publicId: "sample-pub-123456789012",
-    shareUrl: "https://example.com/s/sample-pub-123456789012#secret-key-123",
+    publicId,
+    shareUrl: `http://localhost:3000/s/${publicId}#${fragment}`,
     createdAt: "2026-08-21T12:00:00.000Z",
     expiresAt: "2026-08-22T12:00:00.000Z",
     availableAt: null,
     maxReveals: 3,
-    deleteCapability: "del-cap-123",
-    noteSnippet: "Secret note preview...",
+    deleteCapability,
   };
 
   it("saves and loads history items cleanly", () => {
@@ -68,22 +72,22 @@ describe("Browser-local Share History Manager", () => {
     expect(loaded).toHaveLength(1);
     expect(loaded[0].publicId).toBe(sampleItem.publicId);
     expect(loaded[0].maxReveals).toBe(3);
-    expect(loaded[0].noteSnippet).toBe("Secret note preview...");
+    expect(loaded[0]).not.toHaveProperty("noteSnippet");
   });
 
   it("deduplicates by publicId and puts newest first", () => {
     saveShareToHistory(sampleItem);
     saveShareToHistory({
       ...sampleItem,
-      publicId: "item-2",
-      shareUrl: "https://example.com/s/item-2#sec",
+      publicId: otherPublicId,
+      shareUrl: `http://localhost:3000/s/${otherPublicId}#${fragment}`,
     });
     saveShareToHistory(sampleItem); // Re-add item 1
 
     const loaded = loadShareHistory();
     expect(loaded).toHaveLength(2);
     expect(loaded[0].publicId).toBe(sampleItem.publicId);
-    expect(loaded[1].publicId).toBe("item-2");
+    expect(loaded[1].publicId).toBe(otherPublicId);
   });
 
   it("updates existing items in place", () => {
@@ -102,13 +106,13 @@ describe("Browser-local Share History Manager", () => {
     saveShareToHistory(sampleItem);
     saveShareToHistory({
       ...sampleItem,
-      publicId: "item-2",
-      shareUrl: "https://example.com/s/item-2#sec",
+      publicId: otherPublicId,
+      shareUrl: `http://localhost:3000/s/${otherPublicId}#${fragment}`,
     });
 
     removeShareFromHistory(sampleItem.publicId);
     expect(loadShareHistory()).toHaveLength(1);
-    expect(loadShareHistory()[0].publicId).toBe("item-2");
+    expect(loadShareHistory()[0].publicId).toBe(otherPublicId);
 
     clearShareHistory();
     expect(loadShareHistory()).toEqual([]);
@@ -144,5 +148,15 @@ describe("Browser-local Share History Manager", () => {
 
     expect(merged[0]?.status).toBe("revoked");
     expect(merged[0]?.remainingReveals).toBeNull();
+  });
+
+  it("rejects tampered or cross-origin local records", () => {
+    const storage = window.localStorage;
+    storage.setItem("securebin_share_history_v1", JSON.stringify([
+      { ...sampleItem, shareUrl: "javascript:alert(1)" },
+      { ...sampleItem, shareUrl: "https://other.example/s/AQEBAQEBAQEBAQEBAQEBAQ#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" },
+    ]));
+
+    expect(loadShareHistory()).toEqual([]);
   });
 });

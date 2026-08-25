@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { CodeLanguage } from "../../lib/crypto/payload";
 import { DISCUSSION_CAPABILITY_BYTES } from "../../lib/crypto/payload";
 import { MAX_FILE_PLAINTEXT_BYTES } from "../../lib/crypto/file";
@@ -40,6 +40,23 @@ export interface ComposerProps {
 
 const EXAMPLE_DRAFT = "Example handoff\n\nThis is sample text for trying SecureBin. Replace it with your own content before creating a share.";
 
+function createFailureMessage(error: unknown): string {
+  const code = error instanceof Error ? error.message : "";
+  if (code === "rate_limited") {
+    return "This share could not be created right now: too many requests. Wait a moment and try again.";
+  }
+  if (code === "conflict") {
+    return "This share could not be created because the server rejected a conflicting retry. Try creating it again.";
+  }
+  if (code === "service_unavailable" || code === "Failed to fetch" || code === "NetworkError") {
+    return "This share could not be created because a required service is unavailable. Your draft is still only on this device.";
+  }
+  if (code === "storage_upload_failed" || code === "upload_reservation_failed") {
+    return "This share could not be created because an attachment upload failed. Check your connection and try again.";
+  }
+  return "This share could not be created. Your draft is still only on this device.";
+}
+
 export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: ComposerProps = {}) {
   const [mode, setMode] = useState<ComposerMode>("note");
   const [markdownView, setMarkdownView] = useState<MarkdownViewMode>("edit");
@@ -75,6 +92,18 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   // longer matches the already-sealed staged attempt.
   const lastAttemptRef = useRef<CreateAttempt | null>(null);
   const { stage, discard } = useStagedCreate();
+
+  useEffect(() => {
+    if (shareUrl || (!draft.trim() && attachedFiles.length === 0)) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [attachedFiles.length, draft, shareUrl]);
+
+  const draftByteCount = useMemo(() => new TextEncoder().encode(draft).length, [draft]);
 
   useEffect(() => {
     // Desktop uses a side-by-side Markdown authoring view. Code mode is a
@@ -223,8 +252,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
       setProtection(EMPTY_PROTECTION);
       if (onPhaseChange) onPhaseChange("created");
       if (onShareChange) onShareChange();
-    } catch {
-      setErrorMessage("This share could not be created. Your draft is still only on this device.");
+    } catch (error) {
+      setErrorMessage(createFailureMessage(error));
       if (onPhaseChange) onPhaseChange("draft");
     } finally {
       setIsPending(false);
@@ -320,7 +349,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
         <ModeTabs
           mode={mode}
           language={language}
-          draftByteCount={new TextEncoder().encode(draft).length}
+          draftByteCount={draftByteCount}
           disabled={isPending}
           onModeChange={handleModeChange}
           onLanguageChange={handleLanguageChange}

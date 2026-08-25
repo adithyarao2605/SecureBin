@@ -23,13 +23,15 @@ type RevealedContentProps = {
 
 export function RevealedContent({ content, attachments, children }: RevealedContentProps) {
   const [zipPending, setZipPending] = useState(false);
+  const [zipError, setZipError] = useState("");
   const [textCopyStatus, setTextCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
 
   async function handleDownloadAll() {
     if (zipPending || attachments.length === 0) return;
     setZipPending(true);
+    setZipError("");
     try {
-      const { zipSync } = await import("fflate");
+      const { zip } = await import("fflate");
       const entries: Record<string, Uint8Array> = {};
       for (const attachment of attachments) {
         const base = sanitizeFilename(attachment.payload.filename);
@@ -41,7 +43,16 @@ export function RevealedContent({ content, attachments, children }: RevealedCont
         }
         entries[name] = attachment.payload.data;
       }
-      const blob = new Blob([bytesToArrayBuffer(zipSync(entries))], { type: "application/zip" });
+      const archive = await new Promise<Uint8Array>((resolve, reject) => {
+        zip(entries, (error, data) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve(data);
+        });
+      });
+      const blob = new Blob([bytesToArrayBuffer(archive)], { type: "application/zip" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
@@ -49,7 +60,9 @@ export function RevealedContent({ content, attachments, children }: RevealedCont
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch {
+      setZipError("The ZIP could not be prepared locally. Download the files individually instead.");
     } finally {
       setZipPending(false);
     }
@@ -133,6 +146,7 @@ export function RevealedContent({ content, attachments, children }: RevealedCont
             {zipPending ? "Preparing ZIP…" : "Download all (ZIP)"}
           </button>
         )}
+        {zipError && <p className="code-copy-fallback" role="alert">{zipError}</p>}
 
         {attachments.map((attachment, index) => (
           <FilePreview key={`${attachment.name}-${index}`} file={attachment.payload} />

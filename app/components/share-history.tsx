@@ -161,7 +161,7 @@ export function ShareHistoryDesk({
         <p className="history-eyebrow">Local index · 0 shares</p>
         <h2 className="surface-heading" id="history-heading">No shares created yet</h2>
         <p className="history-empty-text">
-          Stored only in this browser. Shares created here will appear after you create one; no account is required.
+          Stored only in this browser. The complete link and sender revoke control stay here so you can manage the share without an account.
         </p>
         {feedback && <p className="history-feedback" role="status" aria-live="polite">{feedback}</p>}
         {onSwitchToCreate && (
@@ -209,7 +209,7 @@ export function ShareHistoryDesk({
           <p className="history-eyebrow">Local management · {history.length} {history.length === 1 ? "share" : "shares"}</p>
           <h2 id="history-heading" className="history-heading">My shares</h2>
           <p className="history-sub">
-            Stored only in this browser. Shares created here can be managed without an account.
+            The complete links and sender revoke controls are stored only in this browser. No account is required.
           </p>
         </div>
         <div className="history-header-actions">

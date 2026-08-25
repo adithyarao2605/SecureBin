@@ -62,7 +62,7 @@ revocation cannot erase.
 | --- | --- |
 | Content | Plain notes, GitHub-Flavored Markdown, and code with first-paste language detection in one editable syntax-highlighted IDE |
 | Protection | Link fragment, password, 27-character second-channel unlock code, or combined factors |
-| Policies | Scheduled availability, custom expiry, Never expiry, one-time or custom reveal limits, and unlimited reveals |
+| Policies | Scheduled availability, custom expiry, Never expiry, one-time or custom reveal limits, and unlimited reveals (one-time/24-hour is the safe default) |
 | Attachments | Up to five encrypted files, safe previews, individual downloads, and encrypted ZIP download |
 | Discussions | Encrypted threaded comments with client-held edit and delete proofs |
 | Sender tools | Privacy Receipt, local Share History, revocation, QR sharing, and deletion controls |
@@ -97,6 +97,11 @@ atomically enforces:
 
 The server never needs plaintext content, passwords, unlock codes, filenames,
 MIME types, deletion capabilities, or raw discussion capabilities.
+
+The optional local Share History stores the complete share link and sender
+revocation capability in this browser's local storage. It is never uploaded,
+but anyone with access to this browser profile can inspect it; clear local
+history when the device is shared.
 
 ### Honest boundaries
 

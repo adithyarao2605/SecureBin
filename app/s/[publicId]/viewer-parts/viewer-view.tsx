@@ -54,12 +54,13 @@ export type ViewerViewProps = {
   onSubmitFactors: () => void;
   onReveal: () => void;
   onCancelConfirm: () => void;
-        discussionCapability: Uint8Array | null;
-      discussionSalt: Uint8Array | null;
-      discussionMask: FactorMask;
-      releaseWindowEndsAt: string | null;
-      releaseWindowRemainingMs: number | null;
-      };
+  discussionCapability: Uint8Array | null;
+  discussionSalt: Uint8Array | null;
+  discussionMask: FactorMask;
+  releaseWindowEndsAt: string | null;
+  releaseWindowRemainingMs: number | null;
+  revealProgress: string;
+}
 
 export function ViewerView({
   publicId,
@@ -80,11 +81,12 @@ export function ViewerView({
   onSubmitFactors,
   onReveal,
   onCancelConfirm,
-   discussionCapability,
-   discussionSalt,
-   discussionMask,
-   releaseWindowEndsAt,
-   releaseWindowRemainingMs,
+  discussionCapability,
+  discussionSalt,
+  discussionMask,
+  releaseWindowEndsAt,
+  releaseWindowRemainingMs,
+  revealProgress,
 }: ViewerViewProps) {
   const activeStatus = shareStatus?.status === "active" ? shareStatus : null;
   const policyStatus = shareStatus && (shareStatus.status === "active" || shareStatus.status === "scheduled")
@@ -244,7 +246,7 @@ export function ViewerView({
         {state === "pending" && (
           <div className="viewer-action-box">
             <p className="viewer-status-text" role="status" aria-live="polite">
-              Authorizing one reveal…
+              {revealProgress || "Authorizing one reveal…"}
             </p>
             <button type="button" className="action-button primary-button" disabled>
               Opening…

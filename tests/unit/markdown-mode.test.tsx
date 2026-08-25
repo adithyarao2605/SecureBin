@@ -77,6 +77,21 @@ describe("composer markdown edit / split / preview", () => {
     expect(screen.queryByRole("tab", { name: "Preview" })).not.toBeInTheDocument();
   });
 
+  it("keeps focus inside the expanded editor and restores the launcher on Escape", () => {
+    render(<Composer />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Code" }));
+    const focusButton = screen.getByRole("button", { name: "Focus editor" });
+    fireEvent.click(focusButton);
+
+    expect(screen.getByRole("dialog", { name: "Code editor in plaintext" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Code content")).toHaveFocus();
+
+    fireEvent.keyDown(screen.getByLabelText("Code content"), { key: "Escape" });
+    expect(screen.getByRole("region", { name: "Code editor in plaintext" })).toBeInTheDocument();
+    expect(focusButton).toHaveFocus();
+  });
+
   it("detects the first pasted snippet once without changing later selections", () => {
     render(<Composer />);
 

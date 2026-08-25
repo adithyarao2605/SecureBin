@@ -57,8 +57,10 @@ export function defaultPolicyDraft(): PolicyDraft {
     expiryPreset: "24h",
     customExpiryValue: 24,
     customExpiryUnit: "hours",
-    revealPreset: "unlimited",
-    maxReveals: null,
+    // The safe default is one authorized release. Senders can still opt into
+    // additional or unlimited releases explicitly in the policy controls.
+    revealPreset: "burn",
+    maxReveals: 1,
     revealWindowPreset: "none",
   };
 }
@@ -143,6 +145,7 @@ export function formatLocalizedDateTime(isoUtc: string | null, nullLabel = "Neve
   if (!isoUtc) return nullLabel;
   try {
     const date = new Date(isoUtc);
+    if (!Number.isFinite(date.getTime())) return isoUtc;
     return date.toLocaleString(undefined, {
       dateStyle: "medium",
       timeStyle: "short",

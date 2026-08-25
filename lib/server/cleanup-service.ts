@@ -7,7 +7,7 @@ export interface CleanupCandidate {
   readonly candidate_type: "share" | "upload" | "upload_rotation";
   readonly share_id: string | null;
   readonly reservation_id: string | null;
-  readonly object_path: string;
+  readonly object_path: string | null;
 }
 
 export interface CleanupResult {
@@ -50,8 +50,6 @@ function parseCandidate(value: unknown): CleanupCandidate | null {
   const item = value;
   if (
     (candidateType !== "share" && candidateType !== "upload" && candidateType !== "upload_rotation") ||
-    typeof item.object_path !== "string" ||
-    !STORAGE_PATH_PATTERN.test(item.object_path) ||
     !isNullableUuid(item.share_id) ||
     !isNullableUuid(item.reservation_id)
   ) {
@@ -59,6 +57,13 @@ function parseCandidate(value: unknown): CleanupCandidate | null {
   }
   if (candidateType === "share" && !item.share_id) return null;
   if ((candidateType === "upload" || candidateType === "upload_rotation") && !item.reservation_id) {
+    return null;
+  }
+  if (candidateType === "share") {
+    if (item.object_path !== null && (typeof item.object_path !== "string" || !STORAGE_PATH_PATTERN.test(item.object_path))) {
+      return null;
+    }
+  } else if (typeof item.object_path !== "string" || !STORAGE_PATH_PATTERN.test(item.object_path)) {
     return null;
   }
   return {
@@ -108,16 +113,19 @@ export function createCleanupService(
       for (const [shareId, group] of shareGroups) {
         let complete = true;
         for (const candidate of group) {
-          try {
-            await storage.remove(candidate.object_path);
-          } catch {
-            complete = false;
+          if (candidate.object_path) {
+            try {
+              await storage.remove(candidate.object_path);
+            } catch {
+              complete = false;
+            }
           }
         }
         if (complete) successfulShareIds.push(shareId);
       }
 
       for (const candidate of nonShareCandidates) {
+        if (!candidate.object_path) throw new Error("Invalid cleanup candidate response");
         try {
           await storage.remove(candidate.object_path);
           if (candidate.candidate_type === "upload" && candidate.reservation_id) {

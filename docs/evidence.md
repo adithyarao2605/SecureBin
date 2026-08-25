@@ -36,7 +36,8 @@ pnpm supabase:test
 
 The new pre-freeze regression suite covers same-token retry after revocation,
 expiry, and window closure; closed-window status parity; unlock-only shares;
-full create idempotency mismatches; and partial attachment cleanup/recovery.
+full create idempotency mismatches; partial attachment cleanup/recovery; and
+cleanup of exhausted and note-only shares after retry leases close.
 
 ## Performance baseline
 

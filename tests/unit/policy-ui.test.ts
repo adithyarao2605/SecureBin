@@ -61,7 +61,7 @@ describe("policy-ui helper functions", () => {
       expect(result.availableAt).toBeNull();
       expect(result.expiresAt).not.toBeNull();
       expect(Date.parse(result.expiresAt as string)).toBe(fixedNow + 24 * 60 * 60 * 1000);
-      expect(result.maxReveals).toBeNull();
+      expect(result.maxReveals).toBe(1);
     }
   });
 

@@ -130,68 +130,79 @@ export function ShareResultCard({
       )}
 
       {receiptData && (
-        <section className="share-result-section" aria-labelledby="share-proof-heading">
-          <div className="share-result-section-heading">
-            <div>
-              <p className="share-result-eyebrow">03 / Proof</p>
-              <h3 id="share-proof-heading">Verify what was sealed</h3>
+        <details className="share-result-section share-secondary-section">
+          <summary className="share-result-section-summary">
+            <div className="share-result-section-heading">
+              <div>
+                <p className="share-result-eyebrow">03 / Evidence</p>
+                <h3 id="share-proof-heading">Verify what was sealed</h3>
+              </div>
+              <span className="share-proof-chip">No plaintext uploaded</span>
             </div>
-            <span className="share-proof-chip">No plaintext uploaded</span>
-          </div>
-          <div className="share-proof-summary" aria-label="Share policy summary">
-            <div className="share-proof-chips">
-              <span className="share-proof-chip">{receiptData.contentType ?? "Note"}</span>
-              <span className="share-proof-chip">{factorLabel(receiptData.mask)}</span>
-              <span className="share-proof-chip">{revealLabel(receiptData.maxReveals)}</span>
-              <span className="share-proof-chip">
-                {receiptData.expiresAt ? `Expires ${formatLocalizedDateTime(receiptData.expiresAt)}` : "Never expires"}
-              </span>
+          </summary>
+          <div className="share-secondary-body">
+            <div className="share-proof-summary" aria-label="Share policy summary">
+              <div className="share-proof-chips">
+                <span className="share-proof-chip">{receiptData.contentType ?? "Note"}</span>
+                <span className="share-proof-chip">{factorLabel(receiptData.mask)}</span>
+                <span className="share-proof-chip">{revealLabel(receiptData.maxReveals)}</span>
+                <span className="share-proof-chip">
+                  {receiptData.expiresAt ? `Expires ${formatLocalizedDateTime(receiptData.expiresAt)}` : "Never expires"}
+                </span>
+              </div>
+              <p className="share-fingerprint-line">
+                <span>Ciphertext fingerprint</span>
+                <code>{receiptData.fingerprint.slice(0, 16)}…</code>
+              </p>
+              <p className="share-fingerprint-note">
+                This identifies the sealed material; it is not proof that someone opened or read it.
+              </p>
             </div>
-            <p className="share-fingerprint-line">
-              <span>Ciphertext fingerprint</span>
-              <code>{receiptData.fingerprint.slice(0, 16)}…</code>
-            </p>
-            <p className="share-fingerprint-note">
-              This identifies the sealed material; it is not proof that someone opened or read it.
-            </p>
+            <PrivacyReceipt data={receiptData} />
           </div>
-          <PrivacyReceipt data={receiptData} />
-        </section>
+        </details>
       )}
 
       {parcel && receiptData && (
-        <section className="share-result-section" aria-labelledby="parcel-heading">
-          <div className="share-result-section-heading">
-            <div>
-              <p className="share-result-eyebrow">04 / Offline copy</p>
-              <h3 id="parcel-heading">Carry the ciphertext locally</h3>
+        <details className="share-result-section share-secondary-section">
+          <summary className="share-result-section-summary">
+            <div className="share-result-section-heading">
+              <div>
+                <p className="share-result-eyebrow">04 / Offline copy</p>
+                <h3 id="parcel-heading">Carry the ciphertext locally</h3>
+              </div>
+              <span className="share-proof-chip">No network required to restore</span>
             </div>
-            <span className="share-proof-chip">No network required to restore</span>
+          </summary>
+          <div className="share-secondary-body">
+            <div className="parcel-export-box">
+              <button
+                type="button"
+                className="action-button secondary-button"
+                onClick={() => downloadParcel(parcel, receiptData.publicId)}
+              >
+                Download .securebin parcel
+              </button>
+              <p className="policy-hint">
+                The parcel contains encrypted material only—not the link key, password, unlock code, revoke ability, or discussion capability. Restore it from the parcel utility with the original factors.
+              </p>
+            </div>
           </div>
-          <div className="parcel-export-box">
-            <button
-              type="button"
-              className="action-button secondary-button"
-              onClick={() => downloadParcel(parcel, receiptData.publicId)}
-            >
-              Download .securebin parcel
-            </button>
-            <p className="policy-hint">
-              The parcel contains encrypted material only—not the link key, password, unlock code, revoke ability, or discussion capability. Restore it from the parcel utility with the original factors.
-            </p>
-          </div>
-        </section>
+        </details>
       )}
 
-      <section className="share-result-section" aria-labelledby="share-tools-heading">
-        <div className="share-result-section-heading">
-          <div>
-            <p className="share-result-eyebrow">05 / Transport</p>
-            <h3 id="share-tools-heading">Choose how to pass it on</h3>
+      <details className="share-result-section share-secondary-section">
+        <summary className="share-result-section-summary">
+          <div className="share-result-section-heading">
+            <div>
+              <p className="share-result-eyebrow">05 / Transport</p>
+              <h3 id="share-tools-heading">Choose how to pass it on</h3>
+            </div>
+            <span className="share-proof-chip">Full link required</span>
           </div>
-        </div>
-        <ShareActions shareUrl={shareUrl} />
-      </section>
+        </summary>
+        <div className="share-secondary-body"><ShareActions shareUrl={shareUrl} /></div>
+      </details>
 
       <section className="share-danger-section" aria-labelledby="share-controls-heading">
         <div className="share-result-section-heading">

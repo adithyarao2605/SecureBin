@@ -2,6 +2,27 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Judge-facing polish and lifecycle hardening
+
+- Aligned the public copy with the implementation: the link key is documented
+  as 256-bit, unsupported PDFs/executables/markup are download-only, and the
+  landing preview now matches the one-time, 24-hour safe default.
+- Switched the first-load theme to light, added honest transport feedback and
+  fragment-link warnings, made the evidence/parcel/transport sections
+  collapsible, and surfaced staged recipient decryption/download progress.
+- Added a focus-trapped code-editor mode with Escape restoration, deferred
+  highlighting with a large-snippet pause, asynchronous ZIP creation with an
+  actionable failure state, and a beforeunload warning for unsaved drafts.
+- Hardened local Share History validation so only same-origin, canonical share
+  links and capabilities are stored; removed the plaintext note snippet from
+  the local schema.
+- Added cleanup coverage for expired, revoked, exhausted, and note-only shares,
+  including the five-minute reveal-retry lease window, via
+  `20260902000000_exhausted_share_cleanup.sql` and its pgTAP regression suite.
+- `pnpm validate` passes: lint, typecheck, 217 unit tests, source audit, and
+  production build. Supabase reset/replay could not run because this host has
+  neither Docker nor Podman. No commit or push was performed.
+
 ## Remaining polish pass and open licensing
 
 - Added an IDE focus mode with Escape-to-exit, active documentation section

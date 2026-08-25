@@ -53,6 +53,7 @@ export function Viewer({ publicId }: { publicId: string }) {
   const [discussionSalt, setDiscussionSalt] = useState<Uint8Array | null>(null);
   const [releaseWindowEndsAt, setReleaseWindowEndsAt] = useState<string | null>(null);
   const [releaseWindowRemainingMs, setReleaseWindowRemainingMs] = useState<number | null>(null);
+  const [revealProgress, setRevealProgress] = useState("");
   const requestTokenRef = useRef<string | null>(null);
   const revealInFlightRef = useRef(false);
 
@@ -231,6 +232,7 @@ export function Viewer({ publicId }: { publicId: string }) {
     if (requestToken !== token) setRequestToken(token);
 
     revealInFlightRef.current = true;
+    setRevealProgress("Authorizing one reveal…");
     setState("pending");
     try {
       const response = await fetch(`/api/shares/${encodeURIComponent(publicId)}/reveal`, {
@@ -242,17 +244,20 @@ export function Viewer({ publicId }: { publicId: string }) {
       if (!response.ok) {
         if (response.status === 404) {
           setState("unavailable");
+          setRevealProgress("");
           clearRequestToken();
           setDiscussionCapability(null);
           return;
         }
         setNotice("The reveal could not be completed. Retrying with the same authorization…");
         setState(shareStatus.maxReveals === null ? "ready_unlimited" : "ready_limited");
+        setRevealProgress("");
         return;
       }
 
       const revealPayload = parseReveal(await response.json());
       void refreshLocalHistoryStatus(publicId);
+      setRevealProgress("Decrypting the sealed content locally…");
       const plaintext = await openContent(
         revealPayload.contentEnvelope,
         publicId,
@@ -261,7 +266,9 @@ export function Viewer({ publicId }: { publicId: string }) {
       );
 
       const decryptedFiles: DecryptedAttachment[] = [];
-      for (const fileMeta of revealPayload.files ?? []) {
+      const files = revealPayload.files ?? [];
+      for (const [index, fileMeta] of files.entries()) {
+        setRevealProgress(`Downloading and decrypting file ${index + 1} of ${files.length}…`);
         const fileRes = await fetch(fileMeta.downloadUrl, { cache: "no-store" });
         if (!fileRes.ok) throw new Error("file_download_failed");
         const arrayBuf = await fileRes.arrayBuffer();
@@ -287,6 +294,7 @@ export function Viewer({ publicId }: { publicId: string }) {
         setDiscussionCapability(null);
       }
       setState("opened");
+      setRevealProgress("");
       clearRequestToken();
       setPasswordInput("");
       setUnlockInput("");
@@ -302,6 +310,7 @@ export function Viewer({ publicId }: { publicId: string }) {
       } else {
         setFactorError("");
       }
+      setRevealProgress("");
       setNotice(
         shareStatus.maxReveals === null
           ? shareStatus.passwordRequired || shareStatus.unlockRequired
@@ -344,6 +353,7 @@ export function Viewer({ publicId }: { publicId: string }) {
       discussionMask={currentFactorOptions()?.mask ?? "link"}
       releaseWindowEndsAt={releaseWindowEndsAt}
       releaseWindowRemainingMs={releaseWindowRemainingMs}
+      revealProgress={revealProgress}
     />
   );
 }

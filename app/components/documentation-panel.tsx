@@ -150,7 +150,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
           <p>SecureBin supports four distinct factor combinations to prevent link interception:</p>
           <div className="docs-badge-row"><span className="docs-badge">Link Key</span><span className="docs-badge">Link + Password</span><span className="docs-badge">Link + Unlock Code</span><span className="docs-badge">Link + Pass + Unlock</span></div>
           <ul className="threat-section" style={{ margin: 0, paddingLeft: "1.2rem" }}>
-            <li><strong>Link Key:</strong> 128-bit key in URL fragment. Server never receives the fragment.</li>
+            <li><strong>Link Key:</strong> 256-bit key in the URL fragment. The server never receives the fragment.</li>
             <li><strong>Password:</strong> Derived using PBKDF2 (600,000 iterations). Recipient must enter the exact password.</li>
             <li><strong>Second-Channel Unlock:</strong> 27-character base-28 code with checksum (124 bits entropy). Transmitted over SMS/Signal separately so link interception alone fails.</li>
           </ul>
@@ -163,7 +163,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
           <h3>⏱️ Access Policies & Auto-Hide</h3>
           <ul className="threat-section" style={{ margin: 0, paddingLeft: "1.2rem" }}>
             <li><strong>One-Time Release:</strong> The share becomes permanently unavailable after 1 authorized ciphertext release.</li>
-            <li><strong>Reveal Limits:</strong> Set exact bounds (1, 3, 5, 10, custom, or unlimited). Enforced atomically at database level.</li>
+            <li><strong>Reveal Limits:</strong> The safe default is one release; set exact bounds (3, 5, 10, custom, or unlimited) when needed. Every limit is enforced atomically at database level.</li>
             <li><strong>Expiry Durations:</strong> Automatically expires after 24h, 7 days, 30 days, custom duration, or Never (indefinite until manual revocation).</li>
             <li><strong>Release Window & Privacy Veil:</strong> An active countdown (10s–5m) begins when recipient reveals. When it hits zero, decrypted text is scrubbed from browser memory and replaced with a privacy veil.</li>
           </ul>
@@ -174,7 +174,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
           <h3>📎 Files & Encrypted Discussions</h3>
           <ul className="threat-section" style={{ margin: 0, paddingLeft: "1.2rem" }}>
             <li><strong>Multi-File Uploads:</strong> Attach up to 5 files (10 MB each). Each file is encrypted with its own derived key (<code>securebin/v2/link/file</code>).</li>
-            <li><strong>Safe Previews & ZIP:</strong> Recipients can preview images, text, and PDFs safely with CSP sandboxing, or download all attachments as a single decrypted ZIP archive.</li>
+            <li><strong>Safe Previews & ZIP:</strong> Recipients can preview supported images and plain text safely. PDFs, executables, markup, and other unsupported formats remain download-only; multiple attachments can be downloaded as one decrypted ZIP archive.</li>
             <li><strong>Encrypted Comments:</strong> Threaded replies protected by client-held discussion capabilities. Authors can edit or delete comments with cryptographic proof tokens.</li>
           </ul>
         </article>

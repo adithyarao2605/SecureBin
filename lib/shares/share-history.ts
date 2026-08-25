@@ -6,6 +6,8 @@
  * and all queries use public IDs.
  */
 
+import { base64UrlToBytes, bytesToBase64Url } from "../crypto/encoding";
+import { validatePublicId } from "../crypto/envelope";
 import { isMaxReveals, type MaxReveals, type ShareStatusBatchItem } from "./contracts";
 
 export interface ShareHistoryItem {
@@ -16,7 +18,6 @@ export interface ShareHistoryItem {
   readonly availableAt: string | null;
   readonly maxReveals: MaxReveals;
   readonly deleteCapability: string | null;
-  readonly noteSnippet?: string;
   /** Sender-assigned device-local label (never uploaded). */
   readonly label?: string;
   readonly revealWindowSeconds?: number | null;
@@ -35,17 +36,66 @@ function isHistoryStatus(value: unknown): value is NonNullable<ShareHistoryItem[
   return value === "active" || value === "scheduled" || value === "unavailable" || value === "checking" || value === "revoked";
 }
 
+function isIsoDate(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
+}
+
+function isCanonicalBase64Url(value: unknown, expectedBytes: number): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const bytes = base64UrlToBytes(value);
+    return bytes.length === expectedBytes && bytesToBase64Url(bytes) === value;
+  } catch {
+    return false;
+  }
+}
+
+function isValidShareUrl(publicId: string, shareUrl: string): boolean {
+  try {
+    const parsed = new URL(shareUrl);
+    const currentOrigin = typeof globalThis.location?.origin === "string" ? globalThis.location.origin : null;
+    if ((parsed.protocol !== "https:" && parsed.protocol !== "http:") || (currentOrigin && parsed.origin !== currentOrigin)) {
+      return false;
+    }
+    if (parsed.pathname !== `/s/${encodeURIComponent(publicId)}` || parsed.search || !isCanonicalBase64Url(parsed.hash.slice(1), 32)) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function parseHistoryItem(item: unknown): ShareHistoryItem | null {
   if (!isRecord(item)) return null;
   if (
     typeof item.publicId !== "string" ||
     typeof item.shareUrl !== "string" ||
-    typeof item.createdAt !== "string" ||
+    !isIsoDate(item.createdAt) ||
     (typeof item.expiresAt !== "string" && item.expiresAt !== null)
   ) {
     return null;
   }
-  if (!isMaxReveals(item.maxReveals)) return null;
+  try {
+    validatePublicId(item.publicId);
+  } catch {
+    return null;
+  }
+  if (!isValidShareUrl(item.publicId, item.shareUrl) || !isMaxReveals(item.maxReveals)) return null;
+  if (item.expiresAt !== null && !isIsoDate(item.expiresAt)) return null;
+  if (item.availableAt !== null && item.availableAt !== undefined && !isIsoDate(item.availableAt)) return null;
+  if (item.deleteCapability !== null && item.deleteCapability !== undefined && !isCanonicalBase64Url(item.deleteCapability, 32)) return null;
+  if (item.label !== undefined && (typeof item.label !== "string" || item.label.length > 80)) return null;
+  if (
+    item.revealWindowSeconds !== undefined &&
+    item.revealWindowSeconds !== null &&
+    (typeof item.revealWindowSeconds !== "number" || !Number.isInteger(item.revealWindowSeconds) || item.revealWindowSeconds < 10 || item.revealWindowSeconds > 86_400)
+  ) return null;
+  if (
+    item.remainingReveals !== undefined &&
+    item.remainingReveals !== null &&
+    (typeof item.remainingReveals !== "number" || !Number.isInteger(item.remainingReveals) || item.remainingReveals < 0)
+  ) return null;
 
   return {
     publicId: item.publicId,
@@ -55,8 +105,7 @@ function parseHistoryItem(item: unknown): ShareHistoryItem | null {
     availableAt: typeof item.availableAt === "string" ? item.availableAt : null,
     maxReveals: item.maxReveals,
     deleteCapability: typeof item.deleteCapability === "string" ? item.deleteCapability : null,
-    noteSnippet: typeof item.noteSnippet === "string" ? item.noteSnippet : undefined,
-    label: typeof item.label === "string" ? item.label.slice(0, 80) : undefined,
+    label: typeof item.label === "string" ? item.label : undefined,
     revealWindowSeconds:
       typeof item.revealWindowSeconds === "number" || item.revealWindowSeconds === null
         ? item.revealWindowSeconds
@@ -87,9 +136,10 @@ export function loadShareHistory(): ShareHistoryItem[] {
 export function saveShareToHistory(item: ShareHistoryItem): void {
   if (typeof window === "undefined") return;
   try {
+    if (!parseHistoryItem(item)) return;
     const current = loadShareHistory();
     const filtered = current.filter((existing) => existing.publicId !== item.publicId);
-    const updated = [item, ...filtered].slice(0, MAX_HISTORY_ITEMS);
+    const updated = [item, ...filtered].map(parseHistoryItem).filter((entry): entry is ShareHistoryItem => entry !== null).slice(0, MAX_HISTORY_ITEMS);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {
     // LocalStorage quota or access denied - silently handle
@@ -108,7 +158,7 @@ export function updateShareInHistory(
         return { ...item, ...updates };
       }
       return item;
-    });
+    }).map(parseHistoryItem).filter((item): item is ShareHistoryItem => item !== null);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {
     // Silently handle
@@ -132,7 +182,7 @@ export function mergeShareStatuses(statuses: readonly ShareStatusBatchItem[]): S
         status: mergedStatus,
         remainingReveals: status.status === "unavailable" ? null : status.remainingReveals,
       };
-    });
+    }).map(parseHistoryItem).filter((item): item is ShareHistoryItem => item !== null);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     return updated;
   } catch {

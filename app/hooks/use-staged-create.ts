@@ -56,6 +56,13 @@ export interface StagedCreateRequest {
   readonly onProgress?: (progress: StagedCreateProgress) => void;
 }
 
+function throwCreateResponseError(response: Response, fallback: string): never {
+  if (response.status === 429) throw new Error("rate_limited");
+  if (response.status === 409) throw new Error("conflict");
+  if (response.status >= 500) throw new Error("service_unavailable");
+  throw new Error(fallback);
+}
+
 export interface StagedCreateProgress {
   readonly phase: "sealing" | "uploading" | "finalizing";
   readonly current: number;
@@ -271,7 +278,7 @@ export function useStagedCreate() {
       });
 
       if (!uploadRes.ok) {
-        throw new Error("upload_reservation_failed");
+        throwCreateResponseError(uploadRes, "upload_reservation_failed");
       }
 
       const uploadData = (await uploadRes.json()) as {
@@ -294,7 +301,7 @@ export function useStagedCreate() {
         });
 
         if (!putRes.ok) {
-          throw new Error("storage_upload_failed");
+          throw new Error(putRes.status >= 500 ? "service_unavailable" : "storage_upload_failed");
         }
       }
 
@@ -311,7 +318,7 @@ export function useStagedCreate() {
     });
 
     if (!response.ok) {
-      throw new Error("create_failed");
+      throwCreateResponseError(response, "create_failed");
     }
 
     const result = (await response.json()) as { publicId?: unknown };

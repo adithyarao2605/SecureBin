@@ -23,6 +23,7 @@ export function ShareActions({ shareUrl }: ShareActionsProps) {
   const [qrFailed, setQrFailed] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [nativeSupported, setNativeSupported] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState("");
 
   useEffect(() => {
     setNativeSupported(typeof navigator !== "undefined" && typeof navigator.share === "function");
@@ -50,8 +51,9 @@ export function ShareActions({ shareUrl }: ShareActionsProps) {
   async function nativeShare() {
     try {
       await navigator.share({ title: "A private share", url: shareUrl });
+      setShareFeedback("Share sheet opened.");
     } catch {
-      // User dismissed the sheet; nothing to do.
+      setShareFeedback("Share sheet closed. The complete link was not changed.");
     }
   }
 
@@ -88,6 +90,10 @@ export function ShareActions({ shareUrl }: ShareActionsProps) {
       <a className="action-button tertiary-button" href={toMailto(shareUrl)}>
         Send by email
       </a>
+      <p className="share-transport-note" role="note">
+        These options pass the complete link, including its fragment-held decryption key, to the channel you choose. Use a separate channel for any unlock code.
+      </p>
+      {shareFeedback && <p className="share-transport-feedback" role="status" aria-live="polite">{shareFeedback}</p>}
     </div>
   );
 }

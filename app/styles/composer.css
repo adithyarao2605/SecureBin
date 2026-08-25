@@ -584,6 +584,12 @@
   margin-left: auto;
 }
 
+.code-editor-performance-note {
+  color: var(--muted-ink);
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
 .code-editor-focus-button {
   border: 1px solid var(--line);
   border-radius: 999px;
