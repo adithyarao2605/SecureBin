@@ -53,7 +53,7 @@ visual identity.
 
 - [At a glance](#at-a-glance)
 - [Evaluation at a glance](#evaluation-at-a-glance)
-- [Live product and current focus](#live-product-and-current-focus)
+- [Live product](#live-product)
 - [Explore the product](#explore-the-product)
 - [What SecureBin supports](#what-securebin-supports)
 - [How the security model works](#how-the-security-model-works)
@@ -68,14 +68,13 @@ visual identity.
 - [License and security](#license-and-security)
 - [Repository map](#repository-map)
 
-## Live product and current focus
+## Live product
 
 The deployed application is available at **[secure-bin.vercel.app](https://secure-bin.vercel.app/)**.
 
-The current product feature set is established. The release pass is limited to
-fixing bugs, verifying hosted behavior, and polishing documentation,
-repository hygiene, reliability, accessibility, performance, and visual
-details. New roadmap capabilities are intentionally out of scope.
+SecureBin is the completed, deployed product. Its documented feature set,
+security boundaries, reliability checks, and accessible interface are the
+release scope presented in this repository.
 
 The application includes its own guided documentation surface. The **How it
 works** section in the `/new` workspace explains the product as it is used,
