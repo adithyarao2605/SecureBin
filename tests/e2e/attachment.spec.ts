@@ -64,9 +64,9 @@ test("creates a share with an encrypted attachment and reveals both", async ({ p
   await expect(revealButton).toBeVisible({ timeout: 20_000 });
   await revealButton.click();
 
-  await expect(page.getByText(NOTE)).toBeVisible();
+  await expect(page.getByText(NOTE)).toBeVisible({ timeout: 30_000 });
   const attachmentCard = page.getByLabel("Decrypted file attachment");
-  await expect(attachmentCard).toBeVisible();
+  await expect(attachmentCard).toBeVisible({ timeout: 30_000 });
   await expect(attachmentCard.getByRole("heading", { name: /📎 probe\.png/u })).toBeVisible();
 
   // Magic-byte detection drives an inline image preview via a blob URL.

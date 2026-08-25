@@ -36,7 +36,7 @@ test("major public and application views retain the quiet-proof visual contract"
   await expect(page.getByRole("heading", { name: /a share should reveal as little as possible/iu })).toBeVisible();
   await capture(page, testInfo, "new-how-it-works-desktop");
 
-  await page.getByRole("button", { name: "Open parcel" }).click();
+  await page.getByRole("button", { name: "Open parcel", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Open a .securebin parcel" })).toBeVisible();
   await capture(page, testInfo, "new-parcel-empty-desktop");
 });

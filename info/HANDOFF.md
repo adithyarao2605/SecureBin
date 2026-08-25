@@ -2,6 +2,18 @@
 
 Updated: 2026-08-25 (UTC)
 
+## CI attachment and selector hardening
+
+- Increased the first real attachment reveal assertions to a 30-second budget
+  because the cold path includes signed Storage download and browser-side file
+  decryption before content is mounted.
+- Made the visual-contract parcel selector exact so `Open parcel` cannot match
+  the separate `Open Parcel Utility` button in the documentation panel.
+- `pnpm validate` passes with 214 unit tests, lint, typecheck, source audit,
+  and production build. Playwright lists all 19 development tests; browser
+  execution remains CI-only in this workspace.
+- No push was performed.
+
 ## CI browser-contract refresh
 
 - Updated the landing E2E assertion to match the intentional external
