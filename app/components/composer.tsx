@@ -27,6 +27,7 @@ import { ModeTabs, type ComposerMode } from "./composer/mode-tabs";
 import { EditorPane, type MarkdownViewMode } from "./composer/editor-pane";
 import { AttachmentZone } from "./composer/attachment-zone";
 import { ShareResultCard } from "./composer/share-result-card";
+import { detectCodeLanguage } from "../../lib/render/detect-language";
 
 export type { ComposerMode, MarkdownViewMode };
 
@@ -57,6 +58,8 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   const [unlockCodeShown, setUnlockCodeShown] = useState("");
   const [receiptData, setReceiptData] = useState<PrivacyReceiptData | null>(null);
   const [parcel, setParcel] = useState<Uint8Array | null>(null);
+  const languageWasExplicitlySelectedRef = useRef(false);
+  const pasteDetectionUsedRef = useRef(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Discussion capability minted once per share attempt so a staged retry
@@ -95,6 +98,14 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
 
   function handleLanguageChange(newLang: CodeLanguage) {
     setLanguage(newLang);
+    languageWasExplicitlySelectedRef.current = true;
+    resetPrepared();
+  }
+
+  function handleCodePaste(value: string) {
+    if (!value || languageWasExplicitlySelectedRef.current || pasteDetectionUsedRef.current) return;
+    pasteDetectionUsedRef.current = true;
+    setLanguage(detectCodeLanguage(value));
     resetPrepared();
   }
 
@@ -237,6 +248,9 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
     setReceiptData(null);
     setParcel(null);
     setDraft("");
+    setLanguage("plaintext");
+    languageWasExplicitlySelectedRef.current = false;
+    pasteDetectionUsedRef.current = false;
     setAttachedFiles([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
     setShareUrl("");
@@ -299,6 +313,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
           language={language}
           disabled={isPending}
           onDraftChange={handleDraftChange}
+          onCodePaste={handleCodePaste}
           onMarkdownViewChange={setMarkdownView}
         />
 

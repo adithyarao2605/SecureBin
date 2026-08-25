@@ -604,6 +604,23 @@
   overflow: auto;
   resize: none;
   outline: none;
+  scrollbar-color: var(--mineral) var(--surface-subtle);
+  scrollbar-width: thin;
+}
+
+.code-editor-input::-webkit-scrollbar {
+  width: 0.65rem;
+  height: 0.65rem;
+}
+
+.code-editor-input::-webkit-scrollbar-track {
+  background: var(--surface-subtle);
+}
+
+.code-editor-input::-webkit-scrollbar-thumb {
+  border: 2px solid var(--surface-subtle);
+  border-radius: 999px;
+  background: var(--mineral);
 }
 
 .code-editor-input::selection {

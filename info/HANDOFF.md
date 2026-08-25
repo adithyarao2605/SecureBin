@@ -8,8 +8,11 @@ Updated: 2026-08-25 (UTC)
   panel: the real textarea remains the accessible editing surface while a
   synchronized syntax-highlighted layer and line-number gutter provide the
   preview underneath it.
-- Code mode now defaults to `plaintext`; typing never auto-detects or changes
-  the language. The selected language changes only through the explicit picker.
+- Code mode now defaults to `plaintext`; normal typing never auto-detects or
+  changes the language. The first non-empty text paste may detect once, after
+  which the selected language changes only through the explicit picker.
+- Styled vertical and horizontal IDE scrollbars keep long snippets inside the
+  single editor surface.
 - Updated the composer documentation copy and regression tests. Focused
   composer tests, lint, and typecheck pass; no push was performed.
 

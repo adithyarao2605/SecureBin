@@ -9,9 +9,10 @@ interface CodeEditorProps {
   readonly disabled: boolean;
   readonly language: CodeLanguage;
   onDraftChange: (value: string) => void;
+  onPaste: (value: string) => void;
 }
 
-export function CodeEditor({ draft, disabled, language, onDraftChange }: CodeEditorProps) {
+export function CodeEditor({ draft, disabled, language, onDraftChange, onPaste }: CodeEditorProps) {
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
   const gutterRef = useRef<HTMLDivElement | null>(null);
@@ -60,6 +61,7 @@ export function CodeEditor({ draft, disabled, language, onDraftChange }: CodeEdi
             wrap="off"
             spellCheck={false}
             onScroll={syncScroll}
+            onPaste={(event) => onPaste(event.clipboardData.getData("text"))}
             onChange={(event) => onDraftChange(event.target.value)}
           />
         </div>

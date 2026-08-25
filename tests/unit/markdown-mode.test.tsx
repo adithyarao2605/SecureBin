@@ -76,4 +76,23 @@ describe("composer markdown edit / split / preview", () => {
     expect(screen.queryByRole("tab", { name: "Split" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Preview" })).not.toBeInTheDocument();
   });
+
+  it("detects the first pasted snippet once without changing later selections", () => {
+    render(<Composer />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Code" }));
+    const textarea = screen.getByLabelText("Code content");
+    const languagePicker = screen.getByRole("combobox", { name: "Programming language" });
+    expect(languagePicker).toHaveValue("plaintext");
+
+    fireEvent.paste(textarea, {
+      clipboardData: { getData: () => "const answer = 42;" },
+    });
+    expect(languagePicker).toHaveValue("javascript");
+
+    fireEvent.paste(textarea, {
+      clipboardData: { getData: () => "SELECT * FROM users;" },
+    });
+    expect(languagePicker).toHaveValue("javascript");
+  });
 });

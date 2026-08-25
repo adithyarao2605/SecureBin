@@ -15,6 +15,7 @@ interface EditorPaneProps {
   readonly disabled: boolean;
   readonly language: CodeLanguage;
   onDraftChange: (value: string) => void;
+  onCodePaste: (value: string) => void;
   onMarkdownViewChange: (view: MarkdownViewMode) => void;
 }
 
@@ -25,6 +26,7 @@ export function EditorPane({
   disabled,
   language,
   onDraftChange,
+  onCodePaste,
   onMarkdownViewChange,
 }: EditorPaneProps) {
   const markdownTabs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -108,6 +110,7 @@ export function EditorPane({
             disabled={disabled}
             language={language}
             onDraftChange={onDraftChange}
+            onPaste={onCodePaste}
           />
         ) : (
           <>
