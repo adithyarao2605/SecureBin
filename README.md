@@ -21,6 +21,7 @@ visual identity.
 - [What SecureBin supports](#what-securebin-supports)
 - [How the security model works](#how-the-security-model-works)
 - [Offline `.securebin` parcels](#offline-securebin-parcels)
+- [Encrypted discussions](#encrypted-discussions)
 - [Run locally](#run-locally)
 - [Run the validation suite](#run-the-validation-suite)
 - [Self-host](#self-host)
@@ -53,7 +54,6 @@ separate marketing page.
 
 Then use **New share** to exercise the real flow: create a share, inspect the
 visible policy summary and Privacy Receipt, and open the recipient route. The
-UI explains what is implemented, what the server can observe, and what
 UI explains what is implemented, what the server can observe, and what
 revocation cannot erase.
 
@@ -125,6 +125,31 @@ To restore one:
 2. Select the `.securebin` file.
 3. Enter the original fragment key and any required password or unlock code.
 4. Decrypt locally. No API or Storage request is needed.
+
+## Encrypted discussions
+
+SecureBin supports optional encrypted discussion threads attached to a share.
+After a recipient successfully reveals an available share, they can post
+encrypted replies in the browser. The sender can enable discussions when
+creating the share; the discussion capability is sealed into the encrypted
+content and is never exposed through the public share identifier alone.
+
+Discussion behavior:
+
+- Comment bodies and optional nicknames are encrypted before they leave the
+  browser.
+- Replies can be nested, while authors can edit or delete their own comments
+  using browser-held proof tokens.
+- Discussion access follows the share lifecycle: scheduled, expired, revoked,
+  exhausted, or unavailable shares cannot accept or list comments.
+- The server stores encrypted envelopes and capability/proof digests, not
+  plaintext comments or raw client capabilities.
+- SecureBin does not claim to know whether a person read or understood a
+  comment. There are no activity or read receipts.
+
+This is an encrypted threaded discussion feature, not a realtime encrypted
+room. Realtime rooms and collaborative editing remain outside the current
+feature freeze.
 
 ## Run locally
 
