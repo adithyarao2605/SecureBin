@@ -388,4 +388,3 @@ report.
 | `info/HANDOFF.md` | Current implementation status and owner handoff record |
 | `docs/archive/implemented-history.md` | Consolidated implementation history and capability record |
 | `docs/self-hosting.md` | Expanded self-hosting reference |
-| `docs/bugs.md` | Known bug and interaction tracker |

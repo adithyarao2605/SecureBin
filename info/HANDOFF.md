@@ -4,11 +4,12 @@ Updated: 2026-08-25 (UTC)
 
 ## Documentation layout pass
 
-- Moved the expanded self-hosting runbook to `docs/self-hosting.md`, the
-  implemented capability record to `docs/archive/implemented-history.md`, and
-  the resolved bug tracker to `docs/bugs.md`.
+- Moved the expanded self-hosting runbook to `docs/self-hosting.md` and the
+  implemented capability record to `docs/archive/implemented-history.md`.
+- Removed the superseded `docs/bugs.md` tracker after the documentation update
+  from the current maintainer branch; no replacement tracker is advertised.
 - Updated the landing page, in-product documentation link, README, E2E
-  expectation, and historical cross-references to the new paths.
+  expectation, and historical cross-references to the current paths.
 - Kept `README.md`, `LICENSE`, `SECURITY.md`, `AGENTS.md`, and release/planning
   checklists at the repository root because they are standard entry points or
   active planning references. `info/plan.md` was not modified.
