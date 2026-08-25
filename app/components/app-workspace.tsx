@@ -179,6 +179,46 @@ export function AppWorkspace() {
               <p className="how-subtext">SecureBin combines zero-knowledge client-side encryption with atomic database policy enforcement. Explore how to create shares, manage multi-factor protection, self-host, and inspect the security model.</p>
             </div>
 
+            <section className="docs-at-a-glance" aria-labelledby="docs-glance-heading">
+              <div className="docs-glance-heading-row">
+                <div>
+                  <p className="eyebrow">Evaluator summary</p>
+                  <h3 id="docs-glance-heading">The four facts that matter first</h3>
+                </div>
+                <p className="docs-glance-note">A concise product explanation, visible before the detailed guides.</p>
+              </div>
+              <div className="docs-glance-grid">
+                <article className="docs-glance-card">
+                  <span className="docs-glance-index">01 / BROWSER</span>
+                  <h4>Encryption happens locally</h4>
+                  <p>Plaintext, keys, passwords, unlock codes, and decrypted files stay in the browser. The URL fragment is never sent in an HTTP request.</p>
+                </article>
+                <article className="docs-glance-card">
+                  <span className="docs-glance-index">02 / SERVER</span>
+                  <h4>Policy is enforced atomically</h4>
+                  <p>Expiry, revocation, scheduled availability, and reveal limits are enforced by locked database transitions, not by UI state.</p>
+                </article>
+                <article className="docs-glance-card">
+                  <span className="docs-glance-index">03 / EVIDENCE</span>
+                  <h4>Receipts explain the protection</h4>
+                  <p>The Privacy Receipt identifies the algorithm, factors, policy, encrypted objects, and visible infrastructure metadata.</p>
+                </article>
+                <article className="docs-glance-card docs-glance-card-boundary">
+                  <span className="docs-glance-index">04 / LIMITS</span>
+                  <h4>Revocation has honest limits</h4>
+                  <p>Revocation blocks future online releases. It cannot erase plaintext or encrypted parcels that someone already downloaded.</p>
+                </article>
+              </div>
+              <div className="docs-validation-strip" aria-label="Recorded CI validation baseline">
+                <span className="docs-validation-label">Recorded CI baseline</span>
+                <span><strong>191</strong> unit</span>
+                <span><strong>16</strong> integration</span>
+                <span><strong>155</strong> pgTAP</span>
+                <span><strong>19 + 19</strong> browser</span>
+                <span><strong>7</strong> Axe</span>
+              </div>
+            </section>
+
             <nav className="docs-nav-bar" aria-label="Documentation sections">
               <a className="docs-nav-pill" href="#guide-quickstart">🚀 Quickstart</a>
               <a className="docs-nav-pill" href="#guide-factors">🔐 Multi-Factor</a>

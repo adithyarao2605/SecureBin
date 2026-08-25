@@ -1,6 +1,7 @@
 "use client";
 
 import { bytesToArrayBuffer } from "../../../lib/crypto/encoding";
+import { formatLocalizedDateTime } from "../../../lib/shares/policy-ui";
 import { PrivacyReceipt, type PrivacyReceiptData } from "../privacy-receipt";
 import { ShareActions } from "../share-actions";
 
@@ -29,6 +30,25 @@ function downloadParcel(parcel: Uint8Array, publicId: string): void {
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(anchor.href);
+}
+
+function factorLabel(mask: string): string {
+  switch (mask) {
+    case "link":
+      return "Link only";
+    case "link+password":
+      return "Link + password";
+    case "link+unlock":
+      return "Link + unlock code";
+    case "link+password+unlock":
+      return "Link + password + unlock code";
+    default:
+      return mask;
+  }
+}
+
+function revealLabel(maxReveals: number | null): string {
+  return maxReveals === null ? "Unlimited releases" : `${maxReveals} release${maxReveals === 1 ? "" : "s"}`;
 }
 
 export function ShareResultCard({
@@ -62,6 +82,26 @@ export function ShareResultCard({
       <p className="share-hint">
         The key stays in the link fragment. Keep the full link.
       </p>
+
+      {receiptData && (
+        <div className="share-proof-summary" aria-label="Share policy summary">
+          <div className="share-proof-chips">
+            <span className="share-proof-chip">{receiptData.contentType ?? "Note"}</span>
+            <span className="share-proof-chip">{factorLabel(receiptData.mask)}</span>
+            <span className="share-proof-chip">{revealLabel(receiptData.maxReveals)}</span>
+            <span className="share-proof-chip">
+              {receiptData.expiresAt ? `Expires ${formatLocalizedDateTime(receiptData.expiresAt)}` : "Never expires"}
+            </span>
+          </div>
+          <p className="share-fingerprint-line">
+            <span>Ciphertext fingerprint</span>
+            <code>{receiptData.fingerprint.slice(0, 16)}…</code>
+          </p>
+          <p className="share-fingerprint-note">
+            This identifies the sealed material; it is not proof that someone opened or read it.
+          </p>
+        </div>
+      )}
 
       {parcel && receiptData && (
         <div className="parcel-export-box">
