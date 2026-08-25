@@ -351,10 +351,10 @@ Use the shortest document that answers the question:
 | Product behavior, setup, demo, and security summary | This README |
 | Protocol, trust boundaries, schemas, RPCs, and lifecycle semantics | [`docs/architecture.md`](docs/architecture.md) |
 | UX direction and accessibility expectations | [`docs/SPEC.md`](docs/SPEC.md) |
-| Deployment, environment variables, migrations, and smoke checks | [`docs/deployment.md`](docs/deployment.md) and [`self_hosting.md`](self_hosting.md) |
+| Deployment, environment variables, migrations, and smoke checks | [`docs/deployment.md`](docs/deployment.md) and [`docs/self-hosting.md`](docs/self-hosting.md) |
 | Validation evidence and what still needs owner verification | [`docs/evidence.md`](docs/evidence.md) and [`info/HANDOFF.md`](info/HANDOFF.md) |
 | Final verification and demo checklist | [`LAST_DAY.md`](LAST_DAY.md) and [`docs/DAY-7-PLAN.md`](docs/DAY-7-PLAN.md) |
-| Historical decisions and resolved incidents | [`history.md`](history.md) and [`docs/archive/`](docs/archive/) |
+| Historical decisions and resolved incidents | [`docs/archive/implemented-history.md`](docs/archive/implemented-history.md) and [`docs/archive/`](docs/archive/) |
 
 The in-app **How it works** panel at [`/new#how-it-works`](https://secure-bin.vercel.app/new#how-it-works) is the quickest product-level explanation; the documents above provide the implementation evidence behind it.
 
@@ -386,6 +386,6 @@ report.
 | `LAST_DAY.md` | Release-freeze and final demo checklist |
 | `info/plan_v3.md` | Active roadmap and current release status |
 | `info/HANDOFF.md` | Current implementation status and owner handoff record |
-| `history.md` | Consolidated implementation history and capability record |
-| `self_hosting.md` | Expanded self-hosting reference |
-| `bugs.md` | Known bug and interaction tracker |
+| `docs/archive/implemented-history.md` | Consolidated implementation history and capability record |
+| `docs/self-hosting.md` | Expanded self-hosting reference |
+| `docs/bugs.md` | Known bug and interaction tracker |

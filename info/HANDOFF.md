@@ -2,6 +2,21 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Documentation layout pass
+
+- Moved the expanded self-hosting runbook to `docs/self-hosting.md`, the
+  implemented capability record to `docs/archive/implemented-history.md`, and
+  the resolved bug tracker to `docs/bugs.md`.
+- Updated the landing page, in-product documentation link, README, E2E
+  expectation, and historical cross-references to the new paths.
+- Kept `README.md`, `LICENSE`, `SECURITY.md`, `AGENTS.md`, and release/planning
+  checklists at the repository root because they are standard entry points or
+  active planning references. `info/plan.md` was not modified.
+- No product behavior, cryptography, database contract, or feature scope was
+  changed. `new_plan_final.md` remains intentionally untracked and untouched.
+- Documentation link checks, lint, typecheck, unit tests, source audit, and
+  production build remain the relevant validation gates; no push was performed.
+
 ## Documentation and repository hygiene pass
 
 - Synchronized the README, evidence record, active roadmap, architecture,
@@ -149,7 +164,7 @@ Updated: 2026-08-25 (UTC)
 ## CI browser-contract refresh
 
 - Updated the landing E2E assertion to match the intentional external
-  `self_hosting.md` link and its new-tab behavior.
+  `docs/self-hosting.md` link and its new-tab behavior.
 - Updated the visual-contract test to use the current `Open parcel` utility
   label and the protected-share test to read the current semantic `.unlock-code`
   result element.

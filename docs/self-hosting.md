@@ -5,7 +5,7 @@ competition deployment. You can run the application, PostgreSQL database, and
 private Storage on infrastructure you control with Docker and Node.js.
 
 For the shorter setup and security overview, start with the
-[main README](README.md). This file is the expanded operator runbook.
+[main README](../README.md). This file is the expanded operator runbook.
 
 ---
 

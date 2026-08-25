@@ -8,7 +8,7 @@ test("landing page presents the technical shell and real create action", async (
   await expect(primaryNav.getByRole("link", { name: "Features", exact: true })).toHaveAttribute("href", "#features");
   await expect(primaryNav.getByRole("link", { name: "Security", exact: true })).toHaveAttribute("href", "#security");
   const selfHostLink = primaryNav.getByRole("link", { name: "Self-Host", exact: true });
-  await expect(selfHostLink).toHaveAttribute("href", /\/self_hosting\.md$/u);
+  await expect(selfHostLink).toHaveAttribute("href", /\/docs\/self-hosting\.md$/u);
   await expect(selfHostLink).toHaveAttribute("target", "_blank");
   await expect(primaryNav.getByRole("link", { name: "Docs", exact: true })).toHaveAttribute("href", "/new#how-it-works");
   await expect(page.locator(".landing-hero").getByRole("link", { name: /Create secure share/i })).toHaveAttribute("href", "/new");

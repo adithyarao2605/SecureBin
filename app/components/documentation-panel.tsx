@@ -192,7 +192,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
         <h3>🖥️ Self-Hosting Guide & Local Stack</h3>
         <p>Run your own private instance of SecureBin using Docker and Node.js. No external SaaS or proprietary dependencies required.</p>
         <div className="docs-code-box"><code># 1. Start local Supabase container and database migrations<br /><strong>pnpm local:setup</strong><br /><br /># 2. Launch production-built SecureBin web app<br /><strong>pnpm local</strong><br /><br /># Open browser at http://127.0.0.1:3101</code></div>
-        <p>For complete VPS/cloud deployment, Nginx reverse proxy configurations, and systemd service scripts, see the <a href="https://github.com/adithyarao2605/SecureBin/blob/main/self_hosting.md" target="_blank" rel="noreferrer" style={{ color: "var(--mineral)", textDecoration: "underline" }}>Self-Hosting Documentation (self_hosting.md)</a>.</p>
+        <p>For complete VPS/cloud deployment, Nginx reverse proxy configurations, and systemd service scripts, see the <a href="https://github.com/adithyarao2605/SecureBin/blob/main/docs/self-hosting.md" target="_blank" rel="noreferrer" style={{ color: "var(--mineral)", textDecoration: "underline" }}>Self-Hosting Documentation (docs/self-hosting.md)</a>.</p>
       </section>
 
       <section className="protocol-section" id="guide-security" aria-labelledby="protocol-heading">

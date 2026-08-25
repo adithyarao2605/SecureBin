@@ -1,8 +1,8 @@
 # SecureBin: Implemented History & Capabilities
 
 This is a historical capability record, not the live validation scoreboard.
-For current status and release evidence, use [`info/HANDOFF.md`](info/HANDOFF.md)
-and [`docs/evidence.md`](docs/evidence.md).
+For current status and release evidence, use [`info/HANDOFF.md`](../../info/HANDOFF.md)
+and [`docs/evidence.md`](../evidence.md).
 
 ---
 
@@ -79,4 +79,4 @@ The earlier release evidence was captured in prior handoffs. The
 current local JavaScript gate has 217 unit tests passing with lint, strict
 typechecking, source audit, and production build. Supabase, integration,
 Chromium, and Axe results must be refreshed for the final release SHA in CI or
-the owner-hosted environment; see [`docs/evidence.md`](docs/evidence.md).
+the owner-hosted environment; see [`docs/evidence.md`](../evidence.md).
