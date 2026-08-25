@@ -466,29 +466,7 @@
   min-height: 260px;
 }
 
-.code-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0.75rem;
-  align-items: stretch;
-}
-
-.code-split .code-editor-wrap,
-.code-split .composer-code-preview {
-  min-width: 0;
-}
-
-.composer-code-preview {
-  min-width: 0;
-  min-height: 260px;
-  max-height: 420px;
-  overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: .45rem;
-  background: var(--surface-subtle);
-}
-
-.composer-code-preview-header {
+.code-editor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -503,31 +481,10 @@
   text-transform: uppercase;
 }
 
-.composer-code-preview-header code {
+.code-editor-header code {
   color: var(--mineral);
   font-size: inherit;
   font-weight: 700;
-}
-
-.composer-code-preview-body {
-  min-height: 260px;
-  padding: 1rem;
-}
-
-.composer-code-preview-block {
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
-
-.composer-code-preview-empty {
-  margin: 0;
-  padding: 1rem;
-  color: var(--muted-ink);
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
 }
 
 .composer-md-preview {
@@ -554,56 +511,119 @@
 @media (max-width: 767px) {
   .md-view-option.split-option { display: none; }
 
-  .code-view-toggle .md-view-option.split-option { display: inline-flex; }
-
   .md-split {
-    grid-template-columns: 1fr;
-  }
-
-  .code-split {
     grid-template-columns: 1fr;
   }
 
   .md-split .composer-md-preview {
     max-height: 300px;
   }
-
-  .composer-code-preview {
-    max-height: 300px;
-  }
 }
 
 .code-editor-wrap {
   position: relative;
-  min-height: 260px;
   border: 1px solid var(--line);
   border-radius: .45rem;
   background: var(--surface-subtle);
+  overflow: hidden;
 }
 
+.code-editor-surface {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  min-height: 260px;
+  max-height: 420px;
+  overflow: hidden;
+  background: var(--surface-subtle);
+}
+
+.code-editor-gutter {
+  overflow: hidden;
+  padding: 1rem 0.65rem 1rem 0.4rem;
+  border-right: 1px solid var(--line);
+  color: var(--muted-ink);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: right;
+  user-select: none;
+}
+
+.code-editor-gutter-content {
+  will-change: transform;
+}
+
+.code-editor-gutter-content span {
+  display: block;
+}
+
+.code-editor-stage {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.code-editor-highlight,
 .code-editor-input {
   box-sizing: border-box;
   margin: 0;
-  min-height: 260px;
-  width: 100%;
   padding: 1rem;
-  border: none;
-  border-radius: .45rem;
-  background: transparent;
-  color: var(--ink) !important;
-  caret-color: var(--mineral);
   font-family: var(--font-mono);
   font-size: 0.9rem;
   line-height: 1.6;
   tab-size: 2;
   white-space: pre;
-  resize: vertical;
+}
+
+.code-editor-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  min-width: 100%;
+  min-height: 100%;
+  color: var(--ink);
+  pointer-events: none;
+  transform: translate(0, 0);
+  will-change: transform;
+}
+
+.code-editor-input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: transparent !important;
+  caret-color: var(--mineral);
+  -webkit-text-fill-color: transparent;
+  overflow: auto;
+  resize: none;
   outline: none;
 }
 
-.code-editor-input:focus {
-  background: var(--surface-bg);
+.code-editor-input::selection {
+  background: color-mix(in srgb, var(--mineral) 35%, transparent);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
+
+.code-editor-input::placeholder {
+  color: var(--muted-ink);
+  -webkit-text-fill-color: var(--muted-ink);
+  opacity: 1;
+}
+
+@media (max-width: 767px) {
+  .code-editor-surface {
+    max-height: 300px;
+  }
+}
+
 .language-options { position: absolute; z-index: 4; top: calc(100% + .25rem); left: 0; min-width: 12rem; max-height: 14rem; overflow: auto; margin: 0; padding: .25rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--surface-bg); box-shadow: 0 8px 24px rgba(23,36,45,.16); list-style: none; }
 .language-options li { padding: .45rem .6rem; border-radius: 5px; font-family: var(--font-mono); font-size: .78rem; cursor: pointer; }
 .language-options li.active, .language-options li:hover { background: var(--surface-subtle); color: var(--ink); }

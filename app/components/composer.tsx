@@ -24,12 +24,11 @@ import {
   type CreateAttempt,
 } from "../hooks/use-staged-create";
 import { ModeTabs, type ComposerMode } from "./composer/mode-tabs";
-import { EditorPane, type CodeViewMode, type MarkdownViewMode } from "./composer/editor-pane";
+import { EditorPane, type MarkdownViewMode } from "./composer/editor-pane";
 import { AttachmentZone } from "./composer/attachment-zone";
 import { ShareResultCard } from "./composer/share-result-card";
-import { detectCodeLanguage } from "../../lib/render/detect-language";
 
-export type { CodeViewMode, ComposerMode, MarkdownViewMode };
+export type { ComposerMode, MarkdownViewMode };
 
 export interface ComposerProps {
   readonly onPhaseChange?: (phase: ProoflinePhase) => void;
@@ -40,8 +39,7 @@ export interface ComposerProps {
 export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: ComposerProps = {}) {
   const [mode, setMode] = useState<ComposerMode>("note");
   const [markdownView, setMarkdownView] = useState<MarkdownViewMode>("edit");
-  const [codeView, setCodeView] = useState<CodeViewMode>("edit");
-  const [language, setLanguage] = useState<CodeLanguage>("typescript");
+  const [language, setLanguage] = useState<CodeLanguage>("plaintext");
   const [draft, setDraft] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [policyDraft, setPolicyDraft] = useState<PolicyDraft>(defaultPolicyDraft());
@@ -59,7 +57,6 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   const [unlockCodeShown, setUnlockCodeShown] = useState("");
   const [receiptData, setReceiptData] = useState<PrivacyReceiptData | null>(null);
   const [parcel, setParcel] = useState<Uint8Array | null>(null);
-  const manualLanguageRef = useRef(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Discussion capability minted once per share attempt so a staged retry
@@ -73,12 +70,10 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   const { stage, discard } = useStagedCreate();
 
   useEffect(() => {
-    // Desktop has enough room for a live side-by-side authoring view. Keep
-    // mobile focused on editing and let the explicit Preview tab reveal the
-    // rendered result.
+    // Desktop uses a side-by-side Markdown authoring view. Code mode is a
+    // single editable IDE surface at every viewport.
     const desktop = window.matchMedia?.("(min-width: 768px)").matches ?? false;
     setMarkdownView(desktop ? "split" : "edit");
-    setCodeView(desktop ? "split" : "edit");
   }, []);
 
   function resetPrepared() {
@@ -89,28 +84,19 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
 
   function handleDraftChange(value: string) {
     setDraft(value);
-    if (mode === "code" && value.length === 0) manualLanguageRef.current = false;
     resetPrepared();
   }
 
   function handleModeChange(newMode: ComposerMode) {
     setMode(newMode);
     if (newMode !== "markdown") setMarkdownView("edit");
-    if (newMode !== "code") setCodeView("edit");
     resetPrepared();
   }
 
   function handleLanguageChange(newLang: CodeLanguage) {
     setLanguage(newLang);
-    manualLanguageRef.current = true;
     resetPrepared();
   }
-
-  useEffect(() => {
-    if (mode !== "code" || !draft || manualLanguageRef.current) return;
-    const timer = window.setTimeout(() => setLanguage(detectCodeLanguage(draft)), 350);
-    return () => window.clearTimeout(timer);
-  }, [draft, mode]);
 
   function acceptFiles(candidates: File[]): boolean {
     for (const file of candidates) {
@@ -309,13 +295,11 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
         <EditorPane
           mode={mode}
           markdownView={markdownView}
-          codeView={codeView}
           draft={draft}
           language={language}
           disabled={isPending}
           onDraftChange={handleDraftChange}
           onMarkdownViewChange={setMarkdownView}
-          onCodeViewChange={setCodeView}
         />
 
         <AttachmentZone

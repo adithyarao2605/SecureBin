@@ -281,7 +281,7 @@ export function AppWorkspace() {
                     <span className="docs-step-num">1</span>
                     <div className="docs-step-text">
                       <strong>Choose Your Mode</strong>
-                      <p>Select <em>Plain Text</em> for credentials, <em>Markdown</em> for rich documents (with split/preview mode), or <em>Code</em> for language-aware snippets with Edit, Split, and Preview views.</p>
+                      <p>Select <em>Plain Text</em> for credentials, <em>Markdown</em> for rich documents (with split/preview mode), or <em>Code</em> for language-aware snippets in one editable IDE-style surface.</p>
                     </div>
                   </li>
                   <li className="docs-step-item">

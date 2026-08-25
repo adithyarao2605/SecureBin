@@ -2,6 +2,17 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Single-panel code editor
+
+- Replaced the code-mode Edit/Split/Preview layout with one editable IDE-style
+  panel: the real textarea remains the accessible editing surface while a
+  synchronized syntax-highlighted layer and line-number gutter provide the
+  preview underneath it.
+- Code mode now defaults to `plaintext`; typing never auto-detects or changes
+  the language. The selected language changes only through the explicit picker.
+- Updated the composer documentation copy and regression tests. Focused
+  composer tests, lint, and typecheck pass; no push was performed.
+
 ## Documentation guide navigation
 
 - Fixed the documentation guide pills (`Quickstart`, `Multi-Factor`, policies,

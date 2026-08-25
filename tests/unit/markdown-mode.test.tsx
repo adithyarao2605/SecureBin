@@ -53,31 +53,27 @@ describe("composer markdown edit / split / preview", () => {
     expect(split).toHaveAttribute("aria-selected", "true");
   });
 
-  it("renders a language-aware Code preview without replacing the editor", () => {
+  it("renders one editable IDE panel with live syntax highlighting", () => {
     render(<Composer />);
 
     fireEvent.click(screen.getByRole("tab", { name: "Code" }));
-    fireEvent.change(screen.getByLabelText("Code content"), {
+    const languagePicker = screen.getByRole("combobox", { name: "Programming language" });
+    expect(languagePicker).toHaveValue("plaintext");
+    fireEvent.focus(languagePicker);
+    fireEvent.click(screen.getByRole("option", { name: "typescript" }));
+
+    const textarea = screen.getByLabelText("Code content");
+    fireEvent.change(textarea, {
       target: { value: "const answer: number = 42;" },
     });
-    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 
-    expect(screen.queryByLabelText("Code content")).not.toBeInTheDocument();
-    const preview = screen.getByLabelText("Code authoring preview in typescript");
-    expect(preview).toBeInTheDocument();
-    expect(preview.querySelector(".hljs-keyword")).toBeInTheDocument();
-    expect(preview.querySelector(".hljs-number")).toBeInTheDocument();
-  });
-
-  it("stacks the Code editor and preview in split view", () => {
-    render(<Composer />);
-
-    fireEvent.click(screen.getByRole("tab", { name: "Code" }));
-    const textarea = screen.getByLabelText("Code content");
-    fireEvent.change(textarea, { target: { value: "print('hello')" } });
-    fireEvent.click(screen.getByRole("tab", { name: "Split" }));
-
-    expect(textarea.closest(".code-split")).not.toBeNull();
-    expect(screen.getByLabelText("Code authoring preview in typescript")).toBeInTheDocument();
+    expect(languagePicker).toHaveValue("typescript");
+    const editor = screen.getByRole("region", { name: "Code editor in typescript" });
+    expect(editor).toBeInTheDocument();
+    expect(editor.querySelector(".code-editor-highlight .hljs-keyword")).toBeInTheDocument();
+    expect(editor.querySelector(".code-editor-highlight .hljs-number")).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Edit" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Split" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Preview" })).not.toBeInTheDocument();
   });
 });
