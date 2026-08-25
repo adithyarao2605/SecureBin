@@ -2,6 +2,19 @@
 
 Updated: 2026-08-25 (UTC)
 
+## CI browser-contract refresh
+
+- Updated the landing E2E assertion to match the intentional external
+  `self_hosting.md` link and its new-tab behavior.
+- Updated the visual-contract test to use the current `Open parcel` utility
+  label and the protected-share test to read the current semantic `.unlock-code`
+  result element.
+- `pnpm validate` passes with 214 unit tests, lint, typecheck, source audit,
+  and production build. Both development and production Playwright configs
+  enumerate all 19 tests; Chromium execution remains CI-only in this
+  workspace because the pinned browser binary is unavailable locally.
+- No push was performed.
+
 ## Landing capability tile polish
 
 - Scoped the Technical Capabilities tile styling to direct child items so the

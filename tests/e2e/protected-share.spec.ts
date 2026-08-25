@@ -24,9 +24,9 @@ test("creates a password + unlock protected share and reveals with both factors"
   await page.getByRole("checkbox", { name: /separate unlock code/iu }).check();
   await page.getByRole("button", { name: "Create share" }).click();
 
-  const unlockBox = page.getByText(/Second-channel unlock code/u);
-  await expect(unlockBox).toBeVisible({ timeout: 30_000 });
-  const code = (await page.locator(".unlock-code").textContent())?.trim() ?? "";
+  const unlockCode = page.locator(".unlock-code");
+  await expect(unlockCode).toBeVisible({ timeout: 30_000 });
+  const code = (await unlockCode.textContent())?.trim() ?? "";
   expect(code.length).toBeGreaterThanOrEqual(27);
 
   // ZK assertions: neither factor ever appears in any request body.

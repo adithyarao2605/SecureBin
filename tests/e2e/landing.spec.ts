@@ -7,7 +7,9 @@ test("landing page presents the technical shell and real create action", async (
   await expect(page.getByRole("heading", { name: /Share sensitive information/i })).toBeVisible();
   await expect(primaryNav.getByRole("link", { name: "Features", exact: true })).toHaveAttribute("href", "#features");
   await expect(primaryNav.getByRole("link", { name: "Security", exact: true })).toHaveAttribute("href", "#security");
-  await expect(primaryNav.getByRole("link", { name: "Self-Host", exact: true })).toHaveAttribute("href", "#self-hosting");
+  const selfHostLink = primaryNav.getByRole("link", { name: "Self-Host", exact: true });
+  await expect(selfHostLink).toHaveAttribute("href", /\/self_hosting\.md$/u);
+  await expect(selfHostLink).toHaveAttribute("target", "_blank");
   await expect(primaryNav.getByRole("link", { name: "Docs", exact: true })).toHaveAttribute("href", "/new#how-it-works");
   await expect(page.locator(".landing-hero").getByRole("link", { name: /Create secure share/i })).toHaveAttribute("href", "/new");
   await expect(page.getByText("Paste sensitive credentials, API keys, or notes here...", { exact: true })).toBeVisible();
