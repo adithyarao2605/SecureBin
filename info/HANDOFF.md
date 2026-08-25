@@ -2,6 +2,16 @@
 
 Updated: 2026-08-25 (UTC)
 
+## Dark default theme
+
+- Restored dark mode as the first-visit/default theme across the pre-hydration
+  layout and theme toggle. Explicitly choosing light mode remains supported and
+  persists locally.
+- Updated the visual-contract E2E expectations and the active SPEC/architecture
+  wording to match the dark-first default.
+- Lint, typecheck, and Playwright test discovery pass. Full browser execution
+  remains CI-only in this environment. No push was performed.
+
 ## Judge-facing polish and lifecycle hardening
 
 - Aligned the public copy with the implementation: the link key is documented

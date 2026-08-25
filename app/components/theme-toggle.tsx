@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<"dark" | "light">("light");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export function ThemeToggle() {
     } catch {
       // Some embedded and test environments expose no usable storage.
     }
-    const initial = stored === "dark" ? "dark" : "light";
+    const initial = stored === "light" ? "light" : "dark";
     setTheme(initial);
     applyThemeToDom(initial);
   }, []);

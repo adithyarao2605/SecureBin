@@ -11,19 +11,20 @@ test("major public and application views retain the quiet-proof visual contract"
     const style = getComputedStyle(document.documentElement);
     return [style.getPropertyValue("--linen").trim(), style.getPropertyValue("--ink").trim(), style.getPropertyValue("--mineral").trim()];
   });
-  expect(darkTokens).toEqual(["#f4f0e8", "#17242d", "#2f7071"]);
+  expect(darkTokens).toEqual(["#000000", "#f4f4f4", "#79b8b0"]);
+  await capture(page, testInfo, "landing-dark-desktop");
+
+  await page.getByRole("button", { name: "Switch to light theme" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  const lightTokensAfterToggle = await page.evaluate(() => {
+    const style = getComputedStyle(document.documentElement);
+    return [style.getPropertyValue("--linen").trim(), style.getPropertyValue("--ink").trim(), style.getPropertyValue("--mineral").trim()];
+  });
+  expect(lightTokensAfterToggle).toEqual(["#f4f0e8", "#17242d", "#2f7071"]);
   await capture(page, testInfo, "landing-light-desktop");
 
   await page.getByRole("button", { name: "Switch to dark theme" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  const darkTokensAfterToggle = await page.evaluate(() => {
-    const style = getComputedStyle(document.documentElement);
-    return [style.getPropertyValue("--linen").trim(), style.getPropertyValue("--ink").trim(), style.getPropertyValue("--mineral").trim()];
-  });
-  expect(darkTokensAfterToggle).toEqual(["#000000", "#f4f4f4", "#79b8b0"]);
-  await capture(page, testInfo, "landing-dark-desktop");
-
-  await page.getByRole("button", { name: "Switch to light theme" }).click();
   await page.goto("/new");
   await expect(page.getByRole("heading", { name: "Create a private share" })).toBeVisible();
   await capture(page, testInfo, "new-create-desktop");

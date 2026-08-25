@@ -69,8 +69,8 @@ The browser owns key generation, derivation, encryption, decryption, content ren
 ### Experience layer (non-authoritative)
 
 The browser surface follows the quiet-proof direction in
-[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof): a light-first
-Linen/Ink/Mineral/Copper palette, a single compose or reveal surface, and one
+[`docs/SPEC.md`](SPEC.md#experience-direction--quiet-proof): a dark-first
+theme with a light toggle, a single compose or reveal surface, and one
 proofline connecting the browser, sealed parcel, and recipient. The proofline is
 only an explanation of the client flow. It must never be used as evidence that
 encryption, authorization, or deletion succeeded; those states come from the

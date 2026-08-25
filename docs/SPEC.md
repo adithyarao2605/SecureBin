@@ -47,12 +47,11 @@ interface cannot prove.
 
 ### Visual system
 
-- **Palette:** light-first Linen `#F4F0E8` for the canvas, Ink `#17242D` for
-  text, Deep Slate `#2D4148` for quiet panels, Mineral `#2F7071` for actions
-  and focus, Copper `#B86848` for the one accent and attention states, and Mist
-  `#DCE9E3` for confirmed local states. Dark mode uses Deep Ink `#11242A` and
-  warm Mist `#ECF1EB` rather than a black/neon reversal. Every status also has
-  text and an icon or shape; color is never the only signal.
+- **Palette:** dark-first Deep Ink `#000000` and warm Ink `#F4F4F4` for the
+  default canvas and text, with Mineral `#79B8B0` for actions and focus. The
+  light theme uses Linen `#F4F0E8`, Ink `#17242D`, Deep Slate `#2D4148`,
+  Mineral `#2F7071`, Copper `#B86848`, and Mist `#DCE9E3`. Every status also
+  has text and an icon or shape; color is never the only signal.
 - **Typography:** use a self-hosted, bundled display face such as Bricolage
   Grotesque for short headings, Atkinson Hyperlegible for body and controls,
   and IBM Plex Mono for compact receipt labels and technical values. Provide
