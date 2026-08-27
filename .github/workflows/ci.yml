@@ -48,7 +48,7 @@ jobs:
         with:
           node-version-file: '.nvmrc'
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           version: 2.115.0
       - name: Activate the package manager declared by package.json
