@@ -75,6 +75,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [protection, setProtection] = useState<ProtectionState>(EMPTY_PROTECTION);
   const [enableDiscussion, setEnableDiscussion] = useState(false);
+  const [discussionNotice, setDiscussionNotice] = useState("");
   const [unlockCodeShown, setUnlockCodeShown] = useState("");
   const [receiptData, setReceiptData] = useState<PrivacyReceiptData | null>(null);
   const [parcel, setParcel] = useState<Uint8Array | null>(null);
@@ -108,11 +109,14 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
 
   useEffect(() => {
     if (!discussionEligible && enableDiscussion) {
+      setDiscussionNotice("Encrypted discussion is unavailable for one-time shares. Select 3 reveals, 5 reveals, 10 reveals, a custom limit of at least 3, or Unlimited.");
       setEnableDiscussion(false);
       discussionCapabilityRef.current = null;
       discard();
       lastAttemptRef.current = null;
       setErrorMessage("");
+      const timeout = window.setTimeout(() => setDiscussionNotice(""), 6000);
+      return () => window.clearTimeout(timeout);
     }
   }, [discard, discussionEligible, enableDiscussion]);
 
@@ -348,6 +352,12 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
 
   return (
     <div className="surface-card composer-surface">
+      {discussionNotice && (
+        <div className="composer-toast" role="status" aria-live="polite">
+          <span>{discussionNotice}</span>
+          <button type="button" aria-label="Dismiss discussion notice" onClick={() => setDiscussionNotice("")}>×</button>
+        </div>
+      )}
       <div className="composer-header">
         <div className="composer-heading-row">
           <h2 className="surface-heading" id="composer-heading">Create a private share</h2>

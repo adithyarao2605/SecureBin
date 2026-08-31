@@ -423,6 +423,10 @@ valid because of lifecycle policy (for example expiry, revocation, reveal
 exhaustion, scheduling, or a closed release window). It does not disclose
 which specific lifecycle condition matched.
 
+The composer also shows an accessible toast when an enabled discussion is
+made ineligible by switching to a one-time policy, naming the eligible reveal
+choices needed to continue.
+
 Operators of a separate SecureBin deployment should follow
 `docs/deployment.md` and record their own non-secret deployment evidence. The
 published SecureBin service is already covered by this release record.

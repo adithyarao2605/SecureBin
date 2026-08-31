@@ -436,6 +436,30 @@
   font-size: 0.88rem;
 }
 
+.composer-toast {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+  margin: -0.25rem -0.25rem 1rem;
+  padding: .7rem .85rem;
+  border: 1px solid var(--copper);
+  border-radius: .45rem;
+  background: color-mix(in srgb, var(--copper) 12%, transparent);
+  color: var(--ink);
+  font-size: .84rem;
+}
+
+.composer-toast button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .protection-controls {
   border: 1px solid var(--line);
   border-radius: .45rem;
