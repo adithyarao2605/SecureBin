@@ -19,6 +19,12 @@ Updated: 2026-08-31 (UTC)
 - Local database, integration, development-browser, production-browser, and
   accessibility execution remains blocked by this host's Docker socket
   permission (`/var/run/docker.sock`); no result is reported as passed here.
+- Final local rerun confirmed the static gate: `pnpm validate` passed with 217
+  unit tests, source audit, and the Next.js 16 production build; frozen install,
+  reproducibility, lint, typecheck, and the production dependency audit also
+  passed. The 16 integration tests fail only because their Supabase dependency
+  is unavailable (10 dependency failures, 6 isolated tests pass), and all 20,
+  20, and 7 Chromium suites were verified by discovery but not executed.
 - Delegation outcome: the CI audit subagent recommended independent static,
   database, development-browser, production-browser, and accessibility jobs;
   that workflow split was applied. The documentation audit subagent could not
