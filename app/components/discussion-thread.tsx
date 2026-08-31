@@ -136,8 +136,14 @@ export function DiscussionThread({
       if (seq !== loadSeq.current) return;
       setComments(decrypted);
       setLoadError("");
-    } catch {
-      if (seq === loadSeq.current) setLoadError("Comments could not be loaded right now.");
+    } catch (error) {
+      if (seq === loadSeq.current) {
+        setLoadError(
+          error instanceof Error && error.message === "comments_fetch_failed"
+            ? "Discussion is unavailable because this share or its discussion access is no longer valid. This can happen after expiry, revocation, reveal exhaustion, scheduling, or a closed release window."
+            : "Discussion could not be loaded because the encrypted response was invalid. Retry if the share is still available."
+        );
+      }
     } finally {
       if (seq === loadSeq.current) setIsLoading(false);
     }

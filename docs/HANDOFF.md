@@ -417,6 +417,12 @@ The supplied Stitch export was reviewed read-only. The implemented interface pre
 
 ## Released operator notes
 
+The discussion panel now explains why a comments request is unavailable in
+security-safe terms: the share or discussion capability may no longer be
+valid because of lifecycle policy (for example expiry, revocation, reveal
+exhaustion, scheduling, or a closed release window). It does not disclose
+which specific lifecycle condition matched.
+
 Operators of a separate SecureBin deployment should follow
 `docs/deployment.md` and record their own non-secret deployment evidence. The
 published SecureBin service is already covered by this release record.
