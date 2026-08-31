@@ -38,7 +38,10 @@ Updated: 2026-08-31 (UTC)
   and integration, production browser, and accessibility jobs. Development
   browser had 19 passing tests and one brittle visual-token assertion; Chromium
   reports the valid black token as `#000` rather than `#000000`. The assertion
-  was corrected in the follow-up commit.
+  was corrected in `63873da`, after which the production-browser run exposed
+  the inverse serialization (`#000000`). Commit `3737313` now normalizes
+  equivalent three- and six-digit CSS hex forms before comparison; its CI run
+  is the final browser verification.
 
 ## Final submission documentation cleanup
 
