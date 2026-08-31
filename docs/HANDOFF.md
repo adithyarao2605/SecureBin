@@ -30,8 +30,10 @@ Updated: 2026-08-31 (UTC)
   that workflow split was applied. The documentation audit subagent could not
   start because its isolated shell was unavailable, so no delegated doc edits
   were accepted from it.
-- No remote push has been made for this maintenance pass. The candidate must
-  complete CI before it is merged into the release branch.
+- The verified release candidate was pushed to `origin/main` at commit
+  `a027702`; GitHub Actions run `33354397473` is the resulting CI audit. The
+  local Supabase limitation is now delegated to that production-shaped CI
+  environment for database, integration, browser, and accessibility execution.
 
 ## Final submission documentation cleanup
 
