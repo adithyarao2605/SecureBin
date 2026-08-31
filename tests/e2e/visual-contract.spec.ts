@@ -4,6 +4,11 @@ async function capture(page: import("@playwright/test").Page, testInfo: import("
   await page.screenshot({ path: testInfo.outputPath(`${name}.png`), fullPage: true, animations: "disabled" });
 }
 
+function normalizeCssColor(value: string): string {
+  const match = /^#([0-9a-f]{3})$/iu.exec(value);
+  return match ? `#${match[1].split("").map((digit) => `${digit}${digit}`).join("")}` : value;
+}
+
 test("major public and application views retain the quiet-proof visual contract", async ({ page }, testInfo) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Share sensitive information/u })).toBeVisible();
@@ -11,7 +16,7 @@ test("major public and application views retain the quiet-proof visual contract"
     const style = getComputedStyle(document.documentElement);
     return [style.getPropertyValue("--linen").trim(), style.getPropertyValue("--ink").trim(), style.getPropertyValue("--mineral").trim()];
   });
-  expect(darkTokens).toEqual(["#000", "#f4f4f4", "#79b8b0"]);
+  expect(darkTokens.map(normalizeCssColor)).toEqual(["#000000", "#f4f4f4", "#79b8b0"]);
   await capture(page, testInfo, "landing-dark-desktop");
 
   await page.getByRole("button", { name: "Switch to light theme" }).click();
