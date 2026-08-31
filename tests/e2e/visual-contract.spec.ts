@@ -11,7 +11,7 @@ test("major public and application views retain the quiet-proof visual contract"
     const style = getComputedStyle(document.documentElement);
     return [style.getPropertyValue("--linen").trim(), style.getPropertyValue("--ink").trim(), style.getPropertyValue("--mineral").trim()];
   });
-  expect(darkTokens).toEqual(["#000000", "#f4f4f4", "#79b8b0"]);
+  expect(darkTokens).toEqual(["#000", "#f4f4f4", "#79b8b0"]);
   await capture(page, testInfo, "landing-dark-desktop");
 
   await page.getByRole("button", { name: "Switch to light theme" }).click();

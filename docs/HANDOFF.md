@@ -34,6 +34,11 @@ Updated: 2026-08-31 (UTC)
   `a027702`; GitHub Actions run `33354397473` is the resulting CI audit. The
   local Supabase limitation is now delegated to that production-shaped CI
   environment for database, integration, browser, and accessibility execution.
+- CI run `33354397473` passed reproducibility, static quality/build, database
+  and integration, production browser, and accessibility jobs. Development
+  browser had 19 passing tests and one brittle visual-token assertion; Chromium
+  reports the valid black token as `#000` rather than `#000000`. The assertion
+  was corrected in the follow-up commit.
 
 ## Final submission documentation cleanup
 
