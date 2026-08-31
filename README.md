@@ -183,6 +183,8 @@ Discussion behavior:
   using browser-held proof tokens.
 - Discussion access follows the share lifecycle: scheduled, expired, revoked,
   exhausted, or unavailable shares cannot accept or list comments.
+- The composer only enables discussions for shares allowing at least three
+  reveals or unlimited reveals; one-time shares cannot support a thread.
 - The server stores encrypted envelopes and capability/proof digests, not
   plaintext comments or raw client capabilities.
 - SecureBin does not claim to know whether a person read or understood a

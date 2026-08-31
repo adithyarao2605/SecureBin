@@ -104,6 +104,17 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
   }, [attachedFiles.length, draft, shareUrl]);
 
   const draftByteCount = useMemo(() => new TextEncoder().encode(draft).length, [draft]);
+  const discussionEligible = policyDraft.maxReveals === null || policyDraft.maxReveals >= 3;
+
+  useEffect(() => {
+    if (!discussionEligible && enableDiscussion) {
+      setEnableDiscussion(false);
+      discussionCapabilityRef.current = null;
+      discard();
+      lastAttemptRef.current = null;
+      setErrorMessage("");
+    }
+  }, [discard, discussionEligible, enableDiscussion]);
 
   useEffect(() => {
     // Desktop uses a side-by-side Markdown authoring view. Code mode is a
@@ -394,7 +405,7 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
             <input
               type="checkbox"
               checked={enableDiscussion}
-              disabled={isPending}
+              disabled={isPending || !discussionEligible}
               onChange={(e) => {
                 setEnableDiscussion(e.target.checked);
                 discussionCapabilityRef.current = null;
@@ -403,7 +414,11 @@ export function Composer({ onPhaseChange, onPolicyChange, onShareChange }: Compo
             />
             <span>Enable encrypted discussion</span>
           </label>
-          <p className="policy-hint">Revealed recipients can post encrypted replies. SecureBin does not provide activity or read receipts.</p>
+          <p className="policy-hint">
+            {discussionEligible
+              ? "Revealed recipients can post encrypted replies. SecureBin does not provide activity or read receipts."
+              : "Choose at least 3 reveals or Unlimited to enable encrypted discussion; one-time shares cannot support a thread."}
+          </p>
         </fieldset>
 
         {errorMessage && (
