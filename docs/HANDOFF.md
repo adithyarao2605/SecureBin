@@ -10,10 +10,12 @@ Updated: 2026-08-31 (UTC)
 - Added the released-product manual QA matrix at
   [`docs/feature-checklist.md`](feature-checklist.md) and linked it from the
   README, deployment, evidence, self-hosting, and in-product documentation.
-- Prepared a dependency candidate containing the seven Dependabot updates,
-  the Next.js 16 `proxy.ts` migration, flat ESLint compatibility, and a split
-  CI workflow. Static gates pass locally: frozen install, lint, typecheck,
-  217 unit tests, source audit, dependency audit, and production build.
+- Prepared a dependency candidate containing the six compatible Dependabot
+  updates, the Next.js 16 `proxy.ts` migration, flat ESLint compatibility, and
+  a split CI workflow. The TypeScript 6 update was evaluated but retained at
+  5.9.2 because Next.js 16's production build could not parse its `--showConfig`
+  output. Static gates pass locally: frozen install, lint, typecheck, 217 unit
+  tests, source audit, dependency audit, and production build.
 - Local database, integration, development-browser, production-browser, and
   accessibility execution remains blocked by this host's Docker socket
   permission (`/var/run/docker.sock`); no result is reported as passed here.
