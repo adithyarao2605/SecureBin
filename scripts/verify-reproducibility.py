@@ -23,6 +23,7 @@ REQUIRED_FILES = (
     ".github/workflows/ci.yml",
     ".github/dependabot.yml",
     "docs/evidence.md",
+    "docs/feature-checklist.md",
     "docs/history.md",
     "docs/architecture.md",
     "docs/deployment.md",

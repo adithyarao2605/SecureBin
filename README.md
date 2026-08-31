@@ -353,6 +353,7 @@ Use the shortest document that answers the question:
 | UX direction and accessibility expectations | This README, the in-app **How it works** panel, and [`AGENTS.md`](AGENTS.md) |
 | Deployment, environment variables, migrations, and smoke checks | [`docs/deployment.md`](docs/deployment.md) and [`docs/self-hosting.md`](docs/self-hosting.md) |
 | Validation and final verification | [`docs/evidence.md`](docs/evidence.md) |
+| Manual feature verification | [`docs/feature-checklist.md`](docs/feature-checklist.md) |
 | Historical implementation record | [`docs/history.md`](docs/history.md) |
 
 The in-app **How it works** panel at [`/new#how-it-works`](https://secure-bin.vercel.app/new#how-it-works) is the quickest product-level explanation; the documents above provide the implementation evidence behind it.
@@ -381,6 +382,7 @@ report.
 | `supabase/tests/` | pgTAP policy, lifecycle, RLS, concurrency, attachment, and cleanup checks |
 | `tests/` | Unit, integration, browser, production-build, and accessibility tests |
 | `scripts/` | Reproducibility, local runtime, source audit, and smoke tooling |
-| `docs/` | Architecture, deployment, evidence, self-hosting, and historical references |
+| `docs/` | Architecture, deployment, evidence, feature checklist, self-hosting, and historical references |
+| `docs/feature-checklist.md` | Synthetic-data manual QA matrix for every released product surface |
 | `docs/history.md` | Consolidated implementation history and capability record |
 | `docs/self-hosting.md` | Expanded self-hosting reference |

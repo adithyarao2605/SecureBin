@@ -42,7 +42,7 @@ function createNonce(): string {
   return btoa(crypto.randomUUID());
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const nonce = createNonce();
   const contentSecurityPolicy = buildContentSecurityPolicy(nonce, process.env.NODE_ENV === "development");
   const requestHeaders = new Headers(request.headers);

@@ -1,6 +1,29 @@
 # SecureBin release record
 
-Updated: 2026-08-25 (UTC)
+Updated: 2026-08-31 (UTC)
+
+## Current release maintenance pass
+
+- Preserved the sender result-card and security-flow mobile fixes: optional
+  sections now number consecutively, and the `+` control stays on the summary
+  row at narrow widths.
+- Added the released-product manual QA matrix at
+  [`docs/feature-checklist.md`](feature-checklist.md) and linked it from the
+  README, deployment, evidence, self-hosting, and in-product documentation.
+- Prepared a dependency candidate containing the seven Dependabot updates,
+  the Next.js 16 `proxy.ts` migration, flat ESLint compatibility, and a split
+  CI workflow. Static gates pass locally: frozen install, lint, typecheck,
+  217 unit tests, source audit, dependency audit, and production build.
+- Local database, integration, development-browser, production-browser, and
+  accessibility execution remains blocked by this host's Docker socket
+  permission (`/var/run/docker.sock`); no result is reported as passed here.
+- Delegation outcome: the CI audit subagent recommended independent static,
+  database, development-browser, production-browser, and accessibility jobs;
+  that workflow split was applied. The documentation audit subagent could not
+  start because its isolated shell was unavailable, so no delegated doc edits
+  were accepted from it.
+- No remote push has been made for this maintenance pass. The candidate must
+  complete CI before it is merged into the release branch.
 
 ## Final submission documentation cleanup
 
@@ -34,9 +57,9 @@ below are retained as history and do not describe an active development state.
 
 ## Documentation and repository hygiene pass
 
-- Synchronized the README, evidence record, active roadmap, architecture,
-  deployment runbook, self-hosting guide, UI brief, history record, and final
-  checklist with the current dark-first implementation.
+- Synchronized the README, evidence record, architecture, deployment runbook,
+  self-hosting guide, visual contract, history record, and final checklist with
+  the current dark-first implementation.
 - Added a concise documentation index, corrected stale validation claims,
   named the latest lifecycle cleanup migration, and removed the implication
   that `vercel.json` already configures a cleanup scheduler.
@@ -56,8 +79,8 @@ below are retained as history and do not describe an active development state.
 - Restored dark mode as the first-visit/default theme across the pre-hydration
   layout and theme toggle. Explicitly choosing light mode remains supported and
   persists locally.
-- Updated the visual-contract E2E expectations and the active SPEC/architecture
-  wording to match the dark-first default.
+- Updated the visual-contract E2E expectations and the architecture wording to
+  match the dark-first default.
 - Lint, typecheck, and Playwright test discovery pass. Full browser execution
   remains CI-only in this environment. No push was performed.
 

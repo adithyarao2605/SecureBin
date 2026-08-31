@@ -6,7 +6,7 @@ substitute for rerunning the gates at a later commit.
 
 ## Current release record
 
-Updated 2026-08-25 for the released application and dark-default theme. This
+Updated 2026-08-31 for the released application and dark-default theme. This
 section records the completed release gates and their production-shaped CI
 evidence.
 
@@ -18,6 +18,12 @@ evidence.
 | Development and production Playwright | Pass: 20 development and 20 production-build Chromium tests |
 | Accessibility | Pass: 7 Axe checks with no serious or critical findings |
 | Reproducibility and dependency audit | Pass in `main` CI |
+
+The complete synthetic-data manual verification matrix is maintained in
+[`feature-checklist.md`](feature-checklist.md). CI is split into independent
+reproducibility, static-quality, database/integration, development-browser,
+production-browser, and accessibility jobs so an unrelated slow suite does
+not hide a faster failure.
 
 The released feature set and its local/CI gates are established. The deployment
 runbook remains available for operators who deploy their own SecureBin instance.

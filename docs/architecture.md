@@ -18,6 +18,10 @@ documented here.
 The current default theme is dark with an explicit light toggle; the rest of
 the quiet-proof palette and route topology remain unchanged.
 
+The application runs on Next.js 16 with the request proxy entry point in
+`proxy.ts`. Node and pnpm remain pinned by the repository toolchain, and CI
+runs independent release gates in parallel.
+
 SecureBin provides anonymous, browser-encrypted sharing with server-enforced availability, expiry (including "Never"), revocation, and reveal limits from 1 to unlimited. The server stores ciphertext, a discussion-capability digest, and lifecycle metadata but never receives content keys, passwords, unlock codes, discussion capabilities, filenames, plaintext MIME types, or plaintext content.
 
 The release boundary excludes recipient-bound sharing, passkeys, Secure Rooms, richer active previews, localization, Argon2id, size padding, alternate storage adapters, and SDKs.

@@ -2,6 +2,11 @@
 const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Next.js 16's CLI typecheck path detaches the tsc child process. Keep the
+  // compiler API path deterministic across Linux CI and local sandboxes.
+  experimental: {
+    useTypeScriptCli: false,
+  },
   headers: async () => [
     {
       source: "/((?!_next/static|_next/image|favicon.ico).*)",

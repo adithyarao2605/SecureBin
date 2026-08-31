@@ -13,6 +13,9 @@ For the shorter setup and security overview, start with the
 
 Run a complete, isolated local stack (Next.js web app + local Supabase PostgreSQL + local Supabase Storage):
 
+Use [`feature-checklist.md`](feature-checklist.md) for the complete
+synthetic-data acceptance pass after the stack is healthy.
+
 ### Prerequisites
 - **Node.js:** `v22.23.2` from `.nvmrc` (or the repository's pinned runtime)
 - **pnpm:** `v10.15.1` (managed via Corepack)
@@ -61,7 +64,7 @@ pnpm local:stop
 Create a `.env` or `.env.production` file on your server with the following required variables:
 
 ```bash
-# Public URL of your Supabase instance (accessible by server and middleware)
+# Public URL of your Supabase instance (accessible by server and request proxy)
 NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-instance.example.com
 
 # Server-only service role credential (used only by API route handlers, never exposed to browser)

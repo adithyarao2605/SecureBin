@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { buildContentSecurityPolicy } from "../../middleware";
+import { buildContentSecurityPolicy } from "../../proxy";
 
 describe("request nonce CSP", () => {
   const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
