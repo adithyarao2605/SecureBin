@@ -61,7 +61,7 @@ pnpm local:stop
 Create a `.env` or `.env.production` file on your server with the following required variables:
 
 ```bash
-# Public URL of your Supabase instance (accessible by server and middleware)
+# Public URL of your Supabase instance (accessible by server and request proxy)
 NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-instance.example.com
 
 # Server-only service role credential (used only by API route handlers, never exposed to browser)

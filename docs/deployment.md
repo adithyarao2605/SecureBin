@@ -188,7 +188,7 @@ in the provider stores, never in a tracked file.
    CRON_SECRET=<independent random value for POST /api/internal/cleanup>
    ```
 
-   Only `NEXT_PUBLIC_SUPABASE_URL` is public: the middleware embeds the Supabase
+   Only `NEXT_PUBLIC_SUPABASE_URL` is public: the request proxy embeds the Supabase
    project origin into the Content-Security-Policy and no anonymous key ships in
    any bundle. SecureBin accepts Supabase's recommended `sb_secret_...` key as
    well as the legacy service-role JWT under its variable name. Mark the
