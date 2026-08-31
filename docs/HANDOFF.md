@@ -427,6 +427,10 @@ The composer also shows an accessible toast when an enabled discussion is
 made ineligible by switching to a one-time policy, naming the eligible reveal
 choices needed to continue.
 
+The composer-flow regression now selects a three-reveal policy before enabling
+discussion, matching the production eligibility rule and keeping the static
+quality/build CI job deterministic.
+
 Operators of a separate SecureBin deployment should follow
 `docs/deployment.md` and record their own non-secret deployment evidence. The
 published SecureBin service is already covered by this release record.

@@ -150,6 +150,9 @@ describe("composer staged creation flow", () => {
     render(<Composer />);
 
     fireEvent.change(screen.getByLabelText("Note content"), { target: { value: "discussion probe" } });
+    // One-time shares cannot host a thread; discussion requires at least
+    // three authorized releases (or Unlimited).
+    fireEvent.click(screen.getByRole("radio", { name: "3 reveals" }));
     fireEvent.click(screen.getByRole("checkbox", { name: /Enable encrypted discussion/i }));
     fireEvent.click(screen.getByRole("button", { name: "Create share" }));
 
