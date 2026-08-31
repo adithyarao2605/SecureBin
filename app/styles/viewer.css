@@ -107,7 +107,7 @@
 
 .evidence-drawer-summary {
   display: grid;
-  grid-template-columns: auto minmax(8rem, auto) repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: auto minmax(8rem, auto) repeat(3, minmax(0, 1fr)) auto auto;
   align-items: center;
   gap: .65rem;
   min-height: 3.25rem;
@@ -196,7 +196,7 @@
 
 @media (max-width: 900px) {
   .evidence-drawer-summary {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
   }
 
   .evidence-drawer-fact {

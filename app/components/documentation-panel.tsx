@@ -15,6 +15,7 @@ const GUIDE_SECTIONS = [
   "guide-parcels",
   "guide-self-hosting",
   "guide-security",
+  "guide-checklist",
 ] as const;
 
 type GuideSection = (typeof GUIDE_SECTIONS)[number];
@@ -131,6 +132,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
         <a className={`docs-nav-pill${activeGuide === "guide-parcels" ? " active" : ""}`} aria-current={activeGuide === "guide-parcels" ? "location" : undefined} href="#guide-parcels">📦 Offline Parcels</a>
         <a className={`docs-nav-pill${activeGuide === "guide-self-hosting" ? " active" : ""}`} aria-current={activeGuide === "guide-self-hosting" ? "location" : undefined} href="#guide-self-hosting">🖥️ Self-Hosting</a>
         <a className={`docs-nav-pill${activeGuide === "guide-security" ? " active" : ""}`} aria-current={activeGuide === "guide-security" ? "location" : undefined} href="#guide-security">🛡️ Security Model</a>
+        <a className={`docs-nav-pill${activeGuide === "guide-checklist" ? " active" : ""}`} aria-current={activeGuide === "guide-checklist" ? "location" : undefined} href="#guide-checklist">✅ Test Checklist</a>
       </nav>
 
       <div className="docs-grid" id="guide-quickstart">
@@ -138,7 +140,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
           <div className="principle-card-top"><span className="principle-number">01</span><span className="principle-tag">User Guide</span></div>
           <h3>🚀 Quickstart: Creating a Share</h3>
           <ol className="docs-step-list">
-            <li className="docs-step-item"><span className="docs-step-num">1</span><div className="docs-step-text"><strong>Choose Your Mode</strong><p>Select <em>Plain Text</em> for credentials, <em>Markdown</em> for rich documents (with split/preview mode), or <em>Code</em> for language-aware snippets in one editable IDE-style surface.</p></div></li>
+            <li className="docs-step-item"><span className="docs-step-num">1</span><div className="docs-step-text"><strong>Choose Your Mode</strong><p>Select <em>Plain note</em> for credentials, <em>Markdown</em> for rich documents (with edit/split/preview modes), or <em>Code</em> for language-aware snippets in one editable IDE-style surface.</p></div></li>
             <li className="docs-step-item"><span className="docs-step-num">2</span><div className="docs-step-text"><strong>Configure Access & Factors</strong><p>Optionally add a password, generate a two-channel unlock code, set a one-time or custom reveal limit, or define a timed expiration.</p></div></li>
             <li className="docs-step-item"><span className="docs-step-num">3</span><div className="docs-step-text"><strong>Share the Link</strong><p>Click <em>Create share</em>. Your browser encrypts the content with AES-256-GCM before sending ciphertext. Copy the link; the decryption key stays in the URL fragment (#key).</p></div></li>
           </ol>
@@ -165,7 +167,7 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
             <li><strong>One-Time Release:</strong> The share becomes permanently unavailable after 1 authorized ciphertext release.</li>
             <li><strong>Reveal Limits:</strong> The safe default is one release; set exact bounds (3, 5, 10, custom, or unlimited) when needed. Every limit is enforced atomically at database level.</li>
             <li><strong>Expiry Durations:</strong> Automatically expires after 24h, 7 days, 30 days, custom duration, or Never (indefinite until manual revocation).</li>
-            <li><strong>Release Window & Privacy Veil:</strong> A countdown begins at the first authorized ciphertext release. Presets range from 10 seconds to 5 minutes, with custom windows up to 24 hours. When it closes, SecureBin drops its application-held decrypted references and replaces the content with a privacy veil; JavaScript cannot guarantee physical memory erasure.</li>
+            <li><strong>Release Window & Privacy Veil:</strong> The server starts the window at the first authorized ciphertext release and rejects new request tokens after it closes. The recipient countdown uses that server closing time; when it reaches zero, SecureBin drops application-held decrypted references and replaces content with a privacy veil. JavaScript cannot guarantee physical memory erasure.</li>
           </ul>
         </article>
 
@@ -216,6 +218,19 @@ export function DocumentationPanel({ onOpenParcel, onCreateShare }: Documentatio
       <section className="threat-section">
         <p className="eyebrow">Honest Security Boundaries</p>
         <ul><li>Cannot protect against compromised browser extensions or malware on the recipient device.</li><li>Cannot prevent a recipient from taking physical screenshots or copying decrypted text.</li><li>Cannot erase copies of files that a recipient has already downloaded locally.</li><li>The service can observe application ciphertext sizes and access events; network providers can observe TLS traffic sizes, endpoints, and timing.</li></ul>
+      </section>
+
+      <section className="docs-card" id="guide-checklist">
+        <div className="principle-card-top"><span className="principle-number">07</span><span className="principle-tag">Release Verification</span></div>
+        <h3>✅ Test every product surface</h3>
+        <p>Use synthetic content and verify the complete path: composer modes, all four factor combinations, lifecycle policies, encrypted attachments, the sequential Share Ready sections, recipient retry behavior, discussions, Share History, offline parcels, mobile layout, keyboard operation, and honest unavailable states.</p>
+        <ul className="threat-section" style={{ margin: 0, paddingLeft: "1.2rem" }}>
+          <li><strong>Core flow:</strong> create, copy, reveal, download, revoke, and confirm uniform unavailability.</li>
+          <li><strong>Failure flow:</strong> wrong factors, lost responses, closed windows, invalid parcels, clipboard denial, and server errors.</li>
+          <li><strong>Privacy flow:</strong> inspect requests and logs for plaintext, fragments, factors, filenames, capabilities, or ciphertext diagnostics.</li>
+          <li><strong>Inclusive flow:</strong> test 320 px and 390 px, keyboard-only use, light/dark themes, reduced motion, and Axe.</li>
+        </ul>
+        <p>For the complete step-by-step matrix, open <a href="https://github.com/adithyarao2605/SecureBin/blob/main/docs/feature-checklist.md" target="_blank" rel="noreferrer" style={{ color: "var(--mineral)", textDecoration: "underline" }}>docs/feature-checklist.md</a>.</p>
       </section>
 
       <section className="how-final">

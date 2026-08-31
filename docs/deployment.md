@@ -20,7 +20,7 @@ evidence.
 
 ## Fresh-clone check
 
-The Day 1 repository check has no third-party Python dependencies:
+The repository reproducibility check has no third-party Python dependencies:
 
 ```bash
 python3 -m venv .venv
@@ -39,6 +39,11 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 pnpm test:a11y
 ```
+
+For a complete manual pass across the released product, use the synthetic-data
+matrix in [`feature-checklist.md`](feature-checklist.md). It includes failure,
+retry, offline, lifecycle, accessibility, and cleanup paths that are not all
+practical to express in one smoke command.
 
 On a fresh Linux host that lacks browser system libraries, use
 `pnpm exec playwright install --with-deps chromium` instead.

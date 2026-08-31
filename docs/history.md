@@ -2,6 +2,22 @@
 
 This document is the single consolidated record of all implemented features, cryptographic protocols, backend architecture, and UI systems in SecureBin.
 
+## 0. Released toolchain and verification layout (2026-08-31)
+
+- Updated the reviewed dependency set to Next.js 16.3.2, Playwright 1.62.1,
+  Testing Library DOM matchers 7.0.1, TypeScript 6.0.3, and Vitest 4.1.11.
+- Migrated the Next.js request entry point from `middleware.ts` to `proxy.ts`
+  and aligned the flat ESLint configuration with the Next.js 16 preset.
+- Split CI into reproducibility, static-quality, database/integration,
+  development-browser, production-browser, and accessibility jobs. Each job
+  keeps the same pinned install and Chromium-only browser contract.
+- Added [`docs/feature-checklist.md`](feature-checklist.md), a synthetic-data
+  manual matrix covering normal, failure, retry, offline, privacy, and
+  accessibility paths.
+- Corrected sender result numbering so optional sections remain consecutive,
+  and reserved the final evidence-summary grid column for the security-flow
+  expand control on narrow viewports.
+
 ---
 
 ## 1. Zero-Knowledge Cryptography & Key Management

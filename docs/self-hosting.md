@@ -13,6 +13,9 @@ For the shorter setup and security overview, start with the
 
 Run a complete, isolated local stack (Next.js web app + local Supabase PostgreSQL + local Supabase Storage):
 
+Use [`feature-checklist.md`](feature-checklist.md) for the complete
+synthetic-data acceptance pass after the stack is healthy.
+
 ### Prerequisites
 - **Node.js:** `v22.23.2` from `.nvmrc` (or the repository's pinned runtime)
 - **pnpm:** `v10.15.1` (managed via Corepack)

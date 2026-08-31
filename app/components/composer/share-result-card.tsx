@@ -66,6 +66,14 @@ export function ShareResultCard({
   onRevoke,
   onReset,
 }: ShareResultCardProps) {
+  let nextSection = 1;
+  const sectionNumber = (): string => String(nextSection++).padStart(2, "0");
+  const deliverySection = sectionNumber();
+  const unlockSection = unlockCodeShown ? sectionNumber() : null;
+  const evidenceSection = receiptData ? sectionNumber() : null;
+  const parcelSection = parcel && receiptData ? sectionNumber() : null;
+  const transportSection = sectionNumber();
+
   return (
     <div className="surface-card result-card" role="region" aria-labelledby="share-result-heading">
       <header className="share-result-header">
@@ -80,7 +88,7 @@ export function ShareResultCard({
       <section className="share-result-section" aria-labelledby="share-delivery-heading">
         <div className="share-result-section-heading">
           <div>
-            <p className="share-result-eyebrow">01 / Delivery</p>
+            <p className="share-result-eyebrow">{deliverySection} / Delivery</p>
             <h3 id="share-delivery-heading">Send the complete link</h3>
           </div>
           <span className="share-proof-chip">Fragment-held key</span>
@@ -111,7 +119,7 @@ export function ShareResultCard({
         <section className="share-result-section" aria-labelledby="unlock-heading">
           <div className="share-result-section-heading">
             <div>
-              <p className="share-result-eyebrow">02 / Second channel</p>
+              <p className="share-result-eyebrow">{unlockSection} / Second channel</p>
               <h3 id="unlock-heading">Deliver this code separately</h3>
             </div>
             <span className="share-proof-chip">Two-channel unlock</span>
@@ -134,7 +142,7 @@ export function ShareResultCard({
           <summary className="share-result-section-summary">
             <div className="share-result-section-heading">
               <div>
-                <p className="share-result-eyebrow">03 / Evidence</p>
+                <p className="share-result-eyebrow">{evidenceSection} / Evidence</p>
                 <h3 id="share-proof-heading">Verify what was sealed</h3>
               </div>
               <span className="share-proof-chip">No plaintext uploaded</span>
@@ -168,7 +176,7 @@ export function ShareResultCard({
           <summary className="share-result-section-summary">
             <div className="share-result-section-heading">
               <div>
-                <p className="share-result-eyebrow">04 / Offline copy</p>
+                <p className="share-result-eyebrow">{parcelSection} / Offline copy</p>
                 <h3 id="parcel-heading">Carry the ciphertext locally</h3>
               </div>
               <span className="share-proof-chip">No network required to restore</span>
@@ -195,7 +203,7 @@ export function ShareResultCard({
         <summary className="share-result-section-summary">
           <div className="share-result-section-heading">
             <div>
-              <p className="share-result-eyebrow">05 / Transport</p>
+              <p className="share-result-eyebrow">{transportSection} / Transport</p>
               <h3 id="share-tools-heading">Choose how to pass it on</h3>
             </div>
             <span className="share-proof-chip">Full link required</span>
