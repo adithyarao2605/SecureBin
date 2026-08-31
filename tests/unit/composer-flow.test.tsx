@@ -131,6 +131,11 @@ describe("composer staged creation flow", () => {
     const minted = prepareSpy.mock.results[0]?.value;
     if (!minted) throw new Error("prepareFactors never returned");
     expect(container.querySelector(".unlock-code")?.textContent).toBe(minted.unlockCode);
+    expect(screen.getByText("01 / Delivery")).toBeInTheDocument();
+    expect(screen.getByText("02 / Second channel")).toBeInTheDocument();
+    expect(screen.getByText("03 / Evidence")).toBeInTheDocument();
+    expect(screen.getByText("04 / Offline copy")).toBeInTheDocument();
+    expect(screen.getByText("05 / Transport")).toBeInTheDocument();
   });
 
   it("seals a discussion capability into the frame and sends only its digest", async () => {
@@ -152,6 +157,11 @@ describe("composer staged creation flow", () => {
     expect(screen.getByRole("heading", { name: "Share ready" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Verify what was sealed" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open recipient view" })).toHaveAttribute("href", expect.stringContaining("/s/"));
+    expect(screen.getByText("01 / Delivery")).toBeInTheDocument();
+    expect(screen.getByText("02 / Evidence")).toBeInTheDocument();
+    expect(screen.getByText("03 / Offline copy")).toBeInTheDocument();
+    expect(screen.getByText("04 / Transport")).toBeInTheDocument();
+    expect(screen.queryByText("03 / Evidence")).not.toBeInTheDocument();
 
     const [create] = callsTo(fetchMock, "/api/shares");
     // The digest travels; the raw capability never leaves the browser.
