@@ -38,7 +38,7 @@
     "local:stop": "bash scripts/local-stop.sh"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.50.0",
+    "@supabase/supabase-js": "2.112.4",
     "fflate": "0.8.3",
     "lowlight": "3.3.0",
     "next": "16.3.2",
